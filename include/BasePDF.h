@@ -17,7 +17,7 @@ struct BasePDF {
 
     /** Return the pdf value for a given paramater set */
     double operator()(const std::vector<double> &params) const {
-        std::cout << "parameters for part " << part << " out of " << size << ": ";
+        std::cout << "parameters for process " << process << " out of " << size << ": ";
         for(int i=0; i<params.size(); ++i){
             std::cout << params[i];
             if(i<params.size()-1) std::cout << ", ";
@@ -26,14 +26,23 @@ struct BasePDF {
         return 0;
     }
 
-    /** Load the chunk of data to be used by this part of the pdf */
-    void load(int part, int size) {
-        this->part = part;
+    /** Load the chunk of data to be used by this process of the pdf
+     * Each process will get its own copy of the pdf. Once this is done, the
+     * data should be loaded by this method. The responsibilty to divide the
+     * data into distinct portions lies with the pdf and should be done here.
+     * The first parameter is the process id and the second parameter is the
+     * total number of processes.
+     *
+     * @param process the id of this process, starting from 0
+     * @param size the number of processes in total
+     */
+    void load(int process, int size) {
+        this->process = process;
         this->size = size;
     }
 
     /** Variables used for output, not required */
-    int part;
+    int process;
     int size;
 };
 
