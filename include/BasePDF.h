@@ -27,7 +27,7 @@ struct BasePDF {
     }
 
     /** Load the chunk of data to be used by this part of the pdf */
-    void load(int argc, char* argv[], int part, int size) {
+    void load(int part, int size) {
         this->part = part;
         this->size = size;
     }

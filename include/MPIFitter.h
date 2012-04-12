@@ -17,14 +17,10 @@ enum ProcessStatus { PROCESS_CONTINUE, PROCESS_FINISHED };
 
 template<class PDF> class MPIMaster {
     public:
-        MPIMaster(boost::mpi::communicator world):world(world), initialized(false) {}
+        MPIMaster(boost::mpi::communicator world, PDF &pdf):world(world), pdf(pdf), initialized(false) {}
         ~MPIMaster(){
             ProcessStatus status(PROCESS_FINISHED);
             broadcast(world, status, 0);
-        }
-
-        void load(int argc, char* argv[]) {
-            pdf.load(argc, argv, world.rank(), world.size());
         }
 
         double operator()(const params_t &params){
@@ -45,17 +41,13 @@ template<class PDF> class MPIMaster {
 
     protected:
         boost::mpi::communicator world;
-        PDF pdf;
+        PDF &pdf;
         bool initialized;
 };
 
 template<class PDF> class MPIClient {
     public:
-        MPIClient(boost::mpi::communicator world):world(world) {}
-
-        void load(int argc, char* argv[]) {
-            pdf.load(argc, argv, world.rank(), world.size());
-        }
+        MPIClient(boost::mpi::communicator world, PDF &pdf):world(world), pdf(pdf) {}
 
         void run(){
             params_t params;
@@ -75,25 +67,24 @@ template<class PDF> class MPIClient {
 
     protected:
         boost::mpi::communicator world;
-        PDF pdf;
+        PDF &pdf;
 };
 
-template<class PDF> class MPIFitter {
+class MPIFitter {
     public:
-        template<class FitRoutine> int run(int argc, char* argv[], FitRoutine fitter){
-            boost::mpi::environment env(argc, argv);
+        template<class FitRoutine, class PDF> int run(FitRoutine& fitter, PDF& pdf){
+            boost::mpi::environment env;
             boost::mpi::communicator world;
 
+            pdf.load(world.rank(), world.size());
             if( world.rank() > 0 ) {
-                MPIClient<PDF> client(world);
-                client.load(argc, argv);
+                MPIClient<PDF> client(world, pdf);
                 client.run();
                 return 0;
             }
 
             std::cout << "Loading Master in a world of size " << world.size() << std::endl;
-            MPIMaster<PDF> master(world);
-            master.load(argc, argv);
+            MPIMaster<PDF> master(world, pdf);
 
             std::cout << "Calling Fit routine" << std::endl;
             fitter(master);

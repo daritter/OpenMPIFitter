@@ -12,9 +12,9 @@ struct FitRoutine {
     }
 };
 
-
 int main(int argc, char* argv[]){
     FitRoutine fitter;
-    MPIFitter<BasePDF> core;
-    return core.run(argc, argv, fitter);
+    BasePDF pdf;
+    MPIFitter core;
+    return core.run(fitter, pdf);
 }
