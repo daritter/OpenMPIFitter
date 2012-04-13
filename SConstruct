@@ -2,11 +2,13 @@ import os
 
 env = Environment(
     CXX="mpic++",
-    CXXFLAGS=["-O3", "-g"],
-    #LINKFLAGS=["-Wl,--as-needed"],
+    CXXFLAGS=["-O3"],#, "-g"],
+    #LINKFLAGS=["-Wl,--as-needed","-Wl,--strip-all"],
     RPATH = "$LIBPATH",
     CPPPATH=["#include"],
 )
+#env.AppendUnique(LINKFLAGS= "-Wl,--strip-all")
+#env.ParseConfig("root-config --libs --cflags --ldflags")
 for libpath in ("/remote/pcbelle03/ritter/local/",):
     if os.path.exists(libpath):
         env.AppendUnique(LIBPATH=os.path.join(libpath,"lib"))
