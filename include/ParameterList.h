@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <memory>
 
 struct ParameterList {
     public:
@@ -13,41 +14,48 @@ struct ParameterList {
 
         /** Add a parameter to both lists */
         static int addParameter(const std::string &name) {
-            int index = m_parameterList.size();
-            if(!m_parameterMap.insert(make_pair(name,index)).second){
+            ParameterList &pl = ParameterList::getInstance();
+            int index = pl.m_parameterList.size();
+            if(!pl.m_parameterMap.insert(make_pair(name,index)).second){
                 throw std::logic_error("Duplicate Parameter: " + name);
             }
-            m_parameterList.push_back(name);
+            pl.m_parameterList.push_back(name);
             return index;
         }
 
         /** Get parameter index for a given name */
         static int getIndex(const std::string &name) {
-            map_type::const_iterator it = m_parameterMap.find(name);
-            if(it == m_parameterMap.end()) throw std::invalid_argument("Unknown parameter: " + name);
+            ParameterList &pl = ParameterList::getInstance();
+            map_type::const_iterator it = pl.m_parameterMap.find(name);
+            if(it == pl.m_parameterMap.end()) throw std::invalid_argument("Unknown parameter: " + name);
             return it->second;
         }
 
         /** Get parameter name for a given index */
         static std::string getName(int index) {
-            return m_parameterList.at(index);
+            ParameterList &pl = ParameterList::getInstance();
+            return pl.m_parameterList.at(index);
         }
 
-        static const map_type & getParameterMap() { return m_parameterMap; }
-        static const list_type & getParameterList() { return m_parameterList; }
+        static const map_type& getParameterMap() { return  ParameterList::getInstance().m_parameterMap; }
+        static const list_type& getParameterList() { return  ParameterList::getInstance().m_parameterList; }
 
     private:
+        static ParameterList& getInstance();
+
         /** Static class, hide constructor */
-        ParameterList();
+        ParameterList() {}
         /** Static class, hide destructor */
-        ~ParameterList();
+        ~ParameterList() {}
         /** Static class, hide copy constructor */
         ParameterList(const ParameterList&);
 
         /** Map providing mapping between parameter name and parameter index */
-        static map_type  m_parameterMap;
+        map_type  m_parameterMap;
         /** List providing mapping between parameter index and parameter name */
-        static list_type m_parameterList;
+        list_type m_parameterList;
+
+        friend class std::auto_ptr<ParameterList>;
 };
 
 /** Macro to define a parameter easily */
