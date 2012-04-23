@@ -1,4 +1,0 @@
-#Name                                  value             error              min               max        fixed
-signal_mean                       0.0000000000e+00  0.0000000000e+00              -inf               inf     N
-signal_sigma                      0.0000000000e+00  0.0000000000e+00                 0               100     N
-signal_area                       1.0000000000e+00  1.0000000000e-01                 0                 1     Y

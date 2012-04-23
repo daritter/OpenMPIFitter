@@ -1,5 +1,5 @@
-#ifndef DsDsKsFitter_Parameter_H
-#define DsDsKsFitter_Parameter_H
+#ifndef MPIFitter_Parameter_H
+#define MPIFitter_Parameter_H
 
 #include <limits>
 #include <string>
@@ -36,4 +36,4 @@ class Parameter {
 inline std::istream& operator>>(std::istream &in,  Parameter &p){ p.load(in);  return in; }
 inline std::ostream& operator<<(std::ostream &out, const Parameter &p){ p.save(out); return out;}
 
-#endif //DsDsKsFitter_Parameter_H
+#endif //MPIFitter_Parameter_H

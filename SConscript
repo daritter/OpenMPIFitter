@@ -1,3 +1,7 @@
+import os
 Import('*')
 
-env.Program("#fitter",Glob('src/*.cc'),LIBS=["boost_mpi", "boost_serialization"])
+for filename in Glob('src/fitter/*.cc'):
+    basename = os.path.basename(filename.abspath)
+    executable = "#fitter-" + os.path.splitext(basename)[0]
+    env.Program(executable,[filename] + Glob('src/*.cc'))

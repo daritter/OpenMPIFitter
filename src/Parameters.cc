@@ -56,24 +56,24 @@ void Parameters::save(ostream &out) const {
     }
 }
 
-//MnUserParameters Parameters::getMnParams() const {
-    //MnUserParameters mnParams;
+ROOT::Minuit2::MnUserParameters Parameters::getMnParams() const {
+    ROOT::Minuit2::MnUserParameters mnParams;
 
-    //BOOST_FOREACH(const Parameter& p, m_parameters){
-        //mnParams.Add(p.name(), p.value(), p.error());
-        //if(p.hasMin()) mnParams.SetLowerLimit(p.name(), p.min());
-        //if(p.hasMax()) mnParams.SetUpperLimit(p.name(), p.max());
-        //if(p.isFixed()) mnParams.Fix(p.name());
-    //}
+    BOOST_FOREACH(const Parameter& p, m_parameters){
+        mnParams.Add(p.name(), p.value(), p.error());
+        if(p.hasMin()) mnParams.SetLowerLimit(p.name(), p.min());
+        if(p.hasMax()) mnParams.SetUpperLimit(p.name(), p.max());
+        if(p.isFixed()) mnParams.Fix(p.name());
+    }
 
-    //return mnParams;
-//}
+    return mnParams;
+}
 
-//Parameters::update(MnUserParameters mnParams){
-    //BOOST_FOREACH(const MinuitParameter &mnp, mnParams.Parameters()){
-        //int index = ParameterList::getIndex(mnp.GetName());
-        //Parameter &p = m_parameters[index];
-        //p.value(mnp.Value());
-        //p.error(mnp.Error());
-    //}
-//}
+void Parameters::update(ROOT::Minuit2::MnUserParameters mnParams){
+    BOOST_FOREACH(const ROOT::Minuit2::MinuitParameter &mnp, mnParams.Parameters()){
+        int index = ParameterList::getIndex(mnp.GetName());
+        Parameter &p = m_parameters[index];
+        p.value(mnp.Value());
+        p.error(mnp.Error());
+    }
+}

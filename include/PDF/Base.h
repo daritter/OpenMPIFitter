@@ -1,5 +1,5 @@
-#ifndef DsDsKsFitter_BasePDF_h
-#define DsDsKsFitter_BasePDF_h
+#ifndef MPIFitter_BasePDF_h
+#define MPIFitter_BasePDF_h
 
 #include <functional>
 #include <string>
@@ -13,10 +13,13 @@
  */
 struct BasePDF {
     /** Define how different pieces of the pdf should be reduced to one value */
-    typedef std::multiplies<double> operator_type;
+    typedef std::plus<double> operator_type;
+
+    /** Define the increase of the objective function value which is eqvivalent to 1 sigma */
+    static const double error_def = 1.0;
 
     /** Return the pdf value for a given paramater set */
-    double operator()(const std::vector<double> &params) const {
+    virtual double operator()(const std::vector<double> &params) const {
         std::cout << "parameters for process " << process << " out of " << size << ": ";
         for(int i=0; i<params.size(); ++i){
             std::cout << params[i];
@@ -25,6 +28,14 @@ struct BasePDF {
         std::cout << std::endl;
         return 0;
     }
+
+    /** finalize the pdf after all values from the different processes are collected */
+    double finalize(const std::vector<double> &par, const double value) const {
+        const double logL = -2.0*value;
+        std::cout << "-2logL = " << std::setprecision(10) << logL << std::endl;
+        return logL;
+    }
+
 
     /** Load the chunk of data to be used by this process of the pdf
      * Each process will get its own copy of the pdf. Once this is done, the
@@ -46,4 +57,4 @@ struct BasePDF {
     int size;
 };
 
-#endif //DsDsKsFitter_BasePDF_h
+#endif //MPIFitter_BasePDF_h

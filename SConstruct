@@ -1,14 +1,19 @@
 import os
 
 env = Environment(
+    ENV=os.environ,
     CXX="mpic++",
-    CXXFLAGS=["-O3"],#, "-g"],
+    CXXFLAGS=["-O3", "-g", "-Wall"],
     #LINKFLAGS=["-Wl,--as-needed","-Wl,--strip-all"],
     RPATH = "$LIBPATH",
     CPPPATH=["#include"],
+    LIBS=[
+        "boost_mpi", "boost_serialization", "boost_program_options",
+        "Minuit2"
+    ],
 )
 #env.AppendUnique(LINKFLAGS= "-Wl,--strip-all")
-#env.ParseConfig("root-config --libs --cflags --ldflags")
+env.ParseConfig("root-config --libs --cflags --ldflags")
 for libpath in ("/remote/pcbelle03/ritter/local/",):
     if os.path.exists(libpath):
         env.AppendUnique(LIBPATH=os.path.join(libpath,"lib"))

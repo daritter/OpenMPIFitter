@@ -1,11 +1,11 @@
-#ifndef DsDsKsFitter_MPIFitter_h
-#define DsDsKsFitter_MPIFitter_h
+#ifndef MPIFitter_MPIFitter_h
+#define MPIFitter_MPIFitter_h
 
 #include <vector>
 #include <functional>
 #include <boost/mpi.hpp>
 #include <boost/serialization/vector.hpp>
-#include <BasePDF.h>
+#include <Minuit2/FCNBase.h>
 
 typedef std::vector<double> params_t;
 BOOST_IS_MPI_DATATYPE(params_t);
@@ -15,15 +15,15 @@ BOOST_IS_BITWISE_SERIALIZABLE(params_t);
 
 enum ProcessStatus { PROCESS_CONTINUE, PROCESS_FINISHED };
 
-template<class PDF> class MPIMaster {
+template<class PDF> class MPIMaster: public ROOT::Minuit2::FCNBase {
     public:
         MPIMaster(boost::mpi::communicator world, PDF &pdf):world(world), pdf(pdf), initialized(false) {}
-        ~MPIMaster(){
+        virtual ~MPIMaster(){
             ProcessStatus status(PROCESS_FINISHED);
             broadcast(world, status, 0);
         }
 
-        double operator()(const params_t &params){
+        virtual double operator()(const params_t &params) const {
             if(!initialized) {
                 broadcast(world, boost::mpi::skeleton(const_cast<params_t&>(params)), 0);
                 initialized = true;
@@ -36,13 +36,17 @@ template<class PDF> class MPIMaster {
             double result(0);
             typename PDF::operator_type op;
             reduce(world, local_result, result, op, 0);
-            return result;
+            return pdf.finalize(params, result);
+        }
+
+        virtual double Up() const {
+            return PDF::error_def;
         }
 
     protected:
         boost::mpi::communicator world;
         PDF &pdf;
-        bool initialized;
+        mutable bool initialized;
 };
 
 template<class PDF> class MPIClient {
@@ -87,9 +91,9 @@ class MPIFitter {
             MPIMaster<PDF> master(world, pdf);
 
             std::cout << "Calling Fit routine" << std::endl;
-            fitter(master);
+            return fitter(master);
         }
 
 };
 
-#endif //DsDsKsFitter_MPIFitter_h
+#endif //MPIFitter_MPIFitter_h

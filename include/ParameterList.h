@@ -1,5 +1,5 @@
-#ifndef DsDsKsFitter_ParameterList_h
-#define DsDsKsFitter_ParameterList_h
+#ifndef MPIFitter_ParameterList_h
+#define MPIFitter_ParameterList_h
 
 #include <map>
 #include <vector>
@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <memory>
 
+/** This class keeps a name<->index matching for all known parameters */
 struct ParameterList {
     public:
         typedef std::map<std::string, int> map_type;
@@ -59,7 +60,7 @@ struct ParameterList {
 };
 
 /** Macro to define a parameter easily */
-#define PARAM(x) const size_t x = ParameterList::addParameter(#x)
+#define PARAM(x) static const size_t x = ParameterList::addParameter(#x)
 
-#endif //DsDsKsFitter_ParameterList_H
+#endif //MPIFitter_ParameterList_H
 
