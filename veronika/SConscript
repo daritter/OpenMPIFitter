@@ -1,0 +1,13 @@
+Import('*')
+
+veronika = env.Clone()
+
+
+veronika.Append(
+    CPPPATH=["/belle/belle/b20090127_0910/include/", "fit_7d_mc_signal/", "."],
+    LIBPATH=["/belle/belle/b20090127_0910/x86_64-unknown-linux-gnu/opt/lib/so/", "/belle/cern/2006/lib64/"],
+    LIBS=["tatami", "tables", "belleutil", "packlib", "mathlib"],
+)
+
+common =["Data.cc","tools.cc","cheb.cc","wtag.cc","func.cc","hist.cc"]
+veronika.Program("#veronika-7d_mc_signal", common + ["fit_7d_mc_signal/Sig3DFcn.cc","fit_7d_mc_signal/sig3d.cc"])
