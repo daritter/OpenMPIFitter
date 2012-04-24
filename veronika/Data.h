@@ -1,7 +1,7 @@
 #ifndef Data_H_
 #define Data_H_
 
-#include<vector>
+#include <vector>
 
 #include "constant.h"
 
@@ -12,7 +12,7 @@ namespace Belle {
 class Data
 {
  public:
-  Data() {};
+  Data():cache_lifetime(-1) {};
   ~Data() {}
 
   //Accessors
@@ -314,6 +314,31 @@ class Data
   double       b1pi_prob_;
   double       rho0pipi_prob_;
   double       pipipipi_prob_;
+
+  mutable double cache_cos_pdf;
+  mutable double cache_sin_pdf;
+  mutable double cache_life_pdf;
+  mutable double cache_int_life_pdf;
+  mutable double cache_lifetime;
+
+ public:
+  bool getDTComponents(double lifetime, double& life_pdf, double& int_life_pdf, double& cos_pdf, double& sin_pdf) const {
+      if(cache_lifetime != lifetime) return false;
+      lifetime = cache_lifetime;
+      life_pdf = cache_life_pdf;
+      int_life_pdf = cache_int_life_pdf;
+      cos_pdf = cache_cos_pdf;
+      sin_pdf = cache_sin_pdf;
+      return true;
+  }
+  void setDTComponents(double lifetime, double life_pdf, double int_life_pdf, double cos_pdf, double sin_pdf) const {
+      cache_lifetime = lifetime;
+      cache_life_pdf = life_pdf;
+      cache_int_life_pdf = int_life_pdf;
+      cache_cos_pdf = cos_pdf;
+      cache_sin_pdf = sin_pdf;
+  }
+
 };
 
 void FillPlot( std::ifstream& datafile1, std::ifstream& datafile2,

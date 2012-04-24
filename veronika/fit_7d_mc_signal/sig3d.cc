@@ -66,6 +66,7 @@ struct FitRoutine {
      mn_param.Fix(i+2*n_par_wks+n_par_wkp);
    }
 // Delta E
+/*
   for(unsigned int i = 0; i <10; i++){
      mn_param.Release(i);
      mn_param.Release(i+n_par_wks);
@@ -135,7 +136,14 @@ struct FitRoutine {
      mn_param.Release(i+2*n_par_wks);
      mn_param.Release(i+2*n_par_wks+n_par_wkp);
    }
-/**/
+*/
+   for(unsigned int i = 90; i <93; i++){
+     mn_param.Release(i);
+     mn_param.Release(i+n_par_wks);
+     mn_param.Release(i+2*n_par_wks);
+     mn_param.Release(i+2*n_par_wks+n_par_wkp);
+   }
+
    for(unsigned int i = 93; i <99; i++){
      mn_param.Release(i);
      mn_param.SetLimits(i, 0., 1.);

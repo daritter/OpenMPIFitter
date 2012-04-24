@@ -39,7 +39,6 @@ double Sig3DFcn::operator()( const std::vector<double>& par ) const
 
   double log_pdf_wks = 0.0, log_pdf_wkp = 0.0, log_pdf = 0.0;
   unsigned int i;
-  Data data1, data2;
   int r_bin1, r_bin2;
   double wks_pdf, pdf, wkp_pdf;
 #pragma omp parallel private(i,data1,r_bin1,wks_pdf,pdf) reduction(+:log_pdf_wks)
@@ -47,7 +46,7 @@ double Sig3DFcn::operator()( const std::vector<double>& par ) const
 #pragma omp for
     for( i=0; i<data1_.size(); i++ )
       {
-	data1 = data1_[i];
+	Data &data1 = data1_[i];
 	//R-bin
 	r_bin1 = set_rbin( data1.GetR() );
 
@@ -69,7 +68,7 @@ double Sig3DFcn::operator()( const std::vector<double>& par ) const
 #pragma omp for
     for( i=0; i<data2_.size(); i++ )
       {
-	data2 = data2_[i];
+	Data &data2 = data2_[i];
 	//R-bin
 	r_bin2 = set_rbin( data2.GetR() );
 
@@ -109,9 +108,9 @@ double Sig3DFcn::finalize( const std::vector<double>& par, double value) const
 }
 
 template<class T> void splitData(std::vector<T> &data, int i, int N){
-    const size_t size = std::ceil(data.size() / N);
+    const size_t size = std::ceil(1.0 * data.size() / N);
     const size_t start = i * size;
-    const size_t end = std::min(data.size(), (i+1) * size);
+    const size_t end = std::min(data.size(), start + size);
     std::vector<T> tmp;
     tmp.reserve(end-start);
     tmp.insert(tmp.end(),data.begin()+start,data.begin()+end);
@@ -790,8 +789,12 @@ double Sig3DFcn::wksDtQ( const Data& data,
   const dtres_param_t* const dtres_param =
     get_dtres_param( data.GetExpNo(), data.GetMC() );
 
+  double life_pdf(0), int_life_pdf(0), cos_pdf(0), sin_pdf(0);
+  if(!data.getDTComponents(par[par0+0],life_pdf, int_life_pdf, cos_pdf, sin_pdf)){
+
+
   //Lifetime component
-  const double life_pdf =      EfRkRdetRnp_fullrec( dt, data.GetBtype(),
+  life_pdf =      EfRkRdetRnp_fullrec( dt, data.GetBtype(),
 				par[par0+0], data.GetAk(), data.GetCk(),
 				data.GetRecVNtrk(), data.GetRecVZerr(),
 				data.GetRecVChisq(), data.GetRecVNdf(),
@@ -799,7 +802,7 @@ double Sig3DFcn::wksDtQ( const Data& data,
 				data.GetTagVChisq(), data.GetTagVNdf(),
 				data.GetTagVIsl(), dtres_param );
 
-  const double int_life_pdf =	norm_EfRkRdetRnp_fullrec( h_dt_ll, h_dt_ul, data.GetBtype(),
+  int_life_pdf =	norm_EfRkRdetRnp_fullrec( h_dt_ll, h_dt_ul, data.GetBtype(),
 				par[par0+0], data.GetAk(), data.GetCk(),
 				data.GetRecVNtrk(), data.GetRecVZerr(),
 				data.GetRecVChisq(), data.GetRecVNdf(),
@@ -808,7 +811,7 @@ double Sig3DFcn::wksDtQ( const Data& data,
 				data.GetTagVIsl(), dtres_param );
 
   //Acp component
-  const double cos_pdf = 0.5 / par[par0+0] *
+  cos_pdf = 0.5 / par[par0+0] *
       MfRkRdetRnp_fullrec( dt, data.GetBtype(), par[par0+0],
 			   data.GetDeltam(), data.GetAk(), data.GetCk(),
 			   data.GetRecVNtrk(), data.GetRecVZerr(),
@@ -818,7 +821,7 @@ double Sig3DFcn::wksDtQ( const Data& data,
 			   data.GetTagVIsl(), dtres_param );
 
   //Scp component
-  const double sin_pdf = 0.5 / par[par0+0] *
+  sin_pdf = 0.5 / par[par0+0] *
       AfRkRdetRnp_fullrec( dt, data.GetBtype(), par[par0+0],
 			   data.GetDeltam(), data.GetAk(), data.GetCk(),
 			   data.GetRecVNtrk(), data.GetRecVZerr(),
@@ -826,6 +829,8 @@ double Sig3DFcn::wksDtQ( const Data& data,
 			   data.GetTagVNtrk(), data.GetTagVZerr(),
 			   data.GetTagVChisq(), data.GetTagVNdf(),
 			   data.GetTagVIsl(), dtres_param );
+    data.setDTComponents(par[par0+0], life_pdf, int_life_pdf, cos_pdf, sin_pdf);
+  }
 
   //Wrong tag fraction
   const int r_bin = set_rbin( data.GetR() );
@@ -869,8 +874,10 @@ double Sig3DFcn::wkpDtQ( const Data& data,
   const dtres_param_t* const dtres_param =
     get_dtres_param( data.GetExpNo(), data.GetMC() );
 
+  double life_pdf(0), int_life_pdf(0), cos_pdf(0), sin_pdf(0);
+  if(!data.getDTComponents(par[par0+0],life_pdf, int_life_pdf, cos_pdf, sin_pdf)){
   //Lifetime component
-  const double life_pdf =      EfRkRdetRnp_fullrec( dt, data.GetBtype(),
+        life_pdf =      EfRkRdetRnp_fullrec( dt, data.GetBtype(),
 				par[par0+0], data.GetAk(), data.GetCk(),
 				data.GetRecVNtrk(), data.GetRecVZerr(),
 				data.GetRecVChisq(), data.GetRecVNdf(),
@@ -878,7 +885,7 @@ double Sig3DFcn::wkpDtQ( const Data& data,
 				data.GetTagVChisq(), data.GetTagVNdf(),
 				data.GetTagVIsl(), dtres_param );
 
-  const double int_life_pdf =	norm_EfRkRdetRnp_fullrec( h_dt_ll, h_dt_ul, data.GetBtype(),
+        int_life_pdf =	norm_EfRkRdetRnp_fullrec( h_dt_ll, h_dt_ul, data.GetBtype(),
 				par[par0+0], data.GetAk(), data.GetCk(),
 				data.GetRecVNtrk(), data.GetRecVZerr(),
 				data.GetRecVChisq(), data.GetRecVNdf(),
@@ -887,7 +894,7 @@ double Sig3DFcn::wkpDtQ( const Data& data,
 				data.GetTagVIsl(), dtres_param );
 
   //Acp component
-  const double cos_pdf = 0.5 / par[par0+0] *
+        cos_pdf = 0.5 / par[par0+0] *
       MfRkRdetRnp_fullrec( dt, data.GetBtype(), par[par0+0],
 			   data.GetDeltam(), data.GetAk(), data.GetCk(),
 			   data.GetRecVNtrk(), data.GetRecVZerr(),
@@ -897,7 +904,7 @@ double Sig3DFcn::wkpDtQ( const Data& data,
 			   data.GetTagVIsl(), dtres_param );
 
   //Scp component
-  const double sin_pdf = 0.5 / par[par0+0] *
+        sin_pdf = 0.5 / par[par0+0] *
       AfRkRdetRnp_fullrec( dt, data.GetBtype(), par[par0+0],
 			   data.GetDeltam(), data.GetAk(), data.GetCk(),
 			   data.GetRecVNtrk(), data.GetRecVZerr(),
@@ -905,6 +912,9 @@ double Sig3DFcn::wkpDtQ( const Data& data,
 			   data.GetTagVNtrk(), data.GetTagVZerr(),
 			   data.GetTagVChisq(), data.GetTagVNdf(),
 			   data.GetTagVIsl(), dtres_param );
+
+    data.setDTComponents(par[par0+0], life_pdf, int_life_pdf, cos_pdf, sin_pdf);
+  }
 
   //Wrong tag fraction
   const int r_bin = set_rbin( data.GetR() );
