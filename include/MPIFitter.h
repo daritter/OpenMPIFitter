@@ -4,34 +4,33 @@
 #include <vector>
 #include <functional>
 #include <boost/mpi.hpp>
-#include <boost/serialization/vector.hpp>
+#include <boost/foreach.hpp>
 #include <Minuit2/FCNBase.h>
+#include <unistd.h>
 
-typedef std::vector<double> params_t;
-BOOST_IS_MPI_DATATYPE(params_t);
-BOOST_CLASS_TRACKING(params_t,track_never);
-BOOST_CLASS_IMPLEMENTATION(params_t,object_serializable);
-BOOST_IS_BITWISE_SERIALIZABLE(params_t);
-
-enum ProcessStatus { PROCESS_CONTINUE, PROCESS_FINISHED };
+typedef std::pair<size_t, double> ParameterChange;
 
 template<class PDF> class MPIMaster: public ROOT::Minuit2::FCNBase {
     public:
         MPIMaster(boost::mpi::communicator world, PDF &pdf):world(world), pdf(pdf), initialized(false) {}
         virtual ~MPIMaster(){
-            ProcessStatus status(PROCESS_FINISHED);
+            int status(-1);
             broadcast(world, status, 0);
         }
 
-        virtual double operator()(const params_t &params) const {
-            if(!initialized) {
-                broadcast(world, boost::mpi::skeleton(const_cast<params_t&>(params)), 0);
-                initialized = true;
+        virtual double operator()(const std::vector<double> &params) const {
+            changedParameters.clear();
+            lastParameters.reserve(params.size());
+            for(size_t i=0; i<params.size(); ++i){
+                if(i>=lastParameters.size() || params[i]!=lastParameters[i]){
+                    changedParameters.push_back(std::make_pair(i,params[i]));
+                }
             }
+            lastParameters = params;
+            int changed = changedParameters.size();
+            broadcast(world, changed, 0);
+            broadcast(world, (int*) &changedParameters[0], sizeof(ParameterChange)*changed/sizeof(int), 0);
 
-            ProcessStatus status(PROCESS_CONTINUE);
-            broadcast(world, status, 0);
-            broadcast(world, boost::mpi::get_content(params), 0);
             double local_result = pdf(params);
             double result(0);
             typename PDF::operator_type op;
@@ -45,6 +44,8 @@ template<class PDF> class MPIMaster: public ROOT::Minuit2::FCNBase {
 
     protected:
         boost::mpi::communicator world;
+        mutable std::vector<ParameterChange> changedParameters;
+        mutable std::vector<double> lastParameters;
         PDF &pdf;
         mutable bool initialized;
 };
@@ -54,16 +55,21 @@ template<class PDF> class MPIClient {
         MPIClient(boost::mpi::communicator world, PDF &pdf):world(world), pdf(pdf) {}
 
         void run(){
-            params_t params;
-            ProcessStatus flag;
-            broadcast(world, boost::mpi::skeleton(params), 0);
-            boost::mpi::content c = boost::mpi::get_content(params);
+            std::vector<double> params;
+            std::vector<ParameterChange> changedParameters;
+            int changed;
 
             typename PDF::operator_type op;
             while(true){
-                broadcast(world, flag, 0);
-                if(flag == PROCESS_FINISHED) return;
-                broadcast(world, c, 0);
+                broadcast(world, changed, 0);
+                if(changed < 0) return;
+                changedParameters.resize(changed);
+                params.reserve(changed);
+                broadcast(world, (int*) &changedParameters[0], sizeof(ParameterChange)*changed/sizeof(int), 0);
+                BOOST_FOREACH(ParameterChange &c, changedParameters){
+                    if(c.first>=params.size()) params.resize(c.first+1);
+                    params[c.first] = c.second;
+                }
                 double result = pdf(params);
                 reduce(world, result, op, 0);
             }
@@ -82,6 +88,11 @@ class MPIFitter {
 
             pdf.load(world.rank(), world.size());
             if( world.rank() > 0 ) {
+                //Play nice ...
+                int nicelevel = nice(20);
+                if(nicelevel<19){
+                    std::cerr << "Problem nicing process " << world.rank() << std::endl;
+                }
                 MPIClient<PDF> client(world, pdf);
                 client.run();
                 return 0;
