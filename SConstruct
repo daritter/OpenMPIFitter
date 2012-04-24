@@ -1,4 +1,5 @@
 import os
+import sys
 
 env = Environment(
     ENV=os.environ,
@@ -13,7 +14,13 @@ env = Environment(
     ],
 )
 #env.AppendUnique(LINKFLAGS= "-Wl,--strip-all")
-env.ParseConfig("root-config --libs --cflags --ldflags")
+try:
+    env.ParseConfig("root-config --libs --cflags --ldflags")
+except OSError:
+    print "Could not find root-config, please make sure ROOT is set up correctly"
+    sys.exit(1)
+
+#Path to boost installation if neccessary
 for libpath in ("/remote/pcbelle03/ritter/local/",):
     if os.path.exists(libpath):
         env.AppendUnique(LIBPATH=os.path.join(libpath,"lib"))
