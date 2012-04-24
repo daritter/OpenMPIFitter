@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <cstdlib>
 
 #include "hist.h"
 
@@ -62,7 +63,7 @@ double get_chisq( const TH1* h_data, const TH1* h_pdf,
     {
       std::cout << "Error: Data and PDF histograms must have equal bins"
 		<< std::endl;
-      exit(1);
+      std::exit(1);
     }
 
   double chisq = 0.0;
@@ -90,7 +91,7 @@ double get_chisq2D( const TH2* h_data, const TH2* h_pdf,
     {
       std::cout << "Error: Data and PDF histograms must have equal bins"
 		<< std::endl;
-      exit(1);
+      std::exit(1);
     }
 
   double chisq = 0.0;
@@ -102,7 +103,7 @@ double get_chisq2D( const TH2* h_data, const TH2* h_pdf,
       const double data = h_data->GetBinContent(i+1, j+1);
       const double pdf  = h_pdf->GetBinContent(i+1, j+1);
       const double err  = sqrt(data);
-	
+
       	if( data != 0.0 )
 		{
 	  chisq += (data-pdf)*(data-pdf)/err/err;

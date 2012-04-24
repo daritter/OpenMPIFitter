@@ -84,20 +84,23 @@ struct ExamplePDF {
             data_y.push_back(dummy_y);
         }while( !datafile.eof() );
 
+        if(size<=1) return;
         //Now cut the values to be only the segment we really need for this process
         size_t events = (int) std::ceil(1.0 * data_x.size() / size);
-        if(events*(process+1)<data_x.size()){
-            data_x.erase(data_x.begin()+events*(process+1),data_x.end());
-            data_y.erase(data_y.begin()+events*(process+1),data_y.end());
-        }
-        if(process>0){
-            data_x.erase(data_x.begin(), data_x.begin()+process*events);
-            data_y.erase(data_y.begin(), data_y.begin()+process*events);
-        }
+        size_t start = process*events;
+        size_t end = std::min((process+1)*events,data_x.size());
+        std::vector<double> tmp_x;
+        tmp_x.reserve(end-start);
+        tmp_x.insert(tmp_x.end(), data_x.begin()+start, data_x.begin()+end);
+        std::swap(tmp_x,data_x);
+        std::vector<double> tmp_y;
+        tmp_y.reserve(end-start);
+        tmp_y.insert(tmp_y.end(), data_y.begin()+start, data_y.begin()+end);
+        std::swap(tmp_y,data_y);
         std::cout << "Process " << process << " of " << size
             << " read in " << data_x.size() << " events"
-            << " from " << (process*events)
-            << " to " << ((process+1)*events) << std::endl;
+            << " from " << start
+            << " to " << end << std::endl;
     }
 
     /** Set the parameters given */

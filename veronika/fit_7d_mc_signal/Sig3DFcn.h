@@ -19,9 +19,14 @@ namespace Minuit2 {
   class Sig3DFcn : public FCNBase {
 
   public:
+      /** Define how different pieces of the pdf should be reduced to one value */
+      typedef std::plus<double> operator_type;
+      /** Define the increase of the objective function value which is eqvivalent to 1 sigma */
+      static const double error_def = 1.0;
+
   Sig3DFcn( std::vector<Data>& data1_, std::vector<Data>& data2_ ) :
 
-    data1_(data1_), data2_(data2_), 
+    data1_(data1_), data2_(data2_),
 
     //1sigma errors
     error_def_(1.0) {}
@@ -30,7 +35,21 @@ namespace Minuit2 {
 
   virtual double Up() const { return error_def_; }
   virtual double operator()( const std::vector<double>& parameters ) const;
-  
+
+  /** finalize the pdf after all values from the different processes are collected */
+  double finalize(const std::vector<double>& parameters, double value) const;
+  /** Load the chunk of data to be used by this process of the pdf
+    * Each process will get its own copy of the pdf. Once this is done, the
+    * data should be loaded by this method. The responsibilty to divide the
+    * data into distinct portions lies with the pdf and should be done here.
+    * The first parameter is the process id and the second parameter is the
+    * total number of processes.
+    *
+    * @param process the id of this process, starting from 0
+    * @param size the number of processes in total
+    */
+  void load(int process, int size);
+
    //Accessors
   void FillYield( const std::string& svd_no, const std::string& mode,
 		  std::vector<double>& vNwks,
@@ -139,7 +158,7 @@ namespace Minuit2 {
 			  double& mw_sig_pdf, const std::vector<double>& par);
   void PlotMwPDF_wkp( const double& de, const double& mw,
 			  double& mw_sig_pdf, const std::vector<double>& par);
-			  
+
   unsigned int GetNpar() const {return npar_wks_svd1_;}
   const std::vector<Data>& GetData1() const {return data1_;}
   const std::vector<Data>& GetData2() const {return data2_;}
@@ -163,7 +182,7 @@ namespace Minuit2 {
   private:
   std::vector<Data>& data1_;
   std::vector<Data>& data2_;
-/*  
+/*
   double de_ll_;
   double de_ul_;
   double om_ll_;
@@ -179,7 +198,7 @@ namespace Minuit2 {
 */
   static const unsigned int npar_wks_svd1_ = 106;
   static const unsigned int npar_wkp_svd1_ = 106;
-  
+
   double error_def_;
   };
 
