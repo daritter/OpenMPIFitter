@@ -1,12 +1,25 @@
 #ifndef MPIFitter_MPIFitter_h
 #define MPIFitter_MPIFitter_h
 
+//#define VERBOSE_TIMING
+
+#include <iomanip>
 #include <vector>
 #include <functional>
 #include <boost/mpi.hpp>
 #include <boost/foreach.hpp>
 #include <Minuit2/FCNBase.h>
 #include <unistd.h>
+
+#ifdef VERBOSE_TIMING
+#include <sys/time.h>
+
+double getClock(){
+    timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return (ts.tv_sec*1e3) + (ts.tv_nsec*1e-6);
+}
+#endif
 
 typedef std::pair<size_t, double> ParameterChange;
 
@@ -28,6 +41,11 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
 
         /** FCN evaluation, called by Minuit2 */
         virtual double operator()(const std::vector<double> &params) const {
+#ifdef VERBOSE_TIMING
+            double start = getClock();
+            double split = start;
+            double end;
+#endif
             //Make a list of changed parameters: On the first call all
             //parameters will be transmitted and only the changed parameters
             //(mostly 1-2) will be transmitted
@@ -43,15 +61,38 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             int changed = changedParameters.size();
             //std::cout << changed << " Parameters have changed" << std::endl;
             broadcast(world, changed, 0);
-            //Send the changed parameters to all clients
-            broadcast(world, (int*) &changedParameters[0], sizeof(ParameterChange)*changed/sizeof(int), 0);
+#ifdef VERBOSE_TIMING
+            end = getClock();
+            std::cout << "Broadcast of parameters took " << std::fixed
+                      << std::setprecision(4) << (end-split) << "ms"
+                      << std::endl;
+            split = end;
+#endif
+            //Send the changed parameters to all clients (as binary buffer)
+            broadcast(world, (int*) &changedParameters[0],
+                    sizeof(ParameterChange)*changed/sizeof(int), 0);
 
             //Calculate the local result
             double local_result = fcn(params);
+#ifdef VERBOSE_TIMING
+            end = getClock();
+            std::cout << "Local fcn evaluation took " << std::fixed
+                << std::setprecision(4) << (end-split) << "ms"
+                << std::endl;
+            split = end;
+#endif
             double result(0);
             //Reduce the result from all clients to one number (usually by adding them)
             typename FCN::operator_type op;
             reduce(world, local_result, result, op, 0);
+#ifdef VERBOSE_TIMING
+            end = getClock();
+            std::cout << "Getting results took " << std::fixed
+                << std::setprecision(4) << (end-split) << "ms"
+                << std::endl;
+            std::cout << "Total time:  " << std::fixed << std::setprecision(4)
+                << (end-start) << "ms" << std::endl;
+#endif
             //Return the final result to minuit
             return fcn.finalize(params, result);
         }
@@ -73,14 +114,17 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
 };
 
 /** Class representing an MPI client.
- * This class will wait for parameters and evaluate the FCN for those parameters and return the value
+ * This class will wait for parameters and evaluate the FCN for those
+ * parameters and return the value
  */
 template<class FCN> class MPIClient {
     public:
+        /** Constructor which save a reference to the fcn */
         MPIClient(boost::mpi::communicator world, FCN &fcn):world(world), fcn(fcn) {}
 
         /** Run the client.
-         * This is basically an endless loop waiting for new parameters and returning the result
+         * This is basically an endless loop waiting for new parameters and
+         * returning the result
          */
         void run(){
             std::vector<double> params;

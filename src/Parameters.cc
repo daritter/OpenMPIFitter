@@ -8,6 +8,7 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
 using namespace std;
 using namespace boost;
@@ -56,14 +57,30 @@ void Parameters::save(ostream &out) const {
     }
 }
 
-ROOT::Minuit2::MnUserParameters Parameters::getMnParams() const {
+std::vector<double> Parameters::getValues() const {
+    std::vector<double> result(m_parameters.size());
+    for(size_t i=0; i<m_parameters.size(); ++i){
+        result[i] = m_parameters[i].value();
+    }
+    return result;
+}
+
+ROOT::Minuit2::MnUserParameters Parameters::getMnParams(const std::string& fixParameters) const {
     ROOT::Minuit2::MnUserParameters mnParams;
+    boost::regex fixed(fixParameters);
 
     BOOST_FOREACH(const Parameter& p, m_parameters){
-        mnParams.Add(p.name(), p.value(), p.error());
-        if(p.hasMin()) mnParams.SetLowerLimit(p.name(), p.min());
-        if(p.hasMax()) mnParams.SetUpperLimit(p.name(), p.max());
-        if(p.isFixed()) mnParams.Fix(p.name());
+        if(!mnParams.Add(p.name(), p.value(), p.error())){
+            std::cerr << "ERROR adding parameter" << std::endl;
+        }
+        int index = mnParams.Index(p.name());
+        assert(index == ParameterList::getIndex(p.name()));
+        //std::cout << p.name() << ": " << p.hasMin() << "(" << p.min() << "), " << p.hasMax() << "(" << p.max() << ")\n";
+        //std::cout << "fixed: " << boost::regex_match(p.name(),fixed) << std::endl;
+        if(p.isFixed() || boost::regex_match(p.name(),fixed)) mnParams.Fix(index);
+        else if(p.hasMin() && p.hasMax()) mnParams.SetLimits(index, p.min(), p.max());
+        else if(p.hasMin()) mnParams.SetLowerLimit(index, p.min());
+        else if(p.hasMax()) mnParams.SetUpperLimit(index, p.max());
     }
 
     return mnParams;

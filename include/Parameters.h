@@ -11,14 +11,15 @@
 
 class Parameters {
     public:
-
         Parameters();
 
         void load(std::istream &in);
         void save(std::ostream &out) const;
 
-        ROOT::Minuit2::MnUserParameters getMnParams() const;
+        ROOT::Minuit2::MnUserParameters getMnParams(const std::string& fixParameters = "") const;
         void update(const ROOT::Minuit2::MnUserParameters mnParams);
+
+        std::vector<double> getValues() const;
 
         Parameter& operator[](int id){ return m_parameters[id]; }
         Parameter& operator[](const std::string &name){ return m_parameters[ParameterList::getIndex(name)]; }

@@ -18,7 +18,8 @@ namespace {
         to_lower(tmp);
         if(tmp == "inf")       val =  numeric_limits<double>::infinity();
         else if(tmp == "-inf") val = -numeric_limits<double>::infinity();
-        else                   val = lexical_cast<double>(tmp);
+        else if(tmp == "nan")  val =  numeric_limits<double>::quiet_NaN();
+        else                   val =  lexical_cast<double>(tmp);
     }
 
     inline void readBool(istream &in, bool &val){

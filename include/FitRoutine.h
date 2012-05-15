@@ -19,7 +19,7 @@
  */
 struct FitRoutine {
     /** Set some default options */
-    FitRoutine(): parameterIn("params-in.txt"), parameterOut("params-out.txt"), fitStrategy(2), useMinos(false) {}
+    FitRoutine(): parameterIn("params-in.txt"), parameterOut("params-out.txt"), fixParameters(""), fitStrategy(2), useMinos(false) {}
 
     /** Do the fitting */
     template<class FCN> int operator()(FCN &fcn){
@@ -35,26 +35,30 @@ struct FitRoutine {
         std::cout << "Aye, this be thy initial parrrrrameters: " << std::endl;
         std::cout << params << std::endl;
 
-        ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams();
+        std::ios_base::fmtflags originalFormat = std::cout.flags();
+        ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams(fixParameters);
         ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
         ROOT::Minuit2::FunctionMinimum min = migrad();
+        std::cout.flags(originalFormat);
+
         std::cout << min << std::endl;
         std::cout << "Function Minimum: " << std::setprecision(10)
 		  << min.Fval() << std::endl;
         if(!min.IsValid()){
             std::cerr << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
         }else{
-            params.update(min.UserParameters());
-            std::cout << "Avast, Minuit be converrrrging. This be the final parrrrameters ye lubber:" << std::endl;
-            std::cout << params << std::endl;
+            std::cout << "Avast, Minuit be converrrrging." << std::endl;
+        }
+        params.update(min.UserParameters());
+        std::cout << "This be the final parrrrameters ye lubber:" << std::endl;
+        std::cout << params << std::endl;
 
-            std::ofstream output(parameterOut.c_str());
-            if(!output){
-                std::cerr << "ARRRRRRRRR: Thy output parrrrrameter file could not be opened.";
-            }else{
-                output << params;
-                output.close();
-            }
+        std::ofstream output(parameterOut.c_str());
+        if(!output){
+            std::cerr << "ARRRRRRRRR: Thy output parrrrrameter file could not be opened.";
+        }else{
+            output << params;
+            output.close();
         }
 
         return 0;
@@ -64,6 +68,8 @@ struct FitRoutine {
     std::string parameterIn;
     /** Filename to write parameters */
     std::string parameterOut;
+    /** Regular expression to determine the parameters we want to fix in addition to the ones in the parameter file */
+    std::string fixParameters;
     /** Which strategy to use */
     int fitStrategy;
     /** Wether to call minos after the Fit. Not implemented yet */

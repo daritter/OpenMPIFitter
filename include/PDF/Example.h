@@ -40,9 +40,9 @@ struct ExamplePDF {
 
     /** Return the pdf value for a given paramater set and event */
     double PDF(double e, double x, const std::vector<double> &par) const {
-        double sig = par[PAR::sig_N]*gaussian(x,par[PAR::sig_mean],par[PAR::sig_sigma])/
-            norm_gaussian(x_ll, x_ul, par[PAR::sig_mean],par[PAR::sig_sigma]);
-        double bkg = par[PAR::bkg_N]*argus(x,e,par[PAR::bkg_shape])/norm_argus(x_ll, x_ul, e,par[PAR::bkg_shape]);
+        double sig = par[PAR::sig_N]*Belle::gaussian(x,par[PAR::sig_mean],par[PAR::sig_sigma])/
+            Belle::norm_gaussian(x_ll, x_ul, par[PAR::sig_mean],par[PAR::sig_sigma]);
+        double bkg = par[PAR::bkg_N]*Belle::argus(x,e,par[PAR::bkg_shape])/Belle::norm_argus(x_ll, x_ul, e,par[PAR::bkg_shape]);
         return sig + bkg;
     }
 

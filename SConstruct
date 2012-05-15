@@ -9,7 +9,7 @@ env = Environment(
     RPATH = "$LIBPATH",
     CPPPATH=["#include"],
     LIBS=[
-        "boost_mpi", "boost_serialization", "boost_program_options",
+        "boost_mpi", "boost_serialization", "boost_program_options", "boost_regex",
         "Minuit2"
     ],
 )
@@ -19,6 +19,17 @@ try:
 except OSError:
     print "Could not find root-config, please make sure ROOT is set up correctly"
     sys.exit(1)
+
+#Belle library
+if not os.path.exists("/belle/belle/b20090127_0910/include/"):
+   print "Could not find the belle library"
+   sys.exit(1)
+
+env.Append(
+    CPPPATH=["/belle/belle/b20090127_0910/include/"],
+    LIBPATH=["/belle/belle/b20090127_0910/x86_64-unknown-linux-gnu/opt/lib/so/", "/belle/cern/2006/lib64/"],
+    LIBS=["tatami", "tables", "belleutil", "packlib", "mathlib"],
+)
 
 #Path to boost installation if neccessary
 for libpath in ("/remote/pcbelle03/ritter/local/",):
