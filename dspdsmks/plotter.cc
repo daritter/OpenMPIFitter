@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
 
     //FitRoutine fitter;
     std::string parameterIn;
-    std::string rootFile;
+    std::string rootFile("plots.root");
     std::vector<std::string> files;
     int mcInfoRequired(0);
     int maxPrintOrder(3);
@@ -85,12 +85,12 @@ int main(int argc, char* argv[]){
     TH2D *h_MbcdE_fit = new TH2D("mbcde_fit","M_{BC}#DeltaE fit", 100,5.2,5.3,100,-0.2,0.2);
     TH1D *h_bEnergy = new TH1D("benergy", "Beamenergy", 500, 0,0);
     h_bEnergy->SetBuffer(10000);
-    BOOST_FOREACH(const Event& e, pdf.getData()){
+    BOOST_FOREACH(const DspDsmKsEvent& e, pdf.getData()){
         h_bEnergy->Fill(e.benergy);
         h_MbcdE_data->Fill(e.Mbc,e.dE);
     }
     h_bEnergy->BufferEmpty();
-    Event e;
+    DspDsmKsEvent e;
     size_t nEvents = pdf.getData().size();
     for(int ix=0; ix<h_MbcdE_fit->GetNbinsX(); ++ix){
         e.Mbc = h_MbcdE_fit->GetXaxis()->GetBinCenter(ix+1);

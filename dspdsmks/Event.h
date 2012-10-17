@@ -36,7 +36,7 @@ class dTCache {
         double cache_lifetime;
 };
 
-struct Event {
+struct DspDsmKsEvent {
     int expNo;
     int runNo;
     int evtNo;
@@ -57,7 +57,7 @@ struct Event {
     int q;
     double r;
 
-    mutable dTCache dTsignal;
+    //mutable dTCache dTsignal;
 
     void setBranches(TTree* tree, const std::string &bselection="bestB"){
         std::string prefix("");

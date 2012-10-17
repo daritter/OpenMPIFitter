@@ -10,7 +10,7 @@
 //#include "func.h"
 
 #include <Functions.h>
-#include <Event.h>
+#include "Event.h"
 #include <TChain.h>
 
 
@@ -21,18 +21,17 @@
  */
 namespace PAR {
     PARAM(sig_N);
-    //PARAM(sig_Mbc_ratio);
+    PARAM(sig_ratio);
     PARAM(sig_Mbc_mean);
     PARAM(sig_Mbc_sigma);
-    //PARAM(sig_dE_ratio);
-    PARAM(sig_dE_dblg_ratio);
-    PARAM(sig_dE_dblg_mean);
-    PARAM(sig_dE_dblg_meanshift);
-    PARAM(sig_dE_dblg_sigma);
-    PARAM(sig_dE_dblg_sigmascale);
+    PARAM(sig_Mbc_argusC);
+    PARAM(sig_dE_ratio);
+    PARAM(sig_dE_mean);
+    PARAM(sig_dE_meanshift);
+    PARAM(sig_dE_sigma);
+    PARAM(sig_dE_sigmascale);
+    PARAM(sig_dE_cheb1);
     PARAM(bkg_N);
-    PARAM(bkg_dE_cheb1);
-    PARAM(bkg_Mbc_argusC);
     PARAM(gen_N);
 };
 
@@ -55,13 +54,11 @@ struct DspDsmKsPDF {
 
     /** Define all possible components to be able to enable/disable them individually */
     enum EnabledComponents {
-        CMP_signal_Mbc  = 1<<0,
-        CMP_signal_dE   = 1<<1,
-        CMP_signal      = CMP_signal_Mbc | CMP_signal_dE,
-        CMP_background  = 1<<2,
-        CMP_generic     = 1<<3,
-        CMP_continuum   = 1<<4,
-        CMP_deltaT      = 1<<5,
+        CMP_signal      = 1<<0,
+        CMP_background  = 1<<1,
+        CMP_generic     = 1<<2,
+        CMP_continuum   = 1<<3,
+        CMP_deltaT      = 1<<4,
         CMP_ALL         = CMP_signal | CMP_background | CMP_generic | CMP_continuum | CMP_deltaT
     };
 
@@ -69,21 +66,18 @@ struct DspDsmKsPDF {
             EnabledComponents components=CMP_ALL, int mcInfoRequired=0, int maxPrintOrder = 0):
         components(components), mcInfoRequired(mcInfoRequired),
         maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames),
-        signal(lowerMbc,upperMbc, lowerdE, upperdE), background(lowerMbc,upperMbc,lowerdE,upperdE) {}
+        signal(lowerMbc,upperMbc, lowerdE, upperdE) {}//, background(lowerMbc,upperMbc,lowerdE,upperdE) {}
 
     /** Return the pdf value for a given paramater set and event */
-    double PDF(const Event& e, const std::vector<double> &par) const {
-        //Set Parameters
-        //signal_Mbc.set(par[PAR::sig_Mbc_ratio]);
-        signal.fcnx.set(par[PAR::sig_Mbc_mean], par[PAR::sig_Mbc_sigma]);
-
-        //signal_dE.set(par[PAR::sig_dE_ratio]);
-        signal.fcny.set(par[PAR::sig_dE_dblg_ratio],
-                par[PAR::sig_dE_dblg_mean],  par[PAR::sig_dE_dblg_meanshift],
-                par[PAR::sig_dE_dblg_sigma], par[PAR::sig_dE_dblg_sigmascale]);
-
-        background.fcnx.set(e.benergy, par[PAR::bkg_Mbc_argusC]);
-        background.fcny.set(par[PAR::bkg_dE_cheb1]);
+    double PDF(const DspDsmKsEvent& e, const std::vector<double> &par) const {
+        //Set Parameters for signal component
+        signal.set(par[PAR::sig_ratio]);
+        signal.fcn1.fcnx.set(par[PAR::sig_Mbc_mean], par[PAR::sig_Mbc_sigma]);
+        signal.fcn1.fcny.set(par[PAR::sig_dE_ratio],
+                par[PAR::sig_dE_mean],  par[PAR::sig_dE_meanshift],
+                par[PAR::sig_dE_sigma], par[PAR::sig_dE_sigmascale]);
+        signal.fcn2.fcnx.set(e.benergy, par[PAR::sig_Mbc_argusC]);
+        signal.fcn2.fcny.set(par[PAR::sig_dE_cheb1]);
 
         double sig(0), bkg(0), generic(0), continuum(0), deltaT(0);
         if(components & CMP_signal){
@@ -92,7 +86,7 @@ struct DspDsmKsPDF {
             //if(components & CMP_signal_dE)  sig *= signal_dE(e.dE);
         }
         if(components & CMP_background){
-            bkg = par[PAR::bkg_N] * background(e.Mbc, e.dE);
+            bkg = par[PAR::bkg_N];
             //FIXME
         }
         if(components & CMP_generic){
@@ -159,8 +153,8 @@ struct DspDsmKsPDF {
         const unsigned int end = std::min(entries,start+interval);
 
         data.clear();
-        data.reserve(end-start);
-        Event event;
+        data.reserve(end-start+1);
+        DspDsmKsEvent event;
         event.setBranches(chain,"bestB");
         for(unsigned int i=start; i<end; ++i){
             if(!chain->GetEntry(i)) {
@@ -176,7 +170,7 @@ struct DspDsmKsPDF {
         delete chain;
     }
 
-    const std::vector<Event> getData() const { return data; }
+    const std::vector<DspDsmKsEvent>& getData() const { return data; }
 
     protected:
 
@@ -189,13 +183,12 @@ struct DspDsmKsPDF {
     /** Number of calls */
     mutable int nCalls;
     /** vector containing the data values */
-    std::vector<Event> data;
+    std::vector<DspDsmKsEvent> data;
     /** filename from which the data should be read */
     std::vector<std::string> filenames;
 
     /** PDF function components */
-    mutable CompoundFcn2D<Gauss, DoubleGauss> signal;
-    mutable CompoundFcn2D<Argus, Chebychev1>  background;
+    mutable Add2DFcn<CompoundFcn2D<Gauss, DoubleGauss>, CompoundFcn2D<Argus, Chebychev1> > signal;
     //mutable Gauss signal_dE;
 };
 

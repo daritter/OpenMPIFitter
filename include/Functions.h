@@ -131,9 +131,9 @@ class Chebychev1 {
 };
 
 /** Compound FCN for adding to generic 1D FCN functions*/
-template<class FCN1, class FCN2> class CompoundFCN {
+template<class FCN1, class FCN2> class Add1DFcn {
     public:
-        CompoundFCN(double lower, double upper): fcn1(lower,upper), fcn2(lower,upper), ratio(1) {}
+        Add1DFcn(double lower, double upper): fcn1(lower,upper), fcn2(lower,upper), ratio(1) {}
 
         /** Set the parameters. The parameters of the components have to be set separately by calling
          * fcn1.set and fcn2.set
@@ -145,6 +145,30 @@ template<class FCN1, class FCN2> class CompoundFCN {
         /** Calculate the fcn for a given value */
         double operator()(double x) const {
             return ratio*fcn1(x) + (1.0-ratio)*fcn2(x);
+        }
+
+        FCN1 fcn1;
+        FCN2 fcn2;
+    protected:
+        double ratio;
+};
+
+
+template<class FCN1, class FCN2> class Add2DFcn {
+    public:
+        Add2DFcn(double lowerX, double upperX, double lowerY, double upperY):
+            fcn1(lowerX,upperX,lowerY,upperY), fcn2(lowerX,upperX,lowerY,upperY), ratio(0.5) {}
+
+        /** Set the parameters. The parameters of the components have to be set separately by calling
+         * fcn1.set and fcn2.set
+         */
+        void set(double ratio) {
+            this->ratio = ratio;
+        }
+
+        /** Calculate the fcn for a given value */
+        double operator()(double x, double y) const {
+            return ratio*fcn1(x,y) + (1.0-ratio)*fcn2(x,y);
         }
 
         FCN1 fcn1;
@@ -167,12 +191,12 @@ template<class FCNX, class FCNY> class CompoundFcn2D {
 };
 
 
-class DoubleGauss: public CompoundFCN<Gauss, Gauss> {
+class DoubleGauss: public Add1DFcn<Gauss, Gauss> {
     public:
-        DoubleGauss(double lower, double upper): CompoundFCN<Gauss, Gauss>(lower,upper) {}
+        DoubleGauss(double lower, double upper): Add1DFcn<Gauss, Gauss>(lower,upper) {}
 
         void set(double ratio, double mean, double meanshift, double sigma, double sigmascale, double sigma2=-1, double sigma2scale=-1){
-            CompoundFCN<Gauss, Gauss>::set(ratio);
+            Add1DFcn<Gauss, Gauss>::set(ratio);
             fcn1.set(mean, sigma, sigma2);
             if(sigma2 != -1){
                 if(sigma2scale == -1) sigma2scale = sigmascale;
