@@ -22,8 +22,12 @@
 namespace PAR {
     PARAM(sig_N);
     PARAM(sig_ratio);
-    PARAM(sig_Mbc_mean);
+    PARAM(sig_Mbc_ratio);
+    PARAM(sig_Mbc_mean_m0);
+    PARAM(sig_Mbc_mean_m1);
+    PARAM(sig_Mbc_meanshift);
     PARAM(sig_Mbc_sigma);
+    PARAM(sig_Mbc_sigmascale);
     PARAM(sig_Mbc_argusC);
     PARAM(sig_dE_ratio);
     PARAM(sig_dE_mean);
@@ -72,7 +76,11 @@ struct DspDsmKsPDF {
     double PDF(const DspDsmKsEvent& e, const std::vector<double> &par) const {
         //Set Parameters for signal component
         signal.set(par[PAR::sig_ratio]);
-        signal.fcn1.fcnx.set(par[PAR::sig_Mbc_mean], par[PAR::sig_Mbc_sigma]);
+        //signal.fcn1.fcnx.set(par[PAR::sig_Mbc_mean], par[PAR::sig_Mbc_sigma]);
+        signal.fcn1.fcnx.set(par[PAR::sig_Mbc_ratio],
+                par[PAR::sig_Mbc_mean_m0] + e.dE*par[PAR::sig_Mbc_mean_m1],
+                par[PAR::sig_Mbc_meanshift],
+                par[PAR::sig_Mbc_sigma], par[PAR::sig_Mbc_sigmascale]);
         signal.fcn1.fcny.set(par[PAR::sig_dE_ratio],
                 par[PAR::sig_dE_mean],  par[PAR::sig_dE_meanshift],
                 par[PAR::sig_dE_sigma], par[PAR::sig_dE_sigmascale]);
@@ -188,7 +196,7 @@ struct DspDsmKsPDF {
     std::vector<std::string> filenames;
 
     /** PDF function components */
-    mutable Add2DFcn<CompoundFcn2D<Gauss, DoubleGauss>, CompoundFcn2D<Argus, Chebychev1> > signal;
+    mutable Add2DFcn<CompoundFcn2D<DoubleGauss, DoubleGauss>, CompoundFcn2D<Argus, Chebychev1> > signal;
     //mutable Gauss signal_dE;
 };
 
