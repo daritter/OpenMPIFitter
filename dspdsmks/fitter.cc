@@ -22,8 +22,11 @@ int main(int argc, char* argv[]){
 
     FitRoutine fitter;
     std::vector<std::string> files;
-    int mcInfoRequired(0);
-    int maxPrintOrder(3);
+    int maxPrintOrder(2);
+    double lowerMbc(5.2);
+    double upperMbc(5.3);
+    double lowerdE(-0.2);
+    double upperdE( 0.2);
 
     //FIXME: components
 
@@ -41,12 +44,18 @@ int main(int argc, char* argv[]){
          "The file thy result should be hidden in")
         ("fit-strategy", po::value<int>(&fitter.fitStrategy)->default_value(fitter.fitStrategy),
          "Declare thy preferrrrred strategy to be fittin with")
-        ("mcFlag", po::value<int>(&mcInfoRequired)->default_value(mcInfoRequired),
-         "Which mc flags to require from the blasted events")
         ("print,p", po::value<int>(&maxPrintOrder)->default_value(maxPrintOrder),
          "Only print -2logL for each 10^N call")
         ("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
          "Aye, give the order to be fixin the parrrameters which match against this rrrregular expression")
+        ("minMbc", po::value<double>(&lowerMbc)->default_value(lowerMbc),
+         "The minimal Mbc value for the fit")
+        ("maxMbc", po::value<double>(&upperMbc)->default_value(upperMbc),
+         "The maximal Mbc value for the fit")
+        ("mindE", po::value<double>(&lowerdE)->default_value(lowerdE),
+         "The minimal dE value for the fit")
+        ("maxdE", po::value<double>(&upperdE)->default_value(upperdE),
+         "The maximal dE value for the fit")
         ;
 
     po::variables_map vm;
@@ -64,7 +73,7 @@ int main(int argc, char* argv[]){
     }
     po::notify(vm);
 
-    DspDsmKsPDF pdf(5.20, 5.30, -0.2, 0.2, files, DspDsmKsPDF::CMP_ALL, mcInfoRequired, maxPrintOrder);
+    DspDsmKsPDF pdf(lowerMbc,upperMbc,lowerdE,upperdE, files, DspDsmKsPDF::CMP_ALL, maxPrintOrder);
 
     /** Call the MPI Fitting core and return the result */
     MPIFitter core;

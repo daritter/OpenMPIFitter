@@ -8,7 +8,7 @@ class Gauss {
     public:
         static const double sqrt_2pi_2 = 1.2533141373155002512078826424055226265034;
 
-        Gauss(double lower, double upper):
+        Gauss(double lower=0, double upper=0):
             lower(lower),upper(upper),mean(std::numeric_limits<double>::quiet_NaN()),sigma(-1),sigma2(-1),norm(0) {}
 
         /** Setup the parameters */
@@ -52,6 +52,11 @@ class Gauss {
         }
 
         double getNorm() const { return norm; }
+
+        void setLimits(double lower, double upper){
+            this->lower = lower;
+            this->upper = upper;
+        }
 
     protected:
         double lower;
@@ -204,6 +209,74 @@ class DoubleGauss: public Add1DFcn<Gauss, Gauss> {
             }
             fcn2.set(mean+meanshift, sigma*sigmascale, sigma2);
         }
+};
+
+template<int N> class MultiGauss {
+    public:
+        MultiGauss(double lower, double upper) {
+            fcns = new Gauss[N];
+            for(int i=0; i<N; ++i){
+                fcns[i].setLimits(lower,upper);
+            }
+            norms[0]=1;
+        }
+        ~MultiGauss(){
+            delete[] fcns;
+        }
+
+        void set(const double *par1){
+            double mean(0);
+            double sigma(1.0);
+            for(int i=0; i<N; ++i){
+                if(i>0) norms[i] = par1[3*i-1];
+                mean += par1[3*i];
+                sigma *= par1[3*i+1];
+                //std::cout << "mean: " << mean << ", sigma: " << sigma << std::endl;
+                fcns[i].set(mean,sigma);
+            }
+        }
+
+        void set(double mean, double sigma, const double *par1=0){
+            fcns[0].set(mean,sigma);
+            for(int i=1; i<N; ++i){
+                norms[i] = par1[3*i-3];
+                mean += par1[3*i-2];
+                sigma *= par1[3*i-1];
+                //std::cout << "mean: " << mean << ", sigma: " << sigma << std::endl;
+                fcns[i].set(mean,sigma);
+            }
+        }
+
+        void set(double mean, double sigma, double norm1, double meanshift1, double sigmascale1, const double *par1=0){
+            fcns[0].set(mean,sigma);
+            mean += meanshift1;
+            sigma *= sigmascale1;
+            norms[1] = norm1;
+            fcns[1].set(mean,sigma);
+            for(int i=2; i<N; ++i){
+                norms[i] = par1[3*i-6];
+                mean += par1[3*i-5];
+                sigma *= par1[3*i-4];
+                fcns[i].set(mean,sigma);
+            }
+        }
+
+
+        double operator()(double x) const {
+            double result(0);
+            double norm(0);
+            for(int i=0; i<N; ++i){
+                //std::cout << "norm: " << norms[i] << std::endl;
+                result += norms[i]*fcns[i](x);
+                norm += norms[i];
+            }
+            return result/norm;
+        }
+
+
+    private:
+        Gauss* fcns;
+        double norms[N];
 };
 
 #endif //OpenMPIFitter_Functions_h

@@ -9,9 +9,10 @@
 #include <boost/foreach.hpp>
 //#include "func.h"
 
+#include <TChain.h>
 #include <Functions.h>
 #include "Event.h"
-#include <TChain.h>
+#include "Signal.h"
 
 
 /** Define all parameters in a namespace to encapsule them with a qualifier.
@@ -21,20 +22,6 @@
  */
 namespace PAR {
     PARAM(sig_N);
-    PARAM(sig_ratio);
-    PARAM(sig_Mbc_ratio);
-    PARAM(sig_Mbc_mean_m0);
-    PARAM(sig_Mbc_mean_m1);
-    PARAM(sig_Mbc_meanshift);
-    PARAM(sig_Mbc_sigma);
-    PARAM(sig_Mbc_sigmascale);
-    PARAM(sig_Mbc_argusC);
-    PARAM(sig_dE_ratio);
-    PARAM(sig_dE_mean);
-    PARAM(sig_dE_meanshift);
-    PARAM(sig_dE_sigma);
-    PARAM(sig_dE_sigmascale);
-    PARAM(sig_dE_cheb1);
     PARAM(bkg_N);
     PARAM(gen_N);
 };
@@ -67,31 +54,16 @@ struct DspDsmKsPDF {
     };
 
     DspDsmKsPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE, const std::vector<std::string> filenames,
-            EnabledComponents components=CMP_ALL, int mcInfoRequired=0, int maxPrintOrder = 0):
-        components(components), mcInfoRequired(mcInfoRequired),
-        maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames),
-        signal(lowerMbc,upperMbc, lowerdE, upperdE) {}//, background(lowerMbc,upperMbc,lowerdE,upperdE) {}
+            EnabledComponents components=CMP_ALL, int maxPrintOrder = 0):
+        components(components), maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames),
+        lowerMbc(lowerMbc), upperMbc(upperMbc), lowerdE(lowerdE), upperdE(upperdE),
+        signal(lowerMbc,upperMbc, lowerdE, upperdE) {}
 
     /** Return the pdf value for a given paramater set and event */
     double PDF(const DspDsmKsEvent& e, const std::vector<double> &par) const {
-        //Set Parameters for signal component
-        signal.set(par[PAR::sig_ratio]);
-        //signal.fcn1.fcnx.set(par[PAR::sig_Mbc_mean], par[PAR::sig_Mbc_sigma]);
-        signal.fcn1.fcnx.set(par[PAR::sig_Mbc_ratio],
-                par[PAR::sig_Mbc_mean_m0] + e.dE*par[PAR::sig_Mbc_mean_m1],
-                par[PAR::sig_Mbc_meanshift],
-                par[PAR::sig_Mbc_sigma], par[PAR::sig_Mbc_sigmascale]);
-        signal.fcn1.fcny.set(par[PAR::sig_dE_ratio],
-                par[PAR::sig_dE_mean],  par[PAR::sig_dE_meanshift],
-                par[PAR::sig_dE_sigma], par[PAR::sig_dE_sigmascale]);
-        signal.fcn2.fcnx.set(e.benergy, par[PAR::sig_Mbc_argusC]);
-        signal.fcn2.fcny.set(par[PAR::sig_dE_cheb1]);
-
         double sig(0), bkg(0), generic(0), continuum(0), deltaT(0);
         if(components & CMP_signal){
-            sig = par[PAR::sig_N] * signal(e.Mbc, e.dE);
-            //if(components & CMP_signal_Mbc) sig *= signal_Mbc(e.Mbc);
-            //if(components & CMP_signal_dE)  sig *= signal_dE(e.dE);
+            sig = par[PAR::sig_N] * signal(e, par);
         }
         if(components & CMP_background){
             bkg = par[PAR::bkg_N];
@@ -134,7 +106,8 @@ struct DspDsmKsPDF {
         const int interval = static_cast<int>(std::pow(10., order));
         if(nCalls % interval == 0){
             std::cout << "call #" << std::setw(5) << std::left << nCalls << ": ";
-            std::cout << "-2logL =" << std::setw(18) << std::setprecision(10) << std::scientific << std::right << logL << std::endl;
+            std::cout << "-2logL =" << std::setw(18) << std::setprecision(10) <<
+                std::scientific << std::right << logL << std::endl;
         }
         return logL;
     }
@@ -169,7 +142,7 @@ struct DspDsmKsPDF {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
                 std::exit(5);
             }
-            if(mcInfoRequired>0 && ((event.mcInfo & mcInfoRequired) != mcInfoRequired)) continue;
+            if(event.Mbc < lowerMbc || event.Mbc > upperMbc || event.dE < lowerdE || event.dE > upperdE) continue;
             data.push_back(event);
         }
 
@@ -184,8 +157,6 @@ struct DspDsmKsPDF {
 
     /** Which components to include into the pdf */
     EnabledComponents components;
-    /** Which flag is required from events to be used */
-    int mcInfoRequired;
     /** Max order to print out log2L */
     int maxPrintOrder;
     /** Number of calls */
@@ -195,9 +166,13 @@ struct DspDsmKsPDF {
     /** filename from which the data should be read */
     std::vector<std::string> filenames;
 
+    double lowerMbc;
+    double upperMbc;
+    double lowerdE;
+    double upperdE;
+
     /** PDF function components */
-    mutable Add2DFcn<CompoundFcn2D<DoubleGauss, DoubleGauss>, CompoundFcn2D<Argus, Chebychev1> > signal;
-    //mutable Gauss signal_dE;
+    mutable Signal signal;
 };
 
 #endif //MPIFitter_DspDsmKsPDF_h

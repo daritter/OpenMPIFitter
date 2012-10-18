@@ -26,8 +26,10 @@ int main(int argc, char* argv[]){
     std::string parameterIn;
     std::string rootFile("plots.root");
     std::vector<std::string> files;
-    int mcInfoRequired(0);
-    int maxPrintOrder(3);
+    double lowerMbc(5.2);
+    double upperMbc(5.3);
+    double lowerdE(-0.2);
+    double upperdE( 0.2);
 
     //FIXME: components
 
@@ -43,8 +45,14 @@ int main(int argc, char* argv[]){
          "Root file to save the plots")
         ("parameter-in,i", po::value<std::string>(&parameterIn)->default_value(parameterIn),
          "Thy file to pillage thy initial parrrameter guesses from")
-        ("mcFlag", po::value<int>(&mcInfoRequired)->default_value(mcInfoRequired),
-         "Which mc flags to require from the blasted events")
+        ("minMbc", po::value<double>(&lowerMbc)->default_value(lowerMbc),
+         "The minimal Mbc value for the fit")
+        ("maxMbc", po::value<double>(&upperMbc)->default_value(upperMbc),
+         "The maximal Mbc value for the fit")
+        ("mindE", po::value<double>(&lowerdE)->default_value(lowerdE),
+         "The minimal dE value for the fit")
+        ("maxdE", po::value<double>(&upperdE)->default_value(upperdE),
+         "The maximal dE value for the fit")
         //("print,p", po::value<int>(&maxPrintOrder)->default_value(maxPrintOrder),
         // "Only print -2logL for each 10^N call")
         //("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
@@ -77,12 +85,12 @@ int main(int argc, char* argv[]){
 
     std::vector<double> p = params.getValues();
 
-    DspDsmKsPDF pdf(5.20, 5.30, -0.2, 0.2, files,DspDsmKsPDF::CMP_ALL, mcInfoRequired, maxPrintOrder);
+    DspDsmKsPDF pdf(lowerMbc, upperMbc, lowerdE, upperdE, files,DspDsmKsPDF::CMP_ALL, 0);
     pdf.load(0,1);
 
     TFile *r_rootFile = new TFile(rootFile.c_str(),"RECREATE");
-    TH2D *h_MbcdE_data = new TH2D("mbcde_data","M_{BC}#DeltaE data", 100,5.2,5.3,100,-0.2,0.2);
-    TH2D *h_MbcdE_fit = new TH2D("mbcde_fit","M_{BC}#DeltaE fit", 100,5.2,5.3,100,-0.2,0.2);
+    TH2D *h_MbcdE_data = new TH2D("mbcde_data","M_{BC}#DeltaE data", 50, lowerMbc, upperMbc, 50, lowerdE, upperdE);
+    TH2D *h_MbcdE_fit = new TH2D("mbcde_fit","M_{BC}#DeltaE fit", 200, lowerMbc, upperMbc, 200, lowerdE, upperdE);
     TH1D *h_bEnergy = new TH1D("benergy", "Beamenergy", 500, 0,0);
     h_bEnergy->SetBuffer(10000);
     BOOST_FOREACH(const DspDsmKsEvent& e, pdf.getData()){
@@ -108,6 +116,8 @@ int main(int argc, char* argv[]){
             }
         }
     }
+    h_MbcdE_fit->Rebin2D(4,4);
+    h_MbcdE_fit->Scale(1./16);
     h_MbcdE_fit->Scale(h_MbcdE_fit->GetXaxis()->GetBinWidth(1)*h_MbcdE_fit->GetYaxis()->GetBinWidth(1));
 
     h_MbcdE_data->ProjectionX();
