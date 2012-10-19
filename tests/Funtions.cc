@@ -99,10 +99,10 @@ TEST(FuncTest,Argus) {
     }
 }
 
-TEST(FuncTest,Cheb1){
-    Chebychev1 c1(-5,5);
+TEST(FuncTest,Cheb1_T){
+    Chebychev<1> c1(-5,5);
     step(c,-5,5,1001){
-        c1.set(c);
+        c1.set(&c);
         double norm = Belle::norm_cheb1(-5,5,c);
         EXPECT_EQ(norm!=norm, c1.getNorm()!=c1.getNorm());
         if(norm!=norm) continue;
@@ -111,6 +111,74 @@ TEST(FuncTest,Cheb1){
 
         step(x,-5,5,1001){
             EXPECT_FLOAT_EQ(c1(x),Belle::cheb1(x,c)/norm) << "c=" << c << " x=" << x;
+        }
+    }
+}
+
+TEST(FuncTest,Cheb2_T){
+    Chebychev<2> cheb(-5,5);
+    std::vector<double> cn;
+    cn.resize(2);
+    step(c1,-5,5,201){
+        cn[0] = c1;
+        step(c2,-5,5,201){
+            cn[1] = c2;
+            cheb.set(&cn[0]);
+            double norm = Belle::norm_cheb2(-5,5,cn);
+            EXPECT_EQ(norm!=norm, cheb.getNorm()!=cheb.getNorm());
+            if(norm!=norm) continue;
+            EXPECT_FLOAT_EQ(cheb.getNorm(), norm);
+            if(norm==0) continue;
+
+            step(x,-5,5,501){
+                EXPECT_FLOAT_EQ(cheb(x),Belle::cheb2(x,cn)/norm) << "c=" << c1 << "," << c2 << " x=" << x;
+            }
+        }
+    }
+}
+
+TEST(FuncTest,Cheb2_T_Bench){
+    Chebychev<2> cheb(-5,5);
+    double cn[2];
+    step(c1,-5,5,201){
+        cn[0] = c1;
+        step(c2,-5,5,201){
+            cn[1] = c2;
+            cheb.set(cn);
+            double foo(0);
+            step(x,-5,5,5001){
+                foo += cheb(x);
+            }
+            EXPECT_TRUE(fabs(1-(foo/500.))<0.002) << (foo/500.);
+        }
+    }
+}
+
+
+TEST(FuncTest,Cheb4_T){
+    Chebychev<4> cheb(-5,5);
+    std::vector<double> cn;
+    cn.resize(4);
+    step(c1,-5,5,11){
+        cn[0] = c1;
+        step(c2,-5,5,11){
+            cn[1] = c2;
+            step(c3,-5,5,11){
+                cn[2] = c3;
+                step(c4,-5,5,101){
+                    cn[3] = c4;
+                    cheb.set(&cn[0]);
+                    double norm = Belle::norm_cheb4(-5,5,cn);
+                    EXPECT_EQ(norm!=norm, cheb.getNorm()!=cheb.getNorm());
+                    if(norm!=norm) continue;
+                    EXPECT_FLOAT_EQ(cheb.getNorm(), norm);
+                    if(norm==0) continue;
+
+                    step(x,-5,5,101){
+                        EXPECT_FLOAT_EQ(cheb(x),Belle::cheb4(x,cn)/norm) << "c=" << c1 << "," << c2 << " x=" << x;
+                    }
+                }
+            }
         }
     }
 }

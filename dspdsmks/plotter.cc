@@ -30,6 +30,8 @@ int main(int argc, char* argv[]){
     double upperMbc(5.3);
     double lowerdE(-0.2);
     double upperdE( 0.2);
+    int nBins(50);
+    int oversampling(4);
 
     //FIXME: components
 
@@ -53,6 +55,10 @@ int main(int argc, char* argv[]){
          "The minimal dE value for the fit")
         ("maxdE", po::value<double>(&upperdE)->default_value(upperdE),
          "The maximal dE value for the fit")
+        ("bins", po::value<int>(&nBins)->default_value(nBins),
+         "Number of Bins per axis for the data")
+        ("sampling", po::value<int>(&oversampling)->default_value(oversampling),
+         "Oversampling for the fit")
         //("print,p", po::value<int>(&maxPrintOrder)->default_value(maxPrintOrder),
         // "Only print -2logL for each 10^N call")
         //("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
@@ -89,8 +95,8 @@ int main(int argc, char* argv[]){
     pdf.load(0,1);
 
     TFile *r_rootFile = new TFile(rootFile.c_str(),"RECREATE");
-    TH2D *h_MbcdE_data = new TH2D("mbcde_data","M_{BC}#DeltaE data", 50, lowerMbc, upperMbc, 50, lowerdE, upperdE);
-    TH2D *h_MbcdE_fit = new TH2D("mbcde_fit","M_{BC}#DeltaE fit", 200, lowerMbc, upperMbc, 200, lowerdE, upperdE);
+    TH2D *h_MbcdE_data = new TH2D("mbcde_data","M_{BC}#DeltaE data", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
+    TH2D *h_MbcdE_fit = new TH2D("mbcde_fit","M_{BC}#DeltaE fit", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
     TH1D *h_bEnergy = new TH1D("benergy", "Beamenergy", 500, 0,0);
     h_bEnergy->SetBuffer(10000);
     BOOST_FOREACH(const DspDsmKsEvent& e, pdf.getData()){
@@ -99,6 +105,7 @@ int main(int argc, char* argv[]){
     }
     h_bEnergy->BufferEmpty();
     DspDsmKsEvent e;
+    double integral(0);
     size_t nEvents = pdf.getData().size();
     for(int ix=0; ix<h_MbcdE_fit->GetNbinsX(); ++ix){
         e.Mbc = h_MbcdE_fit->GetXaxis()->GetBinCenter(ix+1);
@@ -112,12 +119,16 @@ int main(int argc, char* argv[]){
                 h_pdf += n*pdf.PDF(e,p);
             }
             if(h_pdf>0 && h_pdf==h_pdf) {
+                integral += h_pdf/nEvents
+                    * h_MbcdE_fit->GetXaxis()->GetBinWidth(ix+1)
+                    * h_MbcdE_fit->GetYaxis()->GetBinWidth(iy+1);
                 h_MbcdE_fit->Fill(e.Mbc, e.dE, h_pdf/nEvents);
             }
         }
     }
-    h_MbcdE_fit->Rebin2D(4,4);
-    h_MbcdE_fit->Scale(1./16);
+    std::cout << "PDF Integral = " << integral << std::endl;
+    //h_MbcdE_fit->Rebin2D(4,4);
+    //h_MbcdE_fit->Scale(1./16);
     h_MbcdE_fit->Scale(h_MbcdE_fit->GetXaxis()->GetBinWidth(1)*h_MbcdE_fit->GetYaxis()->GetBinWidth(1));
 
     h_MbcdE_data->ProjectionX();

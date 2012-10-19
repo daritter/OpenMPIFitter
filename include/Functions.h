@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 class Gauss {
     public:
@@ -13,7 +14,6 @@ class Gauss {
 
         /** Setup the parameters */
         void set(double mean, double sigma, double sigma2 = -1){
-            //std::cout << "params: " << mean << ", " << sigma << ", " << sigma2 << std::endl;
             //We only have to recalculate if the parameters changed since the last call
             if(mean == this->mean && sigma == this->sigma && sigma2 == this->sigma2) return;
 
@@ -34,7 +34,6 @@ class Gauss {
                 norm *= sqrt_2pi_2;
             }
 
-            //std::cout << "norm: " << norm << ", " << lower << ", " << upper << std::endl;
             //And save the parameters
             this->mean = mean;
             this->sigma = sigma;
@@ -107,31 +106,67 @@ class Argus {
         double norm;
 };
 
-class Chebychev1 {
+template<int N> class Chebychev {
     public:
-        Chebychev1(double lower, double upper):
-            lower(lower),upper(upper),c(std::numeric_limits<double>::quiet_NaN()),norm(0) {}
+        Chebychev(double lower, double upper): norm(0) {
+            if(N<0) throw std::logic_error("Chebychev with N<0 makes no sense");
+            if(N>4) throw std::logic_error("Chebychev with N>4 not supported");
+            if(N>1) c[0] = std::numeric_limits<double>::quiet_NaN();
+            l[0] = lower;
+            u[0] = upper;
+            for(int i=1; i<N+1; ++i){
+                l[i] = l[i-1] * lower;
+                u[i] = u[i-1] * upper;
+            }
+        }
 
-        void set(double c){
-            if(c == this->c) return;
+        void set(const double* c){
+            bool changed=false;
+            for(int i=0; i<N; ++i){
+                if(this->c[i] != c[i]) changed=true;
+            }
+            if(!changed) return;
+            std::copy(c,c+N,this->c);
 
-            const double ll2 = lower*lower;
-            const double ul2 = upper*upper;
-            norm = upper - lower + (c*0.5*ul2) - (c*0.5*ll2);
-            this->c = c;
+            norm = u[0] - l[0];
+            switch(N){
+                case 4:
+                    norm += c[3]*(((8.0/5.0*u[4]) - (8.0/3.0*u[2]) + u[0]) - ((8.0/5.0*l[4]) - (8.0/3.0*l[2]) + l[0]));
+                case 3:
+                    norm += c[2]*((u[3] - (3.0/2.0*u[1])) - (l[3] - (3.0/2.0*l[1])));
+                case 2:
+                    norm += c[1]*(((2.0/3.0*u[2]) - u[0]) - ((2.0/3.0*l[2]) - l[0]));
+                case 1:
+                    norm += c[0]*0.5*(u[1] - l[1]);
+            }
         }
 
         /** Calculate the fcn for a given value */
         double operator()(double x) const {
-            return (1.0 + (c*x))/norm;
+            long double xp[N];
+            xp[0]=x;
+            for(int i=1; i<N; ++i) xp[i]=xp[i-1]*x;
+            long double value = 1.0;
+            switch(N){
+                case 4:
+                    value += c[3]*((8.0*xp[3]) - (8.0*xp[1]) + 1.0);
+                case 3:
+                    value += c[2]*((4.0*xp[2]) - (3.0*xp[0]));
+                case 2:
+                    value += c[1]*((2.0*xp[1])-1.0);
+                case 1:
+                    value += c[0]*xp[0];
+
+            }
+            return value/norm;
         }
 
         double getNorm() const { return norm; }
 
     protected:
-        double lower;
-        double upper;
-        double c;
+        double c[N];
+        double l[N+1];
+        double u[N+1];
         double norm;
 };
 
@@ -242,7 +277,6 @@ template<int N> class MultiGauss {
                 norms[i] = par1[3*i-3];
                 mean += par1[3*i-2];
                 sigma *= par1[3*i-1];
-                //std::cout << "mean: " << mean << ", sigma: " << sigma << std::endl;
                 fcns[i].set(mean,sigma);
             }
         }
@@ -266,7 +300,6 @@ template<int N> class MultiGauss {
             double result(0);
             double norm(0);
             for(int i=0; i<N; ++i){
-                //std::cout << "norm: " << norms[i] << std::endl;
                 result += norms[i]*fcns[i](x);
                 norm += norms[i];
             }
