@@ -6,6 +6,7 @@
 #include "DspDsmKs.h"
 
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 
 namespace po = boost::program_options;
 
@@ -27,6 +28,8 @@ int main(int argc, char* argv[]){
     double upperMbc(5.3);
     double lowerdE(-0.2);
     double upperdE( 0.2);
+    DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_ALL;
+    std::vector<std::string> componentList;
 
     //FIXME: components
 
@@ -56,6 +59,8 @@ int main(int argc, char* argv[]){
          "The minimal dE value for the fit")
         ("maxdE", po::value<double>(&upperdE)->default_value(upperdE),
          "The maximal dE value for the fit")
+        ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
+         "Components to use for the fit")
         ;
 
     po::variables_map vm;
@@ -73,7 +78,27 @@ int main(int argc, char* argv[]){
     }
     po::notify(vm);
 
-    DspDsmKsPDF pdf(lowerMbc,upperMbc,lowerdE,upperdE, files, DspDsmKsPDF::CMP_ALL, maxPrintOrder);
+    if(!componentList.empty()){
+        activeComponents = DspDsmKsPDF::CMP_NONE;
+        BOOST_FOREACH(std::string &component, componentList){
+            boost::to_lower(component);
+            boost::trim(component);
+            if(component == "signal"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_signal);
+            }
+            if(component == "mixed"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_mixed);
+            }
+            if(component == "charged"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_charged);
+            }
+            if(component == "all"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_ALL);
+            }
+        }
+    }
+
+    DspDsmKsPDF pdf(lowerMbc,upperMbc,lowerdE,upperdE, files, activeComponents, maxPrintOrder);
 
     /** Call the MPI Fitting core and return the result */
     MPIFitter core;

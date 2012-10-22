@@ -24,6 +24,7 @@ struct FitRoutine {
     /** Do the fitting */
     template<class FCN> int operator()(FCN &fcn){
         Parameters params;
+        if(!fixParameters.empty()) params.fixParameters(fixParameters);
         std::ifstream input(parameterIn.c_str());
         if(!input){
             std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
@@ -36,7 +37,7 @@ struct FitRoutine {
         std::cout << params << std::endl;
 
         std::ios_base::fmtflags originalFormat = std::cout.flags();
-        ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams(fixParameters);
+        ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams();
         ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
         ROOT::Minuit2::FunctionMinimum min = migrad(10000);
         std::cout.flags(originalFormat);

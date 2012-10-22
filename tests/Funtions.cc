@@ -84,20 +84,41 @@ TEST(GaussTest,Bifur) {
 
 TEST(FuncTest,Argus) {
     Argus a1(5.2,5.3);
-    step(benergy,5.15,5.35,101){
-        step(a,-5,5,101){
+    step(benergy,5.15,5.35,201){
+        step(a,-50,50,201){
             a1.set(benergy,a);
             double norm = Belle::norm_argus(5.2,5.3,benergy,a);
             EXPECT_EQ(norm!=norm, a1.getNorm()!=a1.getNorm());
             if(norm!=norm) continue;
             EXPECT_FLOAT_EQ(a1.getNorm(), norm);
             if(norm==0) continue;
-            step(x,5.2,5.3,1001){
+            step(x,5.2,5.3,2001){
                 EXPECT_FLOAT_EQ(a1(x), Belle::argus(x,benergy,a)/norm) << "benergy=" << benergy << ", a=" << a << ", x=" << x << " norm=" << norm;
             }
         }
     }
 }
+
+TEST(FuncTest,ArgusInt){
+    Argus a1(5.2,5.3);
+    step(benergy,5.25,5.3,201){
+        step(a,-0.0001,-50,201){
+            double norm = Belle::norm_argus(5.2,5.3,benergy,a);
+            a1.set(benergy,a);
+            double integral(0);
+            double intbelle(0);
+            step(x,5.2,5.3,5001){
+                integral += a1(x);
+                intbelle += Belle::argus(x,benergy,a)/norm;
+            }
+            EXPECT_FLOAT_EQ(integral,intbelle);
+            integral *= (5.3-5.2)/5e3;
+            //std::cout << integral << std::endl;
+            EXPECT_TRUE(fabs(1-integral)<0.002) << "benergy=" << benergy << ", a=" << a << ", int= " << integral;
+        }
+    }
+}
+
 
 TEST(FuncTest,Cheb1_T){
     Chebychev<1> c1(-5,5);

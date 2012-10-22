@@ -16,7 +16,8 @@ class Parameters {
         void load(std::istream &in);
         void save(std::ostream &out) const;
 
-        ROOT::Minuit2::MnUserParameters getMnParams(const std::string& fixParameters = "") const;
+        void fixParameters(const std::string& fixParameters = "");
+        ROOT::Minuit2::MnUserParameters getMnParams() const;
         void update(const ROOT::Minuit2::MnUserParameters mnParams);
 
         std::vector<double> getValues() const;

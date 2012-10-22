@@ -26,6 +26,7 @@ namespace {
         if(in.eof()) return;
         string tmp;
         in >> tmp;
+        trim_if(tmp,is_any_of("*"));
         if(tmp == "" || tmp=="0" || tmp=="false" || tmp=="no" || tmp=="N" || tmp=="n"){
             val = false;
         }else{
@@ -43,6 +44,8 @@ void Parameter::load(istream& in){
 }
 
 void Parameter::save(ostream& out) const {
+    string fixed=m_dynfix?"*":"";
+    fixed += m_fixed?"Y":"N";
     out << format("%s %|32t| %17.10e %17.10e %17.10e %17.10e %5s\n")
-        % m_name % m_value % m_error % m_min % m_max % (m_fixed?"Y":"N");
+        % m_name % m_value % m_error % m_min % m_max % fixed;
 }

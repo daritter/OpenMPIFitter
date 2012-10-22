@@ -8,8 +8,40 @@
 #include <TH1D.h>
 
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 
 namespace po = boost::program_options;
+
+void plotPDF(const DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* fit, TH1D* bEnergy, int svdVs, const std::string& name= ""){
+    DspDsmKsEvent e;
+    e.svdVs = svdVs;
+    double integral(0);
+    size_t nEvents = bEnergy->GetEffectiveEntries();
+    for(int ix=0; ix<fit->GetNbinsX(); ++ix){
+        e.Mbc = fit->GetXaxis()->GetBinCenter(ix+1);
+        for(int iy=0; iy<fit->GetNbinsY(); ++iy){
+            e.dE  = fit->GetYaxis()->GetBinCenter(iy+1);
+            double h_pdf(0);
+            for(int iz=0; iz<bEnergy->GetNbinsX(); ++iz){
+                double n = bEnergy->GetBinContent(iz+1);
+                if(n<=0) continue;
+                e.benergy  = bEnergy->GetXaxis()->GetBinCenter(iz+1);
+                h_pdf += n*pdf.PDF(e,par);
+            }
+            if(h_pdf>0 && h_pdf==h_pdf) {
+                integral += h_pdf/nEvents
+                    * fit->GetXaxis()->GetBinWidth(ix+1)
+                    * fit->GetYaxis()->GetBinWidth(iy+1);
+                fit->Fill(e.Mbc, e.dE, h_pdf/nEvents);
+            }
+        }
+    }
+    double yield = pdf.yield(par);
+    fit->Scale(fit->GetXaxis()->GetBinWidth(1)*fit->GetYaxis()->GetBinWidth(1));
+    std::cout << "PDF Integral for '" << name << "' = " << integral << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
+}
+
+
 
 /** This is the main function and will be called on all processes with the same
  * arguments.
@@ -32,6 +64,8 @@ int main(int argc, char* argv[]){
     double upperdE( 0.2);
     int nBins(50);
     int oversampling(4);
+    DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_ALL;
+    std::vector<std::string> componentList;
 
     //FIXME: components
 
@@ -59,6 +93,8 @@ int main(int argc, char* argv[]){
          "Number of Bins per axis for the data")
         ("sampling", po::value<int>(&oversampling)->default_value(oversampling),
          "Oversampling for the fit")
+        ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
+         "Components to use for the fit")
         //("print,p", po::value<int>(&maxPrintOrder)->default_value(maxPrintOrder),
         // "Only print -2logL for each 10^N call")
         //("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
@@ -89,52 +125,102 @@ int main(int argc, char* argv[]){
     input >> params;
     input.close();
 
-    std::vector<double> p = params.getValues();
+    std::vector<double> par = params.getValues();
 
-    DspDsmKsPDF pdf(lowerMbc, upperMbc, lowerdE, upperdE, files,DspDsmKsPDF::CMP_ALL, 0);
-    pdf.load(0,1);
-
-    TFile *r_rootFile = new TFile(rootFile.c_str(),"RECREATE");
-    TH2D *h_MbcdE_data = new TH2D("mbcde_data","M_{BC}#DeltaE data", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
-    TH2D *h_MbcdE_fit = new TH2D("mbcde_fit","M_{BC}#DeltaE fit", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
-    TH1D *h_bEnergy = new TH1D("benergy", "Beamenergy", 500, 0,0);
-    h_bEnergy->SetBuffer(10000);
-    BOOST_FOREACH(const DspDsmKsEvent& e, pdf.getData()){
-        h_bEnergy->Fill(e.benergy);
-        h_MbcdE_data->Fill(e.Mbc,e.dE);
-    }
-    h_bEnergy->BufferEmpty();
-    DspDsmKsEvent e;
-    double integral(0);
-    size_t nEvents = pdf.getData().size();
-    for(int ix=0; ix<h_MbcdE_fit->GetNbinsX(); ++ix){
-        e.Mbc = h_MbcdE_fit->GetXaxis()->GetBinCenter(ix+1);
-        for(int iy=0; iy<h_MbcdE_fit->GetNbinsY(); ++iy){
-            e.dE  = h_MbcdE_fit->GetYaxis()->GetBinCenter(iy+1);
-            double h_pdf(0);
-            for(int iz=0; iz<h_bEnergy->GetNbinsX(); ++iz){
-                double n = h_bEnergy->GetBinContent(iz+1);
-                if(n<=0) continue;
-                e.benergy  = h_bEnergy->GetXaxis()->GetBinCenter(iz+1);
-                h_pdf += n*pdf.PDF(e,p);
+    if(!componentList.empty()){
+        activeComponents = DspDsmKsPDF::CMP_NONE;
+        BOOST_FOREACH(std::string &component, componentList){
+            boost::to_lower(component);
+            boost::trim(component);
+            if(component == "signal"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_signal);
             }
-            if(h_pdf>0 && h_pdf==h_pdf) {
-                integral += h_pdf/nEvents
-                    * h_MbcdE_fit->GetXaxis()->GetBinWidth(ix+1)
-                    * h_MbcdE_fit->GetYaxis()->GetBinWidth(iy+1);
-                h_MbcdE_fit->Fill(e.Mbc, e.dE, h_pdf/nEvents);
+            if(component == "mixed"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_mixed);
+            }
+            if(component == "charged"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_charged);
+            }
+            if(component == "all"){
+                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_ALL);
             }
         }
     }
-    std::cout << "PDF Integral = " << integral << std::endl;
-    //h_MbcdE_fit->Rebin2D(4,4);
-    //h_MbcdE_fit->Scale(1./16);
-    h_MbcdE_fit->Scale(h_MbcdE_fit->GetXaxis()->GetBinWidth(1)*h_MbcdE_fit->GetYaxis()->GetBinWidth(1));
 
+    DspDsmKsPDF pdf(lowerMbc, upperMbc, lowerdE, upperdE, files, activeComponents, 0);
+    pdf.load(0,1);
+    TFile *r_rootFile = new TFile(rootFile.c_str(),"RECREATE");
+    TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
+    TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
+    TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 500, 0,0);
+    TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 500, 0,0);
+    h_bEnergy_svd1->SetBuffer(10000);
+    h_bEnergy_svd2->SetBuffer(30000);
+    BOOST_FOREACH(const DspDsmKsEvent& e, pdf.getData()){
+        if(e.svdVs==0){
+            h_bEnergy_svd1->Fill(e.benergy);
+            h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
+        }else{
+            h_bEnergy_svd2->Fill(e.benergy);
+            h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
+        }
+    }
+    h_bEnergy_svd1->BufferEmpty();
+    h_bEnergy_svd2->BufferEmpty();
+
+    TH2D *total_MbcdE_fit_svd1 = new TH2D("mbcde_svd1_fit",
+            "M_{BC}#DeltaE fit, SVD1", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+    TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
+            "M_{BC}#DeltaE fit, SVD2", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+
+    std::string names[] = {"signal","mixed","charged"};
+    int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
+    for(int i=0; i<3; ++i){
+        std::string name = names[i];
+        if(!name.empty()) name = "_"+name;
+        int cmp = components[i];
+        if(!(cmp & activeComponents)) continue;
+        pdf.setComponents((DspDsmKsPDF::EnabledComponents) cmp);
+        TH2D *h_MbcdE_fit_svd1 = new TH2D(("mbcde_svd1_fit" + name).c_str(),
+                "M_{BC}#DeltaE fit, SVD1", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+        TH2D *h_MbcdE_fit_svd2 = new TH2D(("mbcde_svd2_fit" + name).c_str(),
+                "M_{BC}#DeltaE fit, SVD2", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+        pdf.setSVD(Component::SVD1);
+        plotPDF(pdf,par,h_MbcdE_fit_svd1,h_bEnergy_svd1,0, names[i] + ", SVD1");
+        pdf.setSVD(Component::SVD2);
+        plotPDF(pdf,par,h_MbcdE_fit_svd2,h_bEnergy_svd2,1, names[i] + ", SVD2");
+
+        TH2D* h_MbcdE_fit = (TH2D*) h_MbcdE_fit_svd1->Clone(("mbcde_fit"+name).c_str());
+        h_MbcdE_fit->Add(h_MbcdE_fit_svd2);
+        h_MbcdE_fit->ProjectionX();
+        h_MbcdE_fit->ProjectionY();
+        h_MbcdE_fit_svd1->ProjectionX();
+        h_MbcdE_fit_svd1->ProjectionY();
+        h_MbcdE_fit_svd2->ProjectionX();
+        h_MbcdE_fit_svd2->ProjectionY();
+
+        total_MbcdE_fit_svd1->Add(h_MbcdE_fit_svd1);
+        total_MbcdE_fit_svd2->Add(h_MbcdE_fit_svd2);
+
+    }
+
+    TH2D* h_MbcdE_data = (TH2D*) h_MbcdE_data_svd1->Clone("mbcde_data");
+    h_MbcdE_data->Add(h_MbcdE_data_svd2);
     h_MbcdE_data->ProjectionX();
     h_MbcdE_data->ProjectionY();
-    h_MbcdE_fit->ProjectionX();
-    h_MbcdE_fit->ProjectionY();
+    h_MbcdE_data_svd1->ProjectionX();
+    h_MbcdE_data_svd1->ProjectionY();
+    h_MbcdE_data_svd2->ProjectionX();
+    h_MbcdE_data_svd2->ProjectionY();
+
+    TH2D* total_MbcdE_fit = (TH2D*) total_MbcdE_fit_svd1->Clone("mbcde_fit");
+    total_MbcdE_fit->Add(total_MbcdE_fit_svd2);
+    total_MbcdE_fit->ProjectionX();
+    total_MbcdE_fit->ProjectionY();
+    total_MbcdE_fit_svd1->ProjectionX();
+    total_MbcdE_fit_svd1->ProjectionY();
+    total_MbcdE_fit_svd2->ProjectionX();
+    total_MbcdE_fit_svd2->ProjectionY();
 
     r_rootFile->Write();
     r_rootFile->Close();

@@ -13,18 +13,8 @@
 #include <Functions.h>
 #include "Event.h"
 #include "Signal.h"
-
-
-/** Define all parameters in a namespace to encapsule them with a qualifier.
- *
- * The macro PARAM will define a new parameter with the given name and assign it a unique index as well as
- * fill a map with all known parameter names
- */
-namespace PAR {
-    PARAM(sig_N);
-    PARAM(bkg_N);
-    PARAM(gen_N);
-};
+#include "Mixed.h"
+#include "Charged.h"
 
 /** DspDsmKs PDF function.
  *
@@ -45,35 +35,54 @@ struct DspDsmKsPDF {
 
     /** Define all possible components to be able to enable/disable them individually */
     enum EnabledComponents {
+        CMP_NONE        = 0,
         CMP_signal      = 1<<0,
-        CMP_background  = 1<<1,
-        CMP_generic     = 1<<2,
-        CMP_continuum   = 1<<3,
-        CMP_deltaT      = 1<<4,
-        CMP_ALL         = CMP_signal | CMP_background | CMP_generic | CMP_continuum | CMP_deltaT
+        CMP_mixed       = 1<<1,
+        CMP_charged     = 1<<2,
+        CMP_ALL         = CMP_signal | CMP_mixed | CMP_charged
     };
 
-    DspDsmKsPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE, const std::vector<std::string> filenames,
-            EnabledComponents components=CMP_ALL, int maxPrintOrder = 0):
-        components(components), maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames),
-        lowerMbc(lowerMbc), upperMbc(upperMbc), lowerdE(lowerdE), upperdE(upperdE),
-        signal(lowerMbc,upperMbc, lowerdE, upperdE) {}
+    DspDsmKsPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE,
+            const std::vector<std::string> filenames, EnabledComponents components=CMP_ALL, int maxPrintOrder = 0):
+        svdVs(Component::BOTH), maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames),
+        lowerMbc(lowerMbc), upperMbc(upperMbc), lowerdE(lowerdE), upperdE(upperdE)
+    {
+        setComponents(components);
+    }
+
+    ~DspDsmKsPDF(){
+        BOOST_FOREACH(Component* component, components){
+            delete component;
+        }
+    }
+
+    void setComponents(EnabledComponents cmp=CMP_ALL){
+        BOOST_FOREACH(Component* component, components){
+            delete component;
+        }
+        components.clear();
+        if(cmp & CMP_signal){
+            components.push_back(new SignalPDF(lowerMbc,upperMbc, lowerdE, upperdE));
+        }
+        if(cmp & CMP_mixed){
+            components.push_back(new MixedPDF(lowerMbc,upperMbc, lowerdE, upperdE));
+        }
+        if(cmp & CMP_charged){
+            components.push_back(new ChargedPDF(lowerMbc,upperMbc, lowerdE, upperdE));
+        }
+    }
+
+    void setSVD(Component::EnabledSVD svd){
+        svdVs = svd;
+    }
 
     /** Return the pdf value for a given paramater set and event */
     double PDF(const DspDsmKsEvent& e, const std::vector<double> &par) const {
-        double sig(0), bkg(0), generic(0), continuum(0), deltaT(0);
-        if(components & CMP_signal){
-            sig = par[PAR::sig_N] * signal(e, par);
+        long double result(0);
+        BOOST_FOREACH(Component* component, components){
+            result += (*component)(e, par);
         }
-        if(components & CMP_background){
-            bkg = par[PAR::bkg_N];
-            //FIXME
-        }
-        if(components & CMP_generic){
-            generic = par[PAR::gen_N];
-        }
-        //FIXME: ...
-        return sig + bkg + generic + continuum + deltaT;
+        return result;
     }
 
     /** Return the pdf for all events */
@@ -87,18 +96,17 @@ struct DspDsmKsPDF {
         return log_pdf;
     }
 
+    double yield(const std::vector<double> &par) const {
+        double yield(0);
+        BOOST_FOREACH(Component* component, components){
+            yield += component->get_yield(par,svdVs);
+        }
+        return yield;
+    }
+
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, double value) const {
-        if(components & CMP_signal){
-            value -= par[PAR::sig_N];
-        }
-        if(components & CMP_background){
-            value -= par[PAR::bkg_N];
-        }
-        if(components & CMP_generic){
-            value -= par[PAR::gen_N];
-        }
-        const double logL = -2.0*value;
+        const double logL = -2.0*(value-yield(par));
 
         //Determine wether to show value
         nCalls++;
@@ -156,7 +164,8 @@ struct DspDsmKsPDF {
     protected:
 
     /** Which components to include into the pdf */
-    EnabledComponents components;
+    //EnabledComponents components;
+    Component::EnabledSVD svdVs;
     /** Max order to print out log2L */
     int maxPrintOrder;
     /** Number of calls */
@@ -172,7 +181,7 @@ struct DspDsmKsPDF {
     double upperdE;
 
     /** PDF function components */
-    mutable Signal signal;
+    mutable std::vector<Component*> components;
 };
 
 #endif //MPIFitter_DspDsmKsPDF_h

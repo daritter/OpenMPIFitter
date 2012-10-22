@@ -14,6 +14,7 @@ class Gauss {
 
         /** Setup the parameters */
         void set(double mean, double sigma, double sigma2 = -1){
+            //std::cout << "mean: " << mean << ", sigma: " << sigma << std::endl;
             //We only have to recalculate if the parameters changed since the last call
             if(mean == this->mean && sigma == this->sigma && sigma2 == this->sigma2) return;
 

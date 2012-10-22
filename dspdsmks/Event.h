@@ -59,7 +59,7 @@ struct DspDsmKsEvent {
 
     //mutable dTCache dTsignal;
 
-    void setBranches(TTree* tree, const std::string &bselection="bestB"){
+    void setBranches(TTree* tree, const std::string &bselection="bestLHsig"){
         std::string prefix("");
 #define BADDRESS(x) tree->SetBranchAddress((prefix + #x).c_str(),&x)
         BADDRESS(expNo);

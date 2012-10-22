@@ -65,9 +65,15 @@ std::vector<double> Parameters::getValues() const {
     return result;
 }
 
-ROOT::Minuit2::MnUserParameters Parameters::getMnParams(const std::string& fixParameters) const {
-    ROOT::Minuit2::MnUserParameters mnParams;
+void Parameters::fixParameters(const std::string& fixParameters){
     boost::regex fixed(fixParameters);
+    BOOST_FOREACH(Parameter& p, m_parameters){
+        p.setDynamicFix(boost::regex_match(p.name(),fixed));
+    }
+}
+
+ROOT::Minuit2::MnUserParameters Parameters::getMnParams() const {
+    ROOT::Minuit2::MnUserParameters mnParams;
 
     BOOST_FOREACH(const Parameter& p, m_parameters){
         if(!mnParams.Add(p.name(), p.value(), p.error())){
@@ -75,9 +81,7 @@ ROOT::Minuit2::MnUserParameters Parameters::getMnParams(const std::string& fixPa
         }
         int index = mnParams.Index(p.name());
         assert(index == ParameterList::getIndex(p.name()));
-        //std::cout << p.name() << ": " << p.hasMin() << "(" << p.min() << "), " << p.hasMax() << "(" << p.max() << ")\n";
-        //std::cout << "fixed: " << boost::regex_match(p.name(),fixed) << std::endl;
-        if(p.isFixed() || boost::regex_match(p.name(),fixed)) mnParams.Fix(index);
+        if(p.isFixed()) mnParams.Fix(index);
         else if(p.hasMin() && p.hasMax()) mnParams.SetLimits(index, p.min(), p.max());
         else if(p.hasMin()) mnParams.SetLowerLimit(index, p.min());
         else if(p.hasMax()) mnParams.SetUpperLimit(index, p.max());
@@ -90,7 +94,9 @@ void Parameters::update(ROOT::Minuit2::MnUserParameters mnParams){
     BOOST_FOREACH(const ROOT::Minuit2::MinuitParameter &mnp, mnParams.Parameters()){
         int index = ParameterList::getIndex(mnp.GetName());
         Parameter &p = m_parameters[index];
-        p.value(mnp.Value());
-        p.error(mnp.Error());
+        if(!p.isFixed()) {
+            p.value(mnp.Value());
+            p.error(mnp.Error());
+        }
     }
 }
