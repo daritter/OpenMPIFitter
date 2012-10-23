@@ -62,7 +62,7 @@ struct FitRoutine {
             output.close();
         }
 
-        return 0;
+        return min.IsValid();
     }
 
     /** Filename to read parameters */

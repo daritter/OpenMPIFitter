@@ -7,10 +7,12 @@
 #include <iostream>
 #include <iomanip>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 //#include "func.h"
 
 #include <TChain.h>
 #include <Functions.h>
+#include "Range.h"
 #include "Event.h"
 #include "Signal.h"
 #include "Mixed.h"
@@ -39,13 +41,38 @@ struct DspDsmKsPDF {
         CMP_signal      = 1<<0,
         CMP_mixed       = 1<<1,
         CMP_charged     = 1<<2,
-        CMP_ALL         = CMP_signal | CMP_mixed | CMP_charged
+        CMP_dt_signal   = 1<<3,
+        CMP_dt_mixed    = 1<<4,
+        CMP_dt_charged  = 1<<5,
+        CMP_dt_all      = CMP_dt_signal | CMP_dt_mixed | CMP_dt_charged,
+        CMP_nodt_all    = CMP_signal | CMP_mixed | CMP_charged,
+        CMP_all         = CMP_dt_all | CMP_nodt_all
     };
 
-    DspDsmKsPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE,
-            const std::vector<std::string> filenames, EnabledComponents components=CMP_ALL, int maxPrintOrder = 0):
-        svdVs(Component::BOTH), maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames),
-        lowerMbc(lowerMbc), upperMbc(upperMbc), lowerdE(lowerdE), upperdE(upperdE)
+    static EnabledComponents getComponents(const std::vector<std::string> &components){
+        EnabledComponents result = CMP_NONE;
+#define DspDsmKsPDF__checkComponent(name) if(component == #name) result = (EnabledComponents) (result | CMP_##name)
+        BOOST_FOREACH(std::string component, components){
+            boost::to_lower(component);
+            boost::trim(component);
+            DspDsmKsPDF__checkComponent(signal);
+            DspDsmKsPDF__checkComponent(mixed);
+            DspDsmKsPDF__checkComponent(charged);
+            DspDsmKsPDF__checkComponent(dt_signal);
+            DspDsmKsPDF__checkComponent(dt_mixed);
+            DspDsmKsPDF__checkComponent(dt_charged);
+            DspDsmKsPDF__checkComponent(dt_all);
+            DspDsmKsPDF__checkComponent(nodt_all);
+            DspDsmKsPDF__checkComponent(all);
+        }
+#undef DspDsmKsPDF__checkComponent
+        return result;
+    }
+
+    DspDsmKsPDF(Range range_mBC, Range range_dE, Range range_dT,
+            const std::vector<std::string> filenames, const std::string &bestB, EnabledComponents components=CMP_all, int maxPrintOrder = 0):
+        svdVs(Component::BOTH), maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames), bestBSelection(bestB),
+        range_mBC(range_mBC), range_dE(range_dE), range_dT(range_dT)
     {
         setComponents(components);
     }
@@ -56,19 +83,19 @@ struct DspDsmKsPDF {
         }
     }
 
-    void setComponents(EnabledComponents cmp=CMP_ALL){
+    void setComponents(EnabledComponents cmp=CMP_all){
         BOOST_FOREACH(Component* component, components){
             delete component;
         }
         components.clear();
         if(cmp & CMP_signal){
-            components.push_back(new SignalPDF(lowerMbc,upperMbc, lowerdE, upperdE));
+            components.push_back(new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_dt_signal));
         }
         if(cmp & CMP_mixed){
-            components.push_back(new MixedPDF(lowerMbc,upperMbc, lowerdE, upperdE));
+            components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, cmp & CMP_dt_mixed));
         }
         if(cmp & CMP_charged){
-            components.push_back(new ChargedPDF(lowerMbc,upperMbc, lowerdE, upperdE));
+            components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_dt_charged));
         }
     }
 
@@ -77,7 +104,7 @@ struct DspDsmKsPDF {
     }
 
     /** Return the pdf value for a given paramater set and event */
-    double PDF(const DspDsmKsEvent& e, const std::vector<double> &par) const {
+    double PDF(const Event& e, const std::vector<double> &par) const {
         long double result(0);
         BOOST_FOREACH(Component* component, components){
             result += (*component)(e, par);
@@ -96,6 +123,7 @@ struct DspDsmKsPDF {
         return log_pdf;
     }
 
+    /** Return the yield of the pdf given the set of parameters */
     double yield(const std::vector<double> &par) const {
         double yield(0);
         BOOST_FOREACH(Component* component, components){
@@ -143,14 +171,15 @@ struct DspDsmKsPDF {
 
         data.clear();
         data.reserve(end-start+1);
-        DspDsmKsEvent event;
-        event.setBranches(chain,"bestB");
+        Event event;
+        event.setBranches(chain,bestBSelection);
         for(unsigned int i=start; i<end; ++i){
             if(!chain->GetEntry(i)) {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
                 std::exit(5);
             }
-            if(event.Mbc < lowerMbc || event.Mbc > upperMbc || event.dE < lowerdE || event.dE > upperdE) continue;
+            if(!range_mBC(event.Mbc) || !range_dE(event.dE)) continue;
+            event.calculateValues();
             data.push_back(event);
         }
 
@@ -159,7 +188,7 @@ struct DspDsmKsPDF {
         delete chain;
     }
 
-    const std::vector<DspDsmKsEvent>& getData() const { return data; }
+    const std::vector<Event>& getData() const { return data; }
 
     protected:
 
@@ -171,14 +200,18 @@ struct DspDsmKsPDF {
     /** Number of calls */
     mutable int nCalls;
     /** vector containing the data values */
-    std::vector<DspDsmKsEvent> data;
+    std::vector<Event> data;
     /** filename from which the data should be read */
     std::vector<std::string> filenames;
+    /** name of the bestBSelection to be used */
+    std::string bestBSelection;
 
-    double lowerMbc;
-    double upperMbc;
-    double lowerdE;
-    double upperdE;
+    /** Range of the mBC fit */
+    Range range_mBC;
+    /** Range of the dE fit */
+    Range range_dE;
+    /** Range of the dT fit */
+    Range range_dT;
 
     /** PDF function components */
     mutable std::vector<Component*> components;

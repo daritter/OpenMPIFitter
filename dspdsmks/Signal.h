@@ -39,18 +39,25 @@ namespace PAR {
     PARAM(signal_svd2_dE_sigmascale1);
     PARAM(signal_svd2_dE_cheb1);
     PARAM(signal_svd2_dE_cheb2);
+
+    PARAM(signal_blifetime);
+    PARAM(signal_Jc);
+    PARAM(signal_Js1);
+    PARAM(signal_Js2);
 };
 
 
 class SignalPDF: public Component {
     public:
-    SignalPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE):
-        Component(),
-        signalPDF_svd1(lowerMbc, upperMbc, lowerdE, upperdE),
-        signalPDF_svd2(lowerMbc, upperMbc, lowerdE, upperdE)
-    {}
+    SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
+        Component(range_dT, false, useDeltaT),
+        signalPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
+        signalPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
+    {
+        deltaT.setParameters(PAR::signal_blifetime, PAR::signal_Jc, PAR::signal_Js1, PAR::signal_Js2, Event::dt_signal);
+    }
 
-    virtual double operator()(const DspDsmKsEvent& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){
             //Set Parameters for signal component
             signalPDF_svd1.set(par[PAR::signal_svd1_ratio]);

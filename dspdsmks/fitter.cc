@@ -24,14 +24,12 @@ int main(int argc, char* argv[]){
     FitRoutine fitter;
     std::vector<std::string> files;
     int maxPrintOrder(2);
-    double lowerMbc(5.2);
-    double upperMbc(5.3);
-    double lowerdE(-0.2);
-    double upperdE( 0.2);
-    DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_ALL;
+    Range range_mBC(5.24,5.3);
+    Range range_dE(-0.1,0.1);
+    Range range_dT(-70,70);
+    std::string bestB("bestLHsig");
+    DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
     std::vector<std::string> componentList;
-
-    //FIXME: components
 
     /** Read program options using boost::program_options. Could be anything else */
     po::options_description desc("Avast, thy options be:");
@@ -51,14 +49,20 @@ int main(int argc, char* argv[]){
          "Only print -2logL for each 10^N call")
         ("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
          "Aye, give the order to be fixin the parrrameters which match against this rrrregular expression")
-        ("minMbc", po::value<double>(&lowerMbc)->default_value(lowerMbc),
-         "The minimal Mbc value for the fit")
-        ("maxMbc", po::value<double>(&upperMbc)->default_value(upperMbc),
-         "The maximal Mbc value for the fit")
-        ("mindE", po::value<double>(&lowerdE)->default_value(lowerdE),
+        ("minMbc", po::value<float>(&range_mBC.vmin)->default_value(range_mBC.vmin),
+         "The minimal mBC value for the fit")
+        ("maxMbc", po::value<float>(&range_mBC.vmax)->default_value(range_mBC.vmax),
+         "The maximal mBC value for the fit")
+        ("mindE", po::value<float>(&range_dE.vmin)->default_value(range_dE.vmin),
          "The minimal dE value for the fit")
-        ("maxdE", po::value<double>(&upperdE)->default_value(upperdE),
+        ("maxdE", po::value<float>(&range_dE.vmax)->default_value(range_dE.vmax),
          "The maximal dE value for the fit")
+        ("mindT", po::value<float>(&range_dT.vmin)->default_value(range_dT.vmin),
+         "The minimal dT value for the fit")
+        ("maxdT", po::value<float>(&range_dT.vmax)->default_value(range_dT.vmax),
+         "The maximal dT value for the fit")
+        ("bestB", po::value<std::string>(&bestB)->default_value(bestB),
+         "BestB Selection method to use")
         ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
          "Components to use for the fit")
         ;
@@ -79,26 +83,10 @@ int main(int argc, char* argv[]){
     po::notify(vm);
 
     if(!componentList.empty()){
-        activeComponents = DspDsmKsPDF::CMP_NONE;
-        BOOST_FOREACH(std::string &component, componentList){
-            boost::to_lower(component);
-            boost::trim(component);
-            if(component == "signal"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_signal);
-            }
-            if(component == "mixed"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_mixed);
-            }
-            if(component == "charged"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_charged);
-            }
-            if(component == "all"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_ALL);
-            }
-        }
+        activeComponents = DspDsmKsPDF::getComponents(componentList);
     }
 
-    DspDsmKsPDF pdf(lowerMbc,upperMbc,lowerdE,upperdE, files, activeComponents, maxPrintOrder);
+    DspDsmKsPDF pdf(range_mBC, range_dE, range_dT, files, bestB, activeComponents, maxPrintOrder);
 
     /** Call the MPI Fitting core and return the result */
     MPIFitter core;

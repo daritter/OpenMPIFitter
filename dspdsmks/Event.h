@@ -3,8 +3,10 @@
 
 #include <string>
 #include <limits>
-
 #include <TTree.h>
+
+#include <wtag.h>
+#include "tatami/tatami.h"
 
 class dTCache {
     public:
@@ -36,7 +38,15 @@ class dTCache {
         double cache_lifetime;
 };
 
-struct DspDsmKsEvent {
+struct Event {
+    static const double deltaM = 0.507;
+
+    enum dtCachePosition {
+        dt_signal  = 0,
+        dt_mixed   = 1,
+        dt_charged = 2
+    };
+
     int expNo;
     int runNo;
     int evtNo;
@@ -54,10 +64,47 @@ struct DspDsmKsEvent {
     double m2DsmKs;
     double cosTheta;
     double deltaZ;
-    int q;
-    double r;
+    //int q;
+    //double r;
 
-    //mutable dTCache dTsignal;
+    int    vtx_ntrk;
+    double vtx_zerr;
+    double vtx_chi2;
+    int    vtx_ndf;
+
+    int    tag_ntrk;
+    double tag_zerr;
+    double tag_chi2;
+    int    tag_ndf;
+    int    tag_q;
+    double tag_r;
+    int    tag_isL;
+
+    mutable dTCache dTcache[3];
+
+    int rbin;
+    double wrongTag_w;
+    double wrongTag_dw;
+    double Ak;
+    double Ck;
+    double deltaT;
+
+    void calculateValues(){
+        deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
+        tag_r = fabs(tag_r);
+        rbin = Belle::set_rbin(tag_r);
+
+        Ak = 0.0;
+        Ck = 0.0;
+        const double pb_cms_sq = (benergy*benergy) - (Mbc*Mbc);
+        const double Eb_cms = sqrt((Belle::dt_resol_global::mbzero* Belle::dt_resol_global::mbzero) + pb_cms_sq);
+        Belle::CalcAkCk( cosTheta, Eb_cms, &Ak, &Ck, Belle::dt_resol_global::mbzero );
+
+        wrongTag_w = Belle::set_wtag( expNo, rbin, isMC );
+        wrongTag_dw = Belle::set_dwtag( expNo, rbin, isMC );
+    }
+
+
 
     void setBranches(TTree* tree, const std::string &bselection="bestLHsig"){
         std::string prefix("");
@@ -77,8 +124,17 @@ struct DspDsmKsEvent {
         BADDRESS(m2DsmKs);
         BADDRESS(cosTheta);
         BADDRESS(deltaZ);
-        tree->SetBranchAddress((prefix + "tag.flavour").c_str(), &q);
-        tree->SetBranchAddress((prefix + "tag.qr").c_str(), &r);
+        tree->SetBranchAddress((prefix + "tag.ntrk").c_str(),    &tag_ntrk);
+        tree->SetBranchAddress((prefix + "tag.zerr").c_str(),    &tag_zerr);
+        tree->SetBranchAddress((prefix + "tag.chi2").c_str(),    &tag_chi2);
+        tree->SetBranchAddress((prefix + "tag.ndf").c_str(),     &tag_ndf);
+        tree->SetBranchAddress((prefix + "tag.flavour").c_str(), &tag_q);
+        tree->SetBranchAddress((prefix + "tag.qr").c_str(),      &tag_r);
+        tree->SetBranchAddress((prefix + "tag.isL").c_str(),     &tag_isL);
+        tree->SetBranchAddress((prefix + "vtx.ntrk").c_str(),    &vtx_ntrk);
+        tree->SetBranchAddress((prefix + "vtx.zerr").c_str(),    &vtx_zerr);
+        tree->SetBranchAddress((prefix + "vtx.chi2").c_str(),    &vtx_chi2);
+        tree->SetBranchAddress((prefix + "vtx.ndf").c_str(),     &vtx_ndf);
     }
 };
 

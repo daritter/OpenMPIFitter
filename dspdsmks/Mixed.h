@@ -23,18 +23,25 @@ namespace PAR {
     PARAM(mixed_svd2_dE_mean);
     PARAM(mixed_svd2_dE_sigma);
     PARAM(mixed_svd2_dE_cheb1);
+
+    PARAM(mixed_blifetime);
+    PARAM(mixed_Jc);
+    PARAM(mixed_Js1);
+    PARAM(mixed_Js2);
 };
 
 
 class MixedPDF: public Component {
     public:
-    MixedPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE):
-        Component(),
-        mixedPDF_svd1(lowerMbc, upperMbc, lowerdE, upperdE),
-        mixedPDF_svd2(lowerMbc, upperMbc, lowerdE, upperdE)
-    {}
+    MixedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
+        Component(range_dT, false, useDeltaT),
+        mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
+        mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
+    {
+        deltaT.setParameters(PAR::mixed_blifetime, PAR::mixed_Jc, PAR::mixed_Js1, PAR::mixed_Js2, Event::dt_mixed);
+    }
 
-    virtual double operator()(const DspDsmKsEvent& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs==0){
             //Set Parameters for mixed component
             mixedPDF_svd1.set(par[PAR::mixed_svd1_ratio]);

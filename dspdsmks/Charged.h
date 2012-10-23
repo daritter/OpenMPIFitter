@@ -23,18 +23,25 @@ namespace PAR {
     PARAM(charged_svd2_dE_mean);
     PARAM(charged_svd2_dE_sigma);
     PARAM(charged_svd2_dE_cheb1);
+
+    PARAM(charged_blifetime);
+    PARAM(charged_Jc);
+    PARAM(charged_Js1);
+    PARAM(charged_Js2);
 };
 
 
 class ChargedPDF: public Component {
     public:
-    ChargedPDF(double lowerMbc, double upperMbc, double lowerdE, double upperdE):
-        Component(),
-        chargedPDF_svd1(lowerMbc, upperMbc, lowerdE, upperdE),
-        chargedPDF_svd2(lowerMbc, upperMbc, lowerdE, upperdE)
-    {}
+    ChargedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
+        Component(range_dT, true, useDeltaT),
+        chargedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
+        chargedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
+    {
+        deltaT.setParameters(PAR::charged_blifetime, PAR::charged_Jc, PAR::charged_Js1, PAR::charged_Js2, Event::dt_charged);
+    }
 
-    virtual double operator()(const DspDsmKsEvent& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){
             //Set Parameters for charged component
             chargedPDF_svd1.set(par[PAR::charged_svd1_ratio]);
@@ -43,7 +50,7 @@ class ChargedPDF: public Component {
             chargedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::charged_svd1_Mbc_argusC]);
             chargedPDF_svd1.fcn2.fcny.set(&par[PAR::charged_svd1_dE_cheb1]);
 
-            return par[PAR::yield_svd1_charged]*chargedPDF_svd1(e.Mbc, e.dE);
+            return getDeltaT(e,par)*par[PAR::yield_svd1_charged]*chargedPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for charged component
             chargedPDF_svd2.set(par[PAR::charged_svd2_ratio]);
@@ -52,7 +59,7 @@ class ChargedPDF: public Component {
             chargedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::charged_svd2_Mbc_argusC]);
             chargedPDF_svd2.fcn2.fcny.set(&par[PAR::charged_svd2_dE_cheb1]);
 
-            return par[PAR::yield_svd2_charged]*chargedPDF_svd2(e.Mbc, e.dE);
+            return getDeltaT(e,par)*par[PAR::yield_svd2_charged]*chargedPDF_svd2(e.Mbc, e.dE);
         }
     }
 

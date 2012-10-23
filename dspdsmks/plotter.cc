@@ -14,7 +14,7 @@
 namespace po = boost::program_options;
 
 void plotPDF(const DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* fit, TH1D* bEnergy, int svdVs, const std::string& name= ""){
-    DspDsmKsEvent e;
+    Event e;
     e.svdVs = svdVs;
     double integral(0);
     size_t nEvents = bEnergy->GetEffectiveEntries();
@@ -59,16 +59,14 @@ int main(int argc, char* argv[]){
     std::string parameterIn;
     std::string rootFile("plots");
     std::vector<std::string> files;
-    double lowerMbc(5.2);
-    double upperMbc(5.3);
-    double lowerdE(-0.2);
-    double upperdE( 0.2);
+    Range range_mBC(5.24,5.3);
+    Range range_dE(-0.1,0.1);
+    Range range_dT(-70,70);
+    std::string bestB("bestLHsig");
     int nBins(50);
     int oversampling(4);
-    DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_ALL;
+    DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
     std::vector<std::string> componentList;
-
-    //FIXME: components
 
     /** Read program options using boost::program_options. Could be anything else */
     po::options_description desc("Avast, thy options be:");
@@ -82,24 +80,26 @@ int main(int argc, char* argv[]){
          "Basename to save the plots")
         ("parameter-out,i", po::value<std::string>(&parameterIn)->default_value(parameterIn),
          "Thy file to pillage thy parrrametes from")
-        ("minMbc", po::value<double>(&lowerMbc)->default_value(lowerMbc),
+        ("minMbc", po::value<float>(&range_mBC.vmin)->default_value(range_mBC.vmin),
          "The minimal Mbc value for the fit")
-        ("maxMbc", po::value<double>(&upperMbc)->default_value(upperMbc),
+        ("maxMbc", po::value<float>(&range_mBC.vmax)->default_value(range_mBC.vmax),
          "The maximal Mbc value for the fit")
-        ("mindE", po::value<double>(&lowerdE)->default_value(lowerdE),
+        ("mindE", po::value<float>(&range_dE.vmin)->default_value(range_dE.vmin),
          "The minimal dE value for the fit")
-        ("maxdE", po::value<double>(&upperdE)->default_value(upperdE),
+        ("maxdE", po::value<float>(&range_dE.vmax)->default_value(range_dE.vmax),
          "The maximal dE value for the fit")
+        ("mindT", po::value<float>(&range_dT.vmin)->default_value(range_dT.vmin),
+         "The minimal dT value for the fit")
+        ("maxdT", po::value<float>(&range_dT.vmax)->default_value(range_dT.vmax),
+         "The maximal dT value for the fit")
+        ("bestB", po::value<std::string>(&bestB)->default_value(bestB),
+         "BestB Selection method to use")
         ("bins", po::value<int>(&nBins)->default_value(nBins),
          "Number of Bins per axis for the data")
         ("sampling", po::value<int>(&oversampling)->default_value(oversampling),
          "Oversampling for the fit")
         ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
          "Components to use for the fit")
-        //("print,p", po::value<int>(&maxPrintOrder)->default_value(maxPrintOrder),
-        // "Only print -2logL for each 10^N call")
-        //("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
-        // "Aye, give the order to be fixin the parrrameters which match against this rrrregular expression")
         ;
 
     po::variables_map vm;
@@ -129,35 +129,19 @@ int main(int argc, char* argv[]){
     std::vector<double> par = params.getValues();
 
     if(!componentList.empty()){
-        activeComponents = DspDsmKsPDF::CMP_NONE;
-        BOOST_FOREACH(std::string &component, componentList){
-            boost::to_lower(component);
-            boost::trim(component);
-            if(component == "signal"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_signal);
-            }
-            if(component == "mixed"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_mixed);
-            }
-            if(component == "charged"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_charged);
-            }
-            if(component == "all"){
-                activeComponents = (DspDsmKsPDF::EnabledComponents) (activeComponents | DspDsmKsPDF::CMP_ALL);
-            }
-        }
+        activeComponents = DspDsmKsPDF::getComponents(componentList);
     }
 
-    DspDsmKsPDF pdf(lowerMbc, upperMbc, lowerdE, upperdE, files, activeComponents, 0);
+    DspDsmKsPDF pdf(range_mBC, range_dE, range_dT, files, bestB, activeComponents, 0);
     pdf.load(0,1);
     TFile *r_rootFile = new TFile((rootFile+".root").c_str(),"RECREATE");
-    TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
-    TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
+    TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", nBins, range_mBC.vmin, range_mBC.vmax, nBins, range_dE.vmin, range_dE.vmax);
+    TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", nBins, range_mBC.vmin, range_mBC.vmax, nBins, range_dE.vmin, range_dE.vmax);
     TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 500, 0,0);
     TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 500, 0,0);
     h_bEnergy_svd1->SetBuffer(10000);
     h_bEnergy_svd2->SetBuffer(30000);
-    BOOST_FOREACH(const DspDsmKsEvent& e, pdf.getData()){
+    BOOST_FOREACH(const Event& e, pdf.getData()){
         if(e.svdVs==0){
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
@@ -170,9 +154,9 @@ int main(int argc, char* argv[]){
     h_bEnergy_svd2->BufferEmpty();
 
     TH2D *total_MbcdE_fit_svd1 = new TH2D("mbcde_svd1_fit",
-            "M_{BC}#DeltaE fit, SVD1", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+            "M_{BC}#DeltaE fit, SVD1", nBins*oversampling, range_mBC.vmin, range_mBC.vmax, nBins*oversampling, range_dE.vmin, range_dE.vmax);
     TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
-            "M_{BC}#DeltaE fit, SVD2", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+            "M_{BC}#DeltaE fit, SVD2", nBins*oversampling, range_mBC.vmin, range_mBC.vmax, nBins*oversampling, range_dE.vmin, range_dE.vmax);
 
     std::string names[] = {"signal","mixed","charged"};
     int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
@@ -183,9 +167,9 @@ int main(int argc, char* argv[]){
         if(!(cmp & activeComponents)) continue;
         pdf.setComponents((DspDsmKsPDF::EnabledComponents) cmp);
         TH2D *h_MbcdE_fit_svd1 = new TH2D(("mbcde_svd1_fit" + name).c_str(),
-                "M_{BC}#DeltaE fit, SVD1", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+                "M_{BC}#DeltaE fit, SVD1", nBins*oversampling, range_mBC.vmin, range_mBC.vmax, nBins*oversampling, range_dE.vmin, range_dE.vmax);
         TH2D *h_MbcdE_fit_svd2 = new TH2D(("mbcde_svd2_fit" + name).c_str(),
-                "M_{BC}#DeltaE fit, SVD2", nBins*oversampling, lowerMbc, upperMbc, nBins*oversampling, lowerdE, upperdE);
+                "M_{BC}#DeltaE fit, SVD2", nBins*oversampling, range_mBC.vmin, range_mBC.vmax, nBins*oversampling, range_dE.vmin, range_dE.vmax);
         pdf.setSVD(Component::SVD1);
         plotPDF(pdf,par,h_MbcdE_fit_svd1,h_bEnergy_svd1,0, names[i] + ", SVD1");
         pdf.setSVD(Component::SVD2);
