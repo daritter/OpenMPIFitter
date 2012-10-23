@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <Parameters.h>
@@ -56,7 +57,7 @@ int main(int argc, char* argv[]){
 
     //FitRoutine fitter;
     std::string parameterIn;
-    std::string rootFile("plots.root");
+    std::string rootFile("plots");
     std::vector<std::string> files;
     double lowerMbc(5.2);
     double upperMbc(5.3);
@@ -77,10 +78,10 @@ int main(int argc, char* argv[]){
          "Config file with standard parrrrameters")
         ("input", po::value<std::vector<std::string> >(&files)->composing(),
          "Root files containing the data")
-        ("output,o", po::value<std::string>(&rootFile)->default_value(rootFile),
-         "Root file to save the plots")
-        ("parameter-in,i", po::value<std::string>(&parameterIn)->default_value(parameterIn),
-         "Thy file to pillage thy initial parrrameter guesses from")
+        ("plot-output,o", po::value<std::string>(&rootFile)->default_value(rootFile),
+         "Basename to save the plots")
+        ("parameter-out,i", po::value<std::string>(&parameterIn)->default_value(parameterIn),
+         "Thy file to pillage thy parrrametes from")
         ("minMbc", po::value<double>(&lowerMbc)->default_value(lowerMbc),
          "The minimal Mbc value for the fit")
         ("maxMbc", po::value<double>(&upperMbc)->default_value(upperMbc),
@@ -107,7 +108,7 @@ int main(int argc, char* argv[]){
     po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
     std::ifstream config(vm["config"].as<std::string>().c_str());
     if(config.is_open()){
-        po::store(po::parse_config_file(config, desc), vm);
+        po::store(po::parse_config_file(config, desc, true), vm);
         config.close();
     }
     if (vm.count("help")) {
@@ -149,7 +150,7 @@ int main(int argc, char* argv[]){
 
     DspDsmKsPDF pdf(lowerMbc, upperMbc, lowerdE, upperdE, files, activeComponents, 0);
     pdf.load(0,1);
-    TFile *r_rootFile = new TFile(rootFile.c_str(),"RECREATE");
+    TFile *r_rootFile = new TFile((rootFile+".root").c_str(),"RECREATE");
     TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
     TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", nBins, lowerMbc, upperMbc, nBins, lowerdE, upperdE);
     TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 500, 0,0);
@@ -225,5 +226,5 @@ int main(int argc, char* argv[]){
     r_rootFile->Write();
     r_rootFile->Close();
 
-    return 0;
+    return std::system(("./make_plots.py " + rootFile).c_str());
 }

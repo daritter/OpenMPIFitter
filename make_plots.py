@@ -1,6 +1,6 @@
+#!/usr/bin/env python
 import sys
 import os
-import subprocess
 sys.path.insert(0,os.path.expanduser("~/belle/DspDsmKs/python"))
 import matplotlib
 from matplotlib import pyplot as pl
@@ -8,18 +8,13 @@ matplotlib.rc("path", simplify = False)
 
 
 #command handling here
-
-filename = "plots.root"
-parameters = "ddk-initial.par"
-events = ["~/belle/DspDsmKs/skim/ddk-signal-correct.root", "~/belle/DspDsmKs/skim/ddk-charged.root", "~/belle/DspDsmKs/skim/ddk-mixed.root"]
-
-subprocess.call(["./ddk-plotter","-i",parameters,"-o",filename, "--bins=40", "--sampling=5", "--cmp=all"] + events)#,"--mindE=-0.01","--maxdE=0.01"])
-
+filename = sys.argv[1]
 sys.argv = sys.argv[:1]
+
 import pyroot as pr
 import r2mpl
 
-rootfile = root.TFile(filename)
+rootfile = root.TFile(filename + ".root")
 
 def rescale(data,*fits):
     nData = data.GetNbinsX()
@@ -176,5 +171,5 @@ make_plots("mbcde_svd1", "SVD 1")
 make_plots("mbcde_svd2", "SVD 2")
 make_plots("mbcde", "Both")
 
-r2mpl.save_all("plots", png=False)
+r2mpl.save_all(filename, png=False)
 #pl.show()

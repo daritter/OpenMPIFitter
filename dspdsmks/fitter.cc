@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
     po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
     std::ifstream config(vm["config"].as<std::string>().c_str());
     if(config.is_open()){
-        po::store(po::parse_config_file(config, desc), vm);
+        po::store(po::parse_config_file(config, desc, true), vm);
         config.close();
     }
     if (vm.count("help")) {
