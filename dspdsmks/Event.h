@@ -75,7 +75,7 @@ struct Event {
     int    tag_ntrk;
     double tag_zerr;
     double tag_chi2;
-    int    tag_ndf;
+    double tag_ndf;
     int    tag_q;
     double tag_r;
     int    tag_isL;

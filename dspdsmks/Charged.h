@@ -38,7 +38,7 @@ class ChargedPDF: public Component {
         chargedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         chargedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setParameters(PAR::charged_blifetime, PAR::charged_Jc, PAR::charged_Js1, PAR::charged_Js2, Event::dt_charged);
+        deltaT.setParameters(PAR::charged_blifetime, PAR::charged_Jc, PAR::charged_Js1, PAR::charged_Js2, -1, useDeltaT?Event::dt_charged:-1);
     }
 
     virtual double operator()(const Event& e, const std::vector<double> &par) {

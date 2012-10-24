@@ -37,16 +37,12 @@ struct DspDsmKsPDF {
 
     /** Define all possible components to be able to enable/disable them individually */
     enum EnabledComponents {
-        CMP_NONE        = 0,
-        CMP_signal      = 1<<0,
-        CMP_mixed       = 1<<1,
-        CMP_charged     = 1<<2,
-        CMP_dt_signal   = 1<<3,
-        CMP_dt_mixed    = 1<<4,
-        CMP_dt_charged  = 1<<5,
-        CMP_dt_all      = CMP_dt_signal | CMP_dt_mixed | CMP_dt_charged,
-        CMP_nodt_all    = CMP_signal | CMP_mixed | CMP_charged,
-        CMP_all         = CMP_dt_all | CMP_nodt_all
+        CMP_NONE    = 0,
+        CMP_signal  = 1<<0,
+        CMP_mixed   = 1<<1,
+        CMP_charged = 1<<2,
+        CMP_deltat  = 1<<3,
+        CMP_all     = CMP_signal | CMP_mixed | CMP_charged | CMP_deltat
     };
 
     static EnabledComponents getComponents(const std::vector<std::string> &components){
@@ -58,11 +54,7 @@ struct DspDsmKsPDF {
             DspDsmKsPDF__checkComponent(signal);
             DspDsmKsPDF__checkComponent(mixed);
             DspDsmKsPDF__checkComponent(charged);
-            DspDsmKsPDF__checkComponent(dt_signal);
-            DspDsmKsPDF__checkComponent(dt_mixed);
-            DspDsmKsPDF__checkComponent(dt_charged);
-            DspDsmKsPDF__checkComponent(dt_all);
-            DspDsmKsPDF__checkComponent(nodt_all);
+            DspDsmKsPDF__checkComponent(deltat);
             DspDsmKsPDF__checkComponent(all);
         }
 #undef DspDsmKsPDF__checkComponent
@@ -89,13 +81,13 @@ struct DspDsmKsPDF {
         }
         components.clear();
         if(cmp & CMP_signal){
-            components.push_back(new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_dt_signal));
+            components.push_back(new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
         if(cmp & CMP_mixed){
-            components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, cmp & CMP_dt_mixed));
+            components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
         if(cmp & CMP_charged){
-            components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_dt_charged));
+            components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
     }
 
@@ -130,6 +122,15 @@ struct DspDsmKsPDF {
             yield += component->get_yield(par,svdVs);
         }
         return yield;
+    }
+
+    double getDeltaT(const Event &e, const std::vector<double> &par) const {
+        long double deltaT(0);
+        BOOST_FOREACH(Component* component, components){
+            double yield = component->get_yield(par,svdVs);
+            deltaT += component->getDeltaT(e,par, true) * yield;
+        }
+        return deltaT;
     }
 
     /** finalize the event after all processes are collected */
@@ -198,6 +199,7 @@ struct DspDsmKsPDF {
                 std::exit(5);
             }
             if(!range_mBC(event.Mbc) || !range_dE(event.dE)) continue;
+            if(event.flag!=0 || event.tag_q==0) continue;
             event.calculateValues();
             data.push_back(event);
         }

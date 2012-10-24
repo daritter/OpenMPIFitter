@@ -18,8 +18,8 @@ class Component {
     virtual double operator()(const Event& e, const std::vector<double> &par) = 0;
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH) = 0;
 
-    double getDeltaT(const Event& e, const std::vector<double> &par){
-        if(!useDeltaT) return 1.0;
+    double getDeltaT(const Event& e, const std::vector<double> &par, bool anyway=false){
+        if(!useDeltaT && !anyway) return 1.0;
         return deltaT(e, par);
     }
 

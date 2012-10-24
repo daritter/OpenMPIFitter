@@ -40,10 +40,11 @@ namespace PAR {
     PARAM(signal_svd2_dE_cheb1);
     PARAM(signal_svd2_dE_cheb2);
 
-    PARAM(signal_blifetime);
-    PARAM(signal_Jc);
-    PARAM(signal_Js1);
-    PARAM(signal_Js2);
+    PARAM(signal_dt_blifetime);
+    PARAM(signal_dt_Jc);
+    PARAM(signal_dt_Js1);
+    PARAM(signal_dt_Js2);
+    PARAM(signal_dt_fractionscale);
 };
 
 
@@ -54,7 +55,9 @@ class SignalPDF: public Component {
         signalPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         signalPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setParameters(PAR::signal_blifetime, PAR::signal_Jc, PAR::signal_Js1, PAR::signal_Js2, Event::dt_signal);
+        deltaT.setParameters(
+                PAR::signal_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
+                PAR::signal_dt_fractionscale, useDeltaT?Event::dt_signal:-1);
     }
 
     virtual double operator()(const Event& e, const std::vector<double> &par) {
@@ -69,7 +72,7 @@ class SignalPDF: public Component {
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(&par[PAR::signal_svd1_dE_cheb1]);
 
-            return par[PAR::yield_svd1_signal] * signalPDF_svd1(e.Mbc, e.dE);
+            return getDeltaT(e,par)*par[PAR::yield_svd1_signal] * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
             signalPDF_svd2.set(par[PAR::signal_svd2_ratio]);
@@ -81,7 +84,7 @@ class SignalPDF: public Component {
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(&par[PAR::signal_svd2_dE_cheb1]);
 
-            return par[PAR::yield_svd2_signal] * signalPDF_svd2(e.Mbc, e.dE);
+            return getDeltaT(e,par)*par[PAR::yield_svd2_signal] * signalPDF_svd2(e.Mbc, e.dE);
         }
     }
 

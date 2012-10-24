@@ -38,7 +38,7 @@ class MixedPDF: public Component {
         mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setParameters(PAR::mixed_blifetime, PAR::mixed_Jc, PAR::mixed_Js1, PAR::mixed_Js2, Event::dt_mixed);
+        deltaT.setParameters(PAR::mixed_blifetime, PAR::mixed_Jc, PAR::mixed_Js1, PAR::mixed_Js2, -1, useDeltaT?Event::dt_mixed:-1);
     }
 
     virtual double operator()(const Event& e, const std::vector<double> &par) {
@@ -50,7 +50,7 @@ class MixedPDF: public Component {
             mixedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
             mixedPDF_svd1.fcn2.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
 
-            return par[PAR::yield_svd1_mixed] * mixedPDF_svd1(e.Mbc, e.dE);
+            return getDeltaT(e,par)*par[PAR::yield_svd1_mixed] * mixedPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for mixed component
             mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
@@ -59,7 +59,7 @@ class MixedPDF: public Component {
             mixedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
             mixedPDF_svd2.fcn2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
 
-            return par[PAR::yield_svd2_mixed] * mixedPDF_svd2(e.Mbc, e.dE);
+            return getDeltaT(e,par)*par[PAR::yield_svd2_mixed] * mixedPDF_svd2(e.Mbc, e.dE);
         }
     }
 
