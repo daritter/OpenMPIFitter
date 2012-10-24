@@ -148,6 +148,25 @@ struct DspDsmKsPDF {
         return logL;
     }
 
+    double plot(int flag, const std::vector<double> values, const std::vector<double> &par){
+        long double pdf(0.0);
+        Event e;
+        int nEvents(0);
+        for(unsigned int i=0; i<data.size(); i++ ){
+            e = data[i];
+            if(flag==0){
+                e.Mbc = values[0];
+                e.Mbc = values[1];
+            }else if(flag==1){
+                e.deltaT = values[0];
+            }
+            ++nEvents;
+            pdf += PDF(e, par);
+        }
+
+        return pdf/nEvents;
+    }
+
     /** Load the chunk of data to be used by this process of the pdf
      * Each process will get its own copy of the pdf. Once this is done, the
      * data should be loaded by this method. The responsibilty to divide the

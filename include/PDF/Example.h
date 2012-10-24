@@ -58,6 +58,10 @@ struct ExamplePDF {
         return log_pdf;
     }
 
+    double plot(int flag, const std::vector<double> &values, const std::vector<double> &par){
+        return 0;
+    }
+
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, const double value) const {
         const double logL = -2.0*(value - par[PAR::sig_N] - par[PAR::bkg_N]);

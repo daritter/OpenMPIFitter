@@ -23,6 +23,28 @@ double getClock(){
 
 typedef std::pair<size_t, double> ParameterChange;
 
+enum MPIFitterCommand {
+    EXIT       =  0,
+    PARAMETERS =  1,
+    OPERATOR   =  2,
+    PLOTTER    =  4
+};
+
+struct MPICommand {
+    MPICommand(short cmd=0, unsigned short size=0, short flag=0):cmd(cmd), size(size), flag(flag) {}
+    short cmd;
+    unsigned size;
+    short flag;
+};
+
+void broadcast_cmd(const boost::mpi::communicator &world, MPICommand &cmd, int rank){
+    broadcast(world, (int*) &cmd, sizeof(cmd)/sizeof(int), rank);
+}
+
+template<class T> void broadcast_vec(const boost::mpi::communicator &world, std::vector<T> &parameters, int rank){
+    broadcast(world, (int*) &parameters[0], sizeof(T)*parameters.size()/sizeof(int), rank);
+}
+
 /** Class functioning as master for the fit process.
  * This class will be passed to Minuit as the actual FCN and is responsible to
  * send the parameters to all clients and combine the results
@@ -35,12 +57,11 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
         virtual ~MPIMaster(){
             //Let all the others now that the are finished by sending a
             //negative number of changed parameters
-            int status(-1);
-            broadcast(world, status, 0);
+            MPICommand cmd(EXIT);
+            broadcast_cmd(world, cmd, 0);
         }
 
-        /** FCN evaluation, called by Minuit2 */
-        virtual double operator()(const std::vector<double> &params) const {
+        void sendParameters(const std::vector<double> &params, int command = PARAMETERS) const{
 #ifdef VERBOSE_TIMING
             double start = getClock();
             double split = start;
@@ -58,9 +79,11 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             }
             lastParameters = params;
             //Send the number of changed parameters to all clients
-            int changed = changedParameters.size();
+            MPICommand cmd(command, changedParameters.size());
             //std::cout << changed << " Parameters have changed" << std::endl;
-            broadcast(world, changed, 0);
+            broadcast_cmd(world, cmd, 0);
+            //Send the changed parameters to all clients (as binary buffer)
+            broadcast_vec(world, changedParameters, 0);
 #ifdef VERBOSE_TIMING
             end = getClock();
             std::cout << "Broadcast of parameters took " << std::fixed
@@ -68,10 +91,16 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
                       << std::endl;
             split = end;
 #endif
-            //Send the changed parameters to all clients (as binary buffer)
-            broadcast(world, (int*) &changedParameters[0],
-                    sizeof(ParameterChange)*changed/sizeof(int), 0);
+        }
 
+        /** FCN evaluation, called by Minuit2 */
+        virtual double operator()(const std::vector<double> &params) const {
+            sendParameters(params, OPERATOR | PARAMETERS);
+#ifdef VERBOSE_TIMING
+            double start = getClock();
+            double split = start;
+            double end;
+#endif
             //Calculate the local result
             double local_result = fcn(params);
 #ifdef VERBOSE_TIMING
@@ -95,6 +124,17 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
 #endif
             //Return the final result to minuit
             return fcn.finalize(params, result);
+        }
+
+        double plot(int flag, const std::vector<double> &values, const std::vector<double> &params) const {
+            sendParameters(params);
+            MPICommand cmd(PLOTTER,values.size(),flag);
+            broadcast_cmd(world, cmd, 0);
+            double local_result = fcn.plot(flag, values, params);
+            double result(0);
+            typename FCN::operator_type op;
+            reduce(world, local_result, result, op, 0);
+            return result / world.size();
         }
 
         /** Return the error_def to Minuit2 */
@@ -129,27 +169,36 @@ template<class FCN> class MPIClient {
         void run(){
             std::vector<double> params;
             std::vector<ParameterChange> changedParameters;
-            int changed;
+            MPICommand cmd;
 
             typename FCN::operator_type op;
             while(true){
                 //Recieve the number of changed parameters
-                broadcast(world, changed, 0);
-                //Negative number of changed parameters means we're finished
-                if(changed < 0) return;
-                //Otherwise make sure we have enough elements in the list of changed parameters
-                changedParameters.resize(changed);
-                params.reserve(changed);
-                //And then obtain the parameter changes
-                broadcast(world, (int*) &changedParameters[0], sizeof(ParameterChange)*changed/sizeof(int), 0);
-                //And apply them to the local parameters
-                BOOST_FOREACH(ParameterChange &c, changedParameters){
-                    if(c.first>=params.size()) params.resize(c.first+1);
-                    params[c.first] = c.second;
+                broadcast_cmd(world, cmd, 0);
+                if(cmd.cmd == EXIT) return;
+                if(cmd.cmd & PARAMETERS){
+                    //Otherwise make sure we have enough elements in the list of changed parameters
+                    changedParameters.resize(cmd.size);
+                    params.reserve(cmd.size);
+                    //And then obtain the parameter changes
+                    broadcast_vec(world, changedParameters, 0);
+                    //And apply them to the local parameters
+                    BOOST_FOREACH(ParameterChange &c, changedParameters){
+                        if(c.first>=params.size()) params.resize(c.first+1);
+                        params[c.first] = c.second;
+                    }
                 }
-                //Then call the FCN and return the result to the Master
-                double result = fcn(params);
-                reduce(world, result, op, 0);
+                if(cmd.cmd & OPERATOR){
+                    //Then call the FCN and return the result to the Master
+                    double result = fcn(params);
+                    reduce(world, result, op, 0);
+                }
+                if(cmd.cmd & PLOTTER){
+                    std::vector<double> values(cmd.size,0);
+                    broadcast_vec(world, values, 0);
+                    double result = fcn.plot(cmd.flag, values, params);
+                    reduce(world, result, op, 0);
+                }
             }
         }
 
