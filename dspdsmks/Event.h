@@ -82,17 +82,20 @@ struct Event {
 
     mutable dTCache dTcache[3];
 
+    //Calculated variables
     int rbin;
     double wrongTag_w;
     double wrongTag_dw;
     double Ak;
     double Ck;
     double deltaT;
+    int eta;
 
     void calculateValues(){
         deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
         tag_r = fabs(tag_r);
         rbin = Belle::set_rbin(tag_r);
+        eta = (m2DsmKs>m2DspKs)?1:-1;
 
         Ak = 0.0;
         Ck = 0.0;

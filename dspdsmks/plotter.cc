@@ -52,7 +52,7 @@ void plotDT(const DspDsmKsPDF &pdf, const std::vector<double>& par, TH1D* dtpdf,
         BOOST_FOREACH(Event e, pdf.getData()){
             if(e.svdVs != svdVs) continue;
             ++nEvents;
-            if(e.tag_q != flavour) continue;
+            if(e.tag_q*e.eta != flavour) continue;
             e.deltaT = deltaT;
             pdf_value += pdf.getDeltaT(e,par);
         }
@@ -87,6 +87,7 @@ int main(int argc, char* argv[]){
     Range range_mBC(5.24,5.3);
     Range range_dE(-0.1,0.1);
     Range range_dT(-70,70);
+    Range plotrange_dT = range_dT;
     std::string bestB("bestLHsig");
     int nBins(50);
     int sampling(4);
@@ -119,6 +120,10 @@ int main(int argc, char* argv[]){
          "The minimal dT value for the fit")
         ("maxdT", po::value<float>(&range_dT.vmax)->default_value(range_dT.vmax),
          "The maximal dT value for the fit")
+        ("plot-mindT", po::value<float>(&plotrange_dT.vmin)->default_value(plotrange_dT.vmin),
+         "The minimal dT value for the plot")
+        ("plot-maxdT", po::value<float>(&plotrange_dT.vmax)->default_value(plotrange_dT.vmax),
+         "The maximal dT value for the plot")
         ("bestB", po::value<std::string>(&bestB)->default_value(bestB),
          "BestB Selection method to use")
         ("bins", po::value<int>(&nBins)->default_value(nBins),
@@ -168,10 +173,10 @@ int main(int argc, char* argv[]){
     TFile *r_rootFile = new TFile((rootFile+".root").c_str(),"RECREATE");
     TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", nBins, range_mBC.vmin, range_mBC.vmax, nBins, range_dE.vmin, range_dE.vmax);
     TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", nBins, range_mBC.vmin, range_mBC.vmax, nBins, range_dE.vmin, range_dE.vmax);
-    TH1D *h_dT_data_svd1_p = new TH1D("dT_svd1_data_p", "#Deltat data q=-1, SVD1", nBins_dt, range_dT.vmin, range_dT.vmax);
-    TH1D *h_dT_data_svd1_m = new TH1D("dT_svd1_data_m", "#Deltat data q=+1, SVD1", nBins_dt, range_dT.vmin, range_dT.vmax);
-    TH1D *h_dT_data_svd2_p = new TH1D("dT_svd2_data_p", "#Deltat data q=-1, SVD2", nBins_dt, range_dT.vmin, range_dT.vmax);
-    TH1D *h_dT_data_svd2_m = new TH1D("dT_svd2_data_m", "#Deltat data q=+1, SVD2", nBins_dt, range_dT.vmin, range_dT.vmax);
+    TH1D *h_dT_data_svd1_p = new TH1D("dT_svd1_data_p", "#Deltat data q=-1, SVD1", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+    TH1D *h_dT_data_svd1_m = new TH1D("dT_svd1_data_m", "#Deltat data q=+1, SVD1", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+    TH1D *h_dT_data_svd2_p = new TH1D("dT_svd2_data_p", "#Deltat data q=-1, SVD2", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+    TH1D *h_dT_data_svd2_m = new TH1D("dT_svd2_data_m", "#Deltat data q=+1, SVD2", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
     TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 500, 0,0);
     TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 500, 0,0);
     h_bEnergy_svd1->SetBuffer(10000);
@@ -234,10 +239,10 @@ int main(int argc, char* argv[]){
         total_MbcdE_fit_svd2->Add(h_MbcdE_fit_svd2);
 
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
-            TH1D *h_dT_fit_svd1_p = new TH1D(("dT_svd1_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD1", nBins_dt*sampling_dt, range_dT.vmin, range_dT.vmax);
-            TH1D *h_dT_fit_svd1_m = new TH1D(("dT_svd1_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD1", nBins_dt*sampling_dt, range_dT.vmin, range_dT.vmax);
-            TH1D *h_dT_fit_svd2_p = new TH1D(("dT_svd2_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD2", nBins_dt*sampling_dt, range_dT.vmin, range_dT.vmax);
-            TH1D *h_dT_fit_svd2_m = new TH1D(("dT_svd2_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD2", nBins_dt*sampling_dt, range_dT.vmin, range_dT.vmax);
+            TH1D *h_dT_fit_svd1_p = new TH1D(("dT_svd1_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD1", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+            TH1D *h_dT_fit_svd1_m = new TH1D(("dT_svd1_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD1", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+            TH1D *h_dT_fit_svd2_p = new TH1D(("dT_svd2_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD2", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+            TH1D *h_dT_fit_svd2_m = new TH1D(("dT_svd2_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD2", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
             pdf.setSVD(Component::SVD1);
             plotDT(pdf,par,h_dT_fit_svd1_p,+1,0, names[i] + ", SVD1");
             plotDT(pdf,par,h_dT_fit_svd1_m,-1,0, names[i] + ", SVD1");

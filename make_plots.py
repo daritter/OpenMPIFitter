@@ -64,7 +64,11 @@ def plotMbcDe(data, label=None, title=None, **argk):
     a.set_ylabel("$\Delta E$ / GeV")
 
 def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, unit="GeV"):
-    colors = {"signal":"r", "mixed":"g", "charged":"b", "all":"b", "signal, +1":"r", "signal, -1":"b"}
+    colors = {"signal":"r", "mixed":"g", "charged":"b", "all":"b",
+              "signal, +1":"r", "signal, -1":"b",
+              "mixed, +1":"r", "mixed, -1":"b",
+              "charged, +1":"r", "charged, -1":"b",
+             }
     last = None
     for i,(l,f) in enumerate(fits):
         if last is not None:
@@ -108,10 +112,45 @@ def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, uni
         #data_axes.set_ylim(ymin=data.GetMinimum(0.5)/2.0)
         data_axes.set_ylim(ymin)
 
+def accumulate(fits):
+    last = None
+    for l,f in fits:
+        if last is None:
+            last = f.Clone("tmp")
+        else:
+            last.Add(f)
+    return last
+
+
+def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, a1, a2):
+    fp = accumulate(fits_p)
+    fm = accumulate(fits_m)
+    asym_data = data_p.GetAsymmetry(data_m)
+    asym_fit  = fp.GetAsymmetry(fm)
+
+    r2mpl.plotSmooth(fp, axes=a1, color="r", zorder=1, samples=2000)
+    r2mpl.plotSmooth(fm, axes=a1, color="b", zorder=1, samples=2000)
+    r2mpl.plot(data_p, axes=a1, errors=True, color="r", zorder=2, linewidth=0.5, capsize=1.0)
+    r2mpl.plot(data_m, axes=a1, errors=True, color="b", zorder=2, linewidth=0.5, capsize=1.0)
+
+    r2mpl.plotSmooth(asym_fit, axes=a2, zorder=1, color="r", samples=2000)
+    r2mpl.plot(asym_data, axes=a2, errors=True, color="k", zorder=2, linewidth=0.5, capsize=1.0)
+    a2.set_ylim(-1.0,1.0)
+    a2.grid()
+    a1.grid()
+    a1.set_ylabel("Entries / %s %s" % (data_p.GetBinWidth(1), "ps"))
+    a2.set_xlabel(r"$\Delta t$ / ps")
+    loc = matplotlib.ticker.MaxNLocator(prune="upper", nbins=5)
+    a2.get_yaxis().set_major_locator(loc)
+    loc = matplotlib.ticker.MaxNLocator(nbins=5)
+    a2.get_xaxis().set_major_locator(loc)
+    a1.get_xaxis().set_major_locator(loc)
+
+
 
 
 def make_mbcde_plots(name, title):
-    print "make mBC dE plots for ", name, title
+    print "make mBC dE plots for ", name
     mbcde_data = rootfile.Get(name + "_data")
     mbcde_fit  = rootfile.Get(name + "_fit")
     #fits = [("all",mbcde_fit)]
@@ -168,7 +207,7 @@ def make_mbcde_plots(name, title):
     plot_dfs("de", de_data,de_fits,a_dE,a_sdE,"$\Delta E$ / GeV", title=title, log=True)
 
 def make_dt_plots(name, title):
-    print "Make dT plot for", name, title
+    print "Make dT plot for", name
     dt_data_p = rootfile.Get(name + "_data_p")
     dt_data_m = rootfile.Get(name + "_data_m")
 
@@ -202,14 +241,20 @@ def make_dt_plots(name, title):
     plot_dfs("dt_p", dt_data_p, fits_p, a_Mbc,a_sMbc,"$\Delta t$ / ps", title=title, unit="ps", log=True)
     plot_dfs("dt_m", dt_data_m, fits_m, a_dE,a_sdE,"$\Delta t$ / ps", title=title, unit="ps", log=True)
 
+    f = pl.figure(figsize=(4,4))
+    a1  = f.add_axes((0.20,0.38,0.7,0.55))
+    a2 = f.add_axes((0.20,0.13,0.7,0.25))
+    plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, a1, a2)
+
 
 
 make_mbcde_plots("mbcde_svd1", "SVD 1")
 make_mbcde_plots("mbcde_svd2", "SVD 2")
 make_mbcde_plots("mbcde", "Both")
+r2mpl.save_all(filename + "-mBCdE", png=False)
 
 make_dt_plots("dT_svd1", "SVD1")
 make_dt_plots("dT_svd2", "SVD2")
+r2mpl.save_all(filename + "-dT", png=False)
 
-r2mpl.save_all(filename, png=False)
 #pl.show()
