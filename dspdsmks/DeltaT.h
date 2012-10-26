@@ -52,14 +52,15 @@ class DeltaTPDF {
             if(cacheId>=0) e.dTcache[cacheId].set(par[tau], life_pdf, int_life_pdf, sin_pdf, cos_pdf);
         }
 
-        double sig_pdf = life_pdf*(1.0 - e.tag_q*e.wrongTag_dw)
-            + e.tag_q*(1.0-2.0*e.wrongTag_w)*(e.eta*par[Jc]*cos_pdf - (par[Js1] + e.eta*par[Js2])*sin_pdf);
+        double sig_pdf = (life_pdf*(1.0 - e.tag_q*e.wrongTag_dw)
+            + e.tag_q*(1.0-2.0*e.wrongTag_w)*(e.eta*par[Jc]*cos_pdf
+            - (par[Js1] + e.eta*par[Js2])*sin_pdf))/int_life_pdf;
 
         outlierPDF.set(0.0,dtres_param->sig_ol);
         double fraction = (e.tag_ntrk>1 && e.vtx_ntrk>1)?dtres_param->fol_mul:dtres_param->fol_sgl;
         if(fractionScale>=0) fraction*=par[fractionScale];
 
-        return (1-fraction)*sig_pdf + fraction*outlierPDF(e.deltaT);
+        return ((1-fraction)*sig_pdf + fraction*outlierPDF(e.deltaT))/4.0;
     }
 
     private:

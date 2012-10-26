@@ -51,8 +51,9 @@ struct FitRoutine {
             std::cout << "Avast, Minuit be converrrrging." << std::endl;
         }
         params.update(min.UserParameters());
-        std::cout << "This be the final parrrrameters ye lubber:" << std::endl;
-        std::cout << params << std::endl;
+        std::cout << "This be thy final non fixed parrrrameters ye lubber:" << std::endl;
+        params.save(std::cout, true);
+        std::cout << std::endl;
 
         std::ofstream output(parameterOut.c_str());
         if(!output){

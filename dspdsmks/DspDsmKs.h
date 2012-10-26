@@ -47,13 +47,12 @@ struct DspDsmKsPDF {
     };
 
     enum PlotFlags {
-        PLT_NONE  = 0,
-        PLT_SVD1  = 1<<0,
-        PLT_SVD2  = 1<<1,
-        PLT_MBCDE = 1<<2,
-        PLT_DT_P  = 1<<3,
-        PLT_DT_M  = 1<<4,
-        PLT_DT    = PLT_DT_P | PLT_DT_M
+        PLT_NONE   = 0,
+        PLT_SVD1   = 1<<0,
+        PLT_SVD2   = 1<<1,
+        PLT_DT_Q   = 1<<2,
+        PLT_DT_E   = 1<<3,
+        PLT_DT_QE  = 1<<4
     };
 
     static EnabledComponents getComponents(const std::vector<std::string> &components){
@@ -74,7 +73,7 @@ struct DspDsmKsPDF {
 
     DspDsmKsPDF(Range range_mBC, Range range_dE, Range range_dT,
             const std::vector<std::string> filenames, const std::string &bestB, EnabledComponents components=CMP_all, int maxPrintOrder = 0):
-        svdVs(Component::BOTH), maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames), bestBSelection(bestB),
+        maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames), bestBSelection(bestB),
         range_mBC(range_mBC), range_dE(range_dE), range_dT(range_dT)
     {
         setComponents(components);
@@ -106,10 +105,6 @@ struct DspDsmKsPDF {
         setComponents((EnabledComponents) options);
     }
 
-    void setSVD(Component::EnabledSVD svd){
-        svdVs = svd;
-    }
-
     /** Return the pdf value for a given paramater set and event */
     double PDF(const Event& e, const std::vector<double> &par) const {
         long double result(0);
@@ -132,10 +127,10 @@ struct DspDsmKsPDF {
     }
 
     /** Return the yield of the pdf given the set of parameters */
-    double yield(const std::vector<double> &par) const {
+    double yield(const std::vector<double> &par, int svdVs=Component::BOTH) const {
         double yield(0);
         BOOST_FOREACH(Component* component, components){
-            yield += component->get_yield(par,svdVs);
+            yield += component->get_yield(par,(Component::EnabledSVD)svdVs);
         }
         return yield;
     }
@@ -143,8 +138,7 @@ struct DspDsmKsPDF {
     double getDeltaT(const Event &e, const std::vector<double> &par) const {
         long double deltaT(0);
         BOOST_FOREACH(Component* component, components){
-            double yield = component->get_yield(par,svdVs);
-            deltaT += component->getDeltaT(e,par, true) * yield;
+            deltaT += component->getDeltaT(e,par, true);
         }
         return deltaT;
     }
@@ -166,46 +160,35 @@ struct DspDsmKsPDF {
     }
 
     double plot(int flag, const std::vector<double> values, const std::vector<double> &par){
-        //std::cout << flag << " " << values.size() << " " << values[0] << " " << par.size() << " " << par[0] << " " << data.size() << std::endl;
         long double pdf(0.0);
-        Event e;
-        int nEvents(0);
         int svdVs=0;
         if(flag & PLT_SVD1) svdVs |= Component::SVD1;
         if(flag & PLT_SVD2) svdVs |= Component::SVD2;
-        setSVD((Component::EnabledSVD)svdVs);
-        double lastBenergy(std::numeric_limits<double>::quiet_NaN());
-        double lastPDF(0);
+        int nEvents(0);
         for(int svd=0; svd<2; ++svd){
- //           std::cout << svd << flag << PLT_SVD1 << PLT_SVD2 << std::endl;
             if((svd==0) && !(flag & PLT_SVD1)) continue;
             if((svd==1) && !(flag & PLT_SVD2)) continue;
             for(unsigned int i=0; i<data[svd].size(); i++ ){
-                Event &orig = data[svd][i];
-                //Check for svd version
-                ++nEvents;
-                if(flag & PLT_MBCDE){
-                    if(lastBenergy != orig.benergy){
-                        e = orig;
-                        e.Mbc = values[0];
-                        e.dE = values[1];
-                        lastPDF = PDF(e, par);
-                        lastBenergy = e.benergy;
+                Event e = data[svd][i];
+                e.deltaT = values[0];
+                for(int i=-1; i<=2; i+=2){
+                    if(flag & PLT_DT_Q){
+                        e.tag_q = values[1];
+                        e.eta = i;
+                    }else if(flag & PLT_DT_E){
+                        e.tag_q = i;
+                        e.eta = values[1];
+                    }else if(flag & PLT_DT_QE){
+                        e.tag_q = i;
+                        e.eta = i*values[1];
                     }
-                    pdf += lastPDF;
-                }else if(flag & PLT_DT){
-                    if(flag & PLT_DT_M && orig.tag_q*orig.eta != -1) continue;
-                    if(flag & PLT_DT_P && orig.tag_q*orig.eta != +1) continue;
-                    e = orig;
-                    e.deltaT = values[0];
                     pdf += getDeltaT(e, par);
-                    //std::cout << "dT=" << values[0] << " => pdf=" << pdf << std::endl;
                 }
+                ++nEvents;
             }
         }
-        setSVD(Component::BOTH);
-        //if(nEvents==0) return 0;
-        return pdf/nEvents;
+        const double total_yield = yield(par,svdVs);
+        return pdf*total_yield/nEvents;
     }
 
     /** Load the chunk of data to be used by this process of the pdf
@@ -266,9 +249,6 @@ struct DspDsmKsPDF {
 
     protected:
 
-    /** Which components to include into the pdf */
-    //EnabledComponents components;
-    Component::EnabledSVD svdVs;
     /** Max order to print out log2L */
     int maxPrintOrder;
     /** Number of calls */

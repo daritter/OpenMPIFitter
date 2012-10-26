@@ -49,11 +49,16 @@ void Parameters::load(istream &in){
     }
 }
 
-void Parameters::save(ostream &out) const {
-    out << boost::format("#Name %|32t| %=17s %=17s %=17s %=17s %5s\n")
-        % "value" % "error" % "min" % "max" % "fixed";
+void Parameters::save(ostream &out, bool istty) const {
+    if(istty){
+        out << boost::format("#Name %|32t| %=17s %=17s %=17s %=17s %12s\n")
+            % "value" % "error" % "min" % "max" % "significance";
+    }else{
+       out << boost::format("#Name %|32t| %=17s %=17s %=17s %=17s %5s\n")
+           % "value" % "error" % "min" % "max" % "fixed";
+    }
     BOOST_FOREACH(const Parameter &p, m_parameters){
-        out << p;
+        p.save(out, istty);
     }
 }
 
@@ -95,8 +100,8 @@ void Parameters::update(ROOT::Minuit2::MnUserParameters mnParams){
         int index = ParameterList::getIndex(mnp.GetName());
         Parameter &p = m_parameters[index];
         if(!p.isFixed()) {
-            p.value(mnp.Value());
             p.error(mnp.Error());
+            p.value(mnp.Value());
         }
     }
 }

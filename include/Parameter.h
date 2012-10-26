@@ -4,6 +4,16 @@
 #include <limits>
 #include <string>
 #include <iostream>
+#include <cmath>
+
+#define ANSI_RED    "\033[91m"
+#define ANSI_GREEN  "\033[92m"
+#define ANSI_YELLOW "\033[93m"
+#define ANSI_BLUE   "\033[94m"
+#define ANSI_PURPLE "\033[95m"
+#define ANSI_CYAN   "\033[96m"
+#define ANSI_END    "\033[0m"
+
 
 class Parameter {
     public:
@@ -13,10 +23,10 @@ class Parameter {
             m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(false){};
 
         const  std::string &name() const { return m_name; }
-        void   value(double value) { m_value = value; }
+        void   value(double value) { m_changed=std::fabs(m_value-value)/m_error>1.0; m_value = value;}
         double value() const { return m_value; }
-        double error() const { return m_value; }
         void   error(double error)  { m_error = error; }
+        double error() const { return m_error; }
         double min() const { return m_min; }
         double max() const { return m_max; }
         bool   isFixed() const { return m_fixed || m_min>=m_max || m_dynfix; }
@@ -24,8 +34,9 @@ class Parameter {
         bool   hasMax() const { return m_max !=  std::numeric_limits<double>::infinity(); }
 
         void load(std::istream& in);
-        void save(std::ostream& out) const;
+        void save(std::ostream& out, bool istty=false) const;
         void setDynamicFix(bool fix){ m_dynfix = fix; }
+
     protected:
         std::string m_name;
         double m_value;
@@ -34,6 +45,7 @@ class Parameter {
         double m_max;
         bool   m_fixed;
         bool   m_dynfix;
+        bool   m_changed;
 };
 inline std::istream& operator>>(std::istream &in,  Parameter &p){ p.load(in);  return in; }
 inline std::ostream& operator<<(std::ostream &out, const Parameter &p){ p.save(out); return out;}

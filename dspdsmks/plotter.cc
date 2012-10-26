@@ -16,7 +16,6 @@
 namespace po = boost::program_options;
 
 void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, TH1D* h_bEnergy, int svdVs, const std::string& name= ""){
-    pdf.setSVD((Component::EnabledSVD)svdVs);
     Event e;
     e.svdVs = svdVs-1;
     double integral(0);
@@ -43,7 +42,7 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
             }
         }
     }
-    double yield = pdf.yield(par);
+    double yield = pdf.yield(par,svdVs);
     h_pdf->Scale(h_pdf->GetXaxis()->GetBinWidth(1)*h_pdf->GetYaxis()->GetBinWidth(1));
     std::cout << "mBCdE Integral for '" << name << "' = " << integral << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
 }
@@ -77,16 +76,14 @@ template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* 
     Event e;
     double integral(0);
     int flag = svdVs;
-    //if(svdVs == Component::SVD1) flag |= DspDsmKsPDF::PLT_SVD1;
-    //if(svdVs == Component::SVD2) flag |= DspDsmKsPDF::PLT_SVD2;
-    flag |= flavour>0?DspDsmKsPDF::PLT_DT_P:DspDsmKsPDF::PLT_DT_M;
-    std::vector<double> values(1,0);
+    flag |= DspDsmKsPDF::PLT_DT_QE;
+    std::vector<double> values(2,0);
+    values[1] = flavour;
     ProgressBar pbar(dtpdf->GetNbinsX());
     std::cout << "Plotting dT for '" << name << "': ";
     for(int ix=0; ix<dtpdf->GetNbinsX(); ++ix){
         std::cout << ++pbar;
         values[0] = dtpdf->GetXaxis()->GetBinCenter(ix+1);
-        //std::cout << "Plotting dT=" << values[0] << std::endl;
         double pdf_value = pdf.plot(flag,values,par);
         if(pdf_value >0 && pdf_value==pdf_value){
             integral += pdf_value * dtpdf->GetBinWidth(ix+1);

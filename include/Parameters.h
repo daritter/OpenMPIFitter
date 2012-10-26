@@ -14,7 +14,7 @@ class Parameters {
         Parameters();
 
         void load(std::istream &in);
-        void save(std::ostream &out) const;
+        void save(std::ostream &out, bool istty=false) const;
 
         void fixParameters(const std::string& fixParameters = "");
         ROOT::Minuit2::MnUserParameters getMnParams() const;

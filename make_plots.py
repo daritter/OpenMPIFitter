@@ -138,6 +138,7 @@ def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, a1, a2):
     a2.set_ylim(-1.0,1.0)
     a2.grid()
     a1.grid()
+    a1.set_xticklabels([])
     a1.set_ylabel("Entries / %s %s" % (data_p.GetBinWidth(1), "ps"))
     a2.set_xlabel(r"$\Delta t$ / ps")
     loc = matplotlib.ticker.MaxNLocator(prune="upper", nbins=5)
@@ -242,8 +243,8 @@ def make_dt_plots(name, title):
     plot_dfs("dt_m", dt_data_m, fits_m, a_dE,a_sdE,"$\Delta t$ / ps", title=title, unit="ps", log=True)
 
     f = pl.figure(figsize=(4,4))
-    a1  = f.add_axes((0.20,0.38,0.7,0.55))
-    a2 = f.add_axes((0.20,0.13,0.7,0.25))
+    a1  = f.add_axes((0.20,0.38,0.73,0.55))
+    a2 = f.add_axes((0.20,0.13,0.73,0.25))
     plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, a1, a2)
 
 
