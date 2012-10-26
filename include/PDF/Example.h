@@ -62,6 +62,8 @@ struct ExamplePDF {
         return 0;
     }
 
+    void setOptions(int flag) {}
+
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, const double value) const {
         const double logL = -2.0*(value - par[PAR::sig_N] - par[PAR::bkg_N]);

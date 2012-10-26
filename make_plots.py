@@ -150,7 +150,7 @@ def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, a1, a2):
 
 
 def make_mbcde_plots(name, title):
-    print "make mBC dE plots for ", name
+    print "Make mBC dE plots for ", name
     mbcde_data = rootfile.Get(name + "_data")
     mbcde_fit  = rootfile.Get(name + "_fit")
     #fits = [("all",mbcde_fit)]
@@ -217,11 +217,11 @@ def make_dt_plots(name, title):
         fit_p = rootfile.Get(name + "_fit_p_" + component)
         if(fit_p):
             rescale(dt_data_p, fit_p)
-            fits_p.append((component + ", +1",fit_p))
+            fits_p.append((component,fit_p))
         fit_m = rootfile.Get(name + "_fit_m_" + component)
         if(fit_m):
             rescale(dt_data_m, fit_m)
-            fits_m.append((component + ", -1",fit_m))
+            fits_m.append((component,fit_m))
 
     f = pl.figure(figsize=(8,4))
     a_Mbc  = f.add_axes((0.13,0.38,0.35,0.55))

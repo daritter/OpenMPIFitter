@@ -6,6 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 //#include "func.h"
@@ -43,6 +44,16 @@ struct DspDsmKsPDF {
         CMP_charged = 1<<2,
         CMP_deltat  = 1<<3,
         CMP_all     = CMP_signal | CMP_mixed | CMP_charged | CMP_deltat
+    };
+
+    enum PlotFlags {
+        PLT_NONE  = 0,
+        PLT_SVD1  = 1<<0,
+        PLT_SVD2  = 1<<1,
+        PLT_MBCDE = 1<<2,
+        PLT_DT_P  = 1<<3,
+        PLT_DT_M  = 1<<4,
+        PLT_DT    = PLT_DT_P | PLT_DT_M
     };
 
     static EnabledComponents getComponents(const std::vector<std::string> &components){
@@ -91,6 +102,10 @@ struct DspDsmKsPDF {
         }
     }
 
+    void setOptions(int options) {
+        setComponents((EnabledComponents) options);
+    }
+
     void setSVD(Component::EnabledSVD svd){
         svdVs = svd;
     }
@@ -107,10 +122,11 @@ struct DspDsmKsPDF {
     /** Return the pdf for all events */
     double operator()(const std::vector<double> &par) const {
         double log_pdf(0.0);
-
-        for( unsigned int i=0; i<data.size(); i++ ){
-            const double pdf = PDF(data[i], par);
-            if( 0.0 < pdf ) log_pdf += log( pdf ) ;
+        for(int svd=0; svd<2; ++svd){
+            for( unsigned int i=0; i<data[svd].size(); i++ ){
+                const double pdf = PDF(data[svd][i], par);
+                if( 0.0 < pdf ) log_pdf += log( pdf ) ;
+            }
         }
         return log_pdf;
     }
@@ -150,21 +166,45 @@ struct DspDsmKsPDF {
     }
 
     double plot(int flag, const std::vector<double> values, const std::vector<double> &par){
+        //std::cout << flag << " " << values.size() << " " << values[0] << " " << par.size() << " " << par[0] << " " << data.size() << std::endl;
         long double pdf(0.0);
         Event e;
         int nEvents(0);
-        for(unsigned int i=0; i<data.size(); i++ ){
-            e = data[i];
-            if(flag==0){
-                e.Mbc = values[0];
-                e.Mbc = values[1];
-            }else if(flag==1){
-                e.deltaT = values[0];
+        int svdVs=0;
+        if(flag & PLT_SVD1) svdVs |= Component::SVD1;
+        if(flag & PLT_SVD2) svdVs |= Component::SVD2;
+        setSVD((Component::EnabledSVD)svdVs);
+        double lastBenergy(std::numeric_limits<double>::quiet_NaN());
+        double lastPDF(0);
+        for(int svd=0; svd<2; ++svd){
+ //           std::cout << svd << flag << PLT_SVD1 << PLT_SVD2 << std::endl;
+            if((svd==0) && !(flag & PLT_SVD1)) continue;
+            if((svd==1) && !(flag & PLT_SVD2)) continue;
+            for(unsigned int i=0; i<data[svd].size(); i++ ){
+                Event &orig = data[svd][i];
+                //Check for svd version
+                ++nEvents;
+                if(flag & PLT_MBCDE){
+                    if(lastBenergy != orig.benergy){
+                        e = orig;
+                        e.Mbc = values[0];
+                        e.dE = values[1];
+                        lastPDF = PDF(e, par);
+                        lastBenergy = e.benergy;
+                    }
+                    pdf += lastPDF;
+                }else if(flag & PLT_DT){
+                    if(flag & PLT_DT_M && orig.tag_q*orig.eta != -1) continue;
+                    if(flag & PLT_DT_P && orig.tag_q*orig.eta != +1) continue;
+                    e = orig;
+                    e.deltaT = values[0];
+                    pdf += getDeltaT(e, par);
+                    //std::cout << "dT=" << values[0] << " => pdf=" << pdf << std::endl;
+                }
             }
-            ++nEvents;
-            pdf += PDF(e, par);
         }
-
+        setSVD(Component::BOTH);
+        //if(nEvents==0) return 0;
         return pdf/nEvents;
     }
 
@@ -184,32 +224,45 @@ struct DspDsmKsPDF {
         BOOST_FOREACH(const std::string& filename, filenames){
             chain->AddFile(filename.c_str(),-1);
         }
+        bool readStriped = true;
         const unsigned int entries = chain->GetEntries();
-        const unsigned int interval = std::ceil(1.0 * entries / size);
-        const unsigned int start = process*interval;
-        const unsigned int end = std::min(entries,start+interval);
+        unsigned int start=process;
+        unsigned int end=entries;
+        unsigned int stride=size;
+        if(!readStriped){
+            const unsigned int interval = std::ceil(1.0 * entries / size);
+            start = process*interval;
+            end = std::min(entries,start+interval);
+            stride = 1;
+        }
 
-        data.clear();
-        data.reserve(end-start+1);
+        data[0].clear();
+        data[1].clear();
+        //data.reserve(end-start+1);
         Event event;
         event.setBranches(chain,bestBSelection);
-        for(unsigned int i=start; i<end; ++i){
+        for(unsigned int i=start; i<end; i+=stride){
             if(!chain->GetEntry(i)) {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
                 std::exit(5);
             }
-            if(!range_mBC(event.Mbc) || !range_dE(event.dE)) continue;
-            if(event.flag!=0 || event.tag_q==0) continue;
             event.calculateValues();
-            data.push_back(event);
+            if(!range_mBC(event.Mbc) || !range_dE(event.dE) || !range_dT(event.deltaT)) continue;
+            if(event.flag!=0 || event.tag_q==0) continue;
+            data[event.svdVs].push_back(event);
         }
 
-        std::cout << "Aye, process " << process << " fully loaded " << data.size()
-            << " events and is ready for pillaging" << std::endl;
+        std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
+            << ") events and is ready for pillaging" << std::endl;
         delete chain;
     }
 
-    const std::vector<Event>& getData() const { return data; }
+    const std::vector<Event>& getData(int svd) const { return data[svd]; }
+
+
+    const Range getRange_mBC() const { return range_mBC; }
+    const Range getRange_dE() const { return range_dE; }
+    const Range getRange_dT() const { return range_dT; }
 
     protected:
 
@@ -221,7 +274,7 @@ struct DspDsmKsPDF {
     /** Number of calls */
     mutable int nCalls;
     /** vector containing the data values */
-    std::vector<Event> data;
+    std::vector<Event> data[2];
     /** filename from which the data should be read */
     std::vector<std::string> filenames;
     /** name of the bestBSelection to be used */

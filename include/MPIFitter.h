@@ -27,14 +27,15 @@ enum MPIFitterCommand {
     EXIT       =  0,
     PARAMETERS =  1,
     OPERATOR   =  2,
-    PLOTTER    =  4
+    PLOTTER    =  4,
+    OPTIONS    =  8
 };
 
 struct MPICommand {
     MPICommand(short cmd=0, unsigned short size=0, short flag=0):cmd(cmd), size(size), flag(flag) {}
     short cmd;
     unsigned size;
-    short flag;
+    unsigned short flag;
 };
 
 void broadcast_cmd(const boost::mpi::communicator &world, MPICommand &cmd, int rank){
@@ -55,13 +56,17 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
         MPIMaster(boost::mpi::communicator world, FCN &fcn): world(world), fcn(fcn) {}
         /** Destructor */
         virtual ~MPIMaster(){
+            close();
+        }
+
+        void close(){
             //Let all the others now that the are finished by sending a
             //negative number of changed parameters
             MPICommand cmd(EXIT);
             broadcast_cmd(world, cmd, 0);
         }
 
-        void sendParameters(const std::vector<double> &params, int command = PARAMETERS) const{
+        void sendParameters(const std::vector<double> &params, int command = PARAMETERS, bool optional=true) const{
 #ifdef VERBOSE_TIMING
             double start = getClock();
             double split = start;
@@ -77,7 +82,9 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
                     changedParameters.push_back(std::make_pair(i,params[i]));
                 }
             }
-            lastParameters = params;
+            if(changedParameters.size()!=0){
+                lastParameters = params;
+            }else if(optional) return;
             //Send the number of changed parameters to all clients
             MPICommand cmd(command, changedParameters.size());
             //std::cout << changed << " Parameters have changed" << std::endl;
@@ -95,7 +102,7 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
 
         /** FCN evaluation, called by Minuit2 */
         virtual double operator()(const std::vector<double> &params) const {
-            sendParameters(params, OPERATOR | PARAMETERS);
+            sendParameters(params, OPERATOR | PARAMETERS, false);
 #ifdef VERBOSE_TIMING
             double start = getClock();
             double split = start;
@@ -126,21 +133,37 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             return fcn.finalize(params, result);
         }
 
-        double plot(int flag, const std::vector<double> &values, const std::vector<double> &params) const {
+        double plot(int flag, std::vector<double> values, const std::vector<double> &params) const {
             sendParameters(params);
             MPICommand cmd(PLOTTER,values.size(),flag);
             broadcast_cmd(world, cmd, 0);
-            double local_result = fcn.plot(flag, values, params);
-            double result(0);
-            typename FCN::operator_type op;
-            reduce(world, local_result, result, op, 0);
-            return result / world.size();
+            broadcast_vec(world, values, 0);
+            double result = fcn.plot(flag, values, params);
+            int nresults(0);
+            std::vector<double> results;
+            gather(world, result, results, 0);
+            result = 0;
+            BOOST_FOREACH(double &r, results){
+                if(r!=r) continue;
+                result += r;
+                ++nresults;
+            }
+            return result / nresults;
         }
+
+        void setOptions(int flag) {
+            MPICommand cmd(OPTIONS,0,flag);
+            broadcast_cmd(world, cmd, 0);
+            fcn.setOptions(flag);
+        }
+
 
         /** Return the error_def to Minuit2 */
         virtual double Up() const {
             return FCN::error_def;
         }
+
+        FCN& localFCN() { return fcn; }
 
     protected:
         /** Communicator to talk to all clients */
@@ -172,10 +195,15 @@ template<class FCN> class MPIClient {
             MPICommand cmd;
 
             typename FCN::operator_type op;
+            world.barrier();
             while(true){
                 //Recieve the number of changed parameters
                 broadcast_cmd(world, cmd, 0);
-                if(cmd.cmd == EXIT) return;
+                //std::cout << "Recvieved CMD: (" << cmd.cmd << "," << cmd.size << "," << cmd.flag << ")" << std::endl;
+                if(cmd.cmd == EXIT) {
+                    //std::cout << "Aye, process " << world.rank() << " be exiting" << std::endl;
+                    return;
+                }
                 if(cmd.cmd & PARAMETERS){
                     //Otherwise make sure we have enough elements in the list of changed parameters
                     changedParameters.resize(cmd.size);
@@ -197,7 +225,12 @@ template<class FCN> class MPIClient {
                     std::vector<double> values(cmd.size,0);
                     broadcast_vec(world, values, 0);
                     double result = fcn.plot(cmd.flag, values, params);
-                    reduce(world, result, op, 0);
+                    //std::cout << "Client Result: " << result << std::endl;
+                    gather(world, result, 0);
+                }
+                if(cmd.cmd & OPTIONS){
+                    //std::cout << "Setting Options " << cmd.flag << std::endl;
+                    fcn.setOptions(cmd.flag);
                 }
             }
         }
@@ -216,7 +249,7 @@ template<class FCN> class MPIClient {
  */
 class MPIFitter {
     public:
-        template<class FitRoutine, class FCN> int run(FitRoutine& fitter, FCN& fcn){
+        template<class FitRoutine, class FCN> int run(FitRoutine& fitter, FCN& fcn, int niceness=20){
             boost::mpi::environment env;
             boost::mpi::communicator world;
 
@@ -225,7 +258,7 @@ class MPIFitter {
             //If rank>0 we are a client so
             if( world.rank() > 0 ) {
                 //Play nice ...
-                int nicelevel = nice(20);
+                int nicelevel = nice(niceness);
                 if(nicelevel<19){
                     std::cerr << "Problem nicing process " << world.rank() << std::endl;
                 }
@@ -240,6 +273,7 @@ class MPIFitter {
                 << " and calling Fit routine" << std::endl;
             //So wrap the FCN and call the fit routine
             MPIMaster<FCN> master(world, fcn);
+            world.barrier();
             return fitter(master);
         }
 

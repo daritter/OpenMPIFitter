@@ -46,7 +46,7 @@ struct FitRoutine {
         std::cout << "Function Minimum: " << std::setprecision(10)
 		  << min.Fval() << std::endl;
         if(!min.IsValid()){
-            std::cerr << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
+            std::cout << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
         }else{
             std::cout << "Avast, Minuit be converrrrging." << std::endl;
         }
