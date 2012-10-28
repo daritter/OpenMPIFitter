@@ -1,6 +1,7 @@
 #ifndef MPIFitter_Component_h
 #define MPIFitter_Component_h
 
+#include "Event.h"
 #include "Range.h"
 #include "DeltaT.h"
 
@@ -18,10 +19,16 @@ class Component {
     virtual double operator()(const Event& e, const std::vector<double> &par) = 0;
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH) = 0;
 
-    double getDeltaT(const Event& e, const std::vector<double> &par, bool anyway=false){
+    virtual Event get_maxEvent(const std::vector<double> &par, int svd){
+        Event e;
+        return e;
+    }
+
+    double get_deltaT(const Event& e, const std::vector<double> &par, bool anyway=false){
         if(!useDeltaT && !anyway) return 1.0;
         return deltaT(e, par);
     }
+
 
     protected:
     bool useDeltaT;

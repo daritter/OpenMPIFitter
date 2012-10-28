@@ -53,7 +53,7 @@ class ChargedPDF: public Component {
             chargedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::charged_svd1_Mbc_argusC]);
             chargedPDF_svd1.fcn2.fcny.set(&par[PAR::charged_svd1_dE_cheb1]);
 
-            return getDeltaT(e,par)*par[PAR::yield_svd1_charged]*chargedPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_svd1_charged]*chargedPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for charged component
             chargedPDF_svd2.set(par[PAR::charged_svd2_ratio]);
@@ -62,7 +62,7 @@ class ChargedPDF: public Component {
             chargedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::charged_svd2_Mbc_argusC]);
             chargedPDF_svd2.fcn2.fcny.set(&par[PAR::charged_svd2_dE_cheb1]);
 
-            return getDeltaT(e,par)*par[PAR::yield_svd2_charged]*chargedPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_svd2_charged]*chargedPDF_svd2(e.Mbc, e.dE);
         }
     }
 

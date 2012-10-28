@@ -53,7 +53,7 @@ class MixedPDF: public Component {
             mixedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
             mixedPDF_svd1.fcn2.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
 
-            return getDeltaT(e,par)*par[PAR::yield_svd1_mixed] * mixedPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_svd1_mixed] * mixedPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for mixed component
             mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
@@ -62,7 +62,7 @@ class MixedPDF: public Component {
             mixedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
             mixedPDF_svd2.fcn2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
 
-            return getDeltaT(e,par)*par[PAR::yield_svd2_mixed] * mixedPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_svd2_mixed] * mixedPDF_svd2(e.Mbc, e.dE);
         }
     }
 

@@ -127,7 +127,7 @@ struct DspDsmKsPDF {
     }
 
     /** Return the yield of the pdf given the set of parameters */
-    double yield(const std::vector<double> &par, int svdVs=Component::BOTH) const {
+    double get_yield(const std::vector<double> &par, int svdVs=Component::BOTH) const {
         double yield(0);
         BOOST_FOREACH(Component* component, components){
             yield += component->get_yield(par,(Component::EnabledSVD)svdVs);
@@ -135,17 +135,17 @@ struct DspDsmKsPDF {
         return yield;
     }
 
-    double getDeltaT(const Event &e, const std::vector<double> &par) const {
+    double get_deltaT(const Event &e, const std::vector<double> &par) const {
         long double deltaT(0);
         BOOST_FOREACH(Component* component, components){
-            deltaT += component->getDeltaT(e,par, true);
+            deltaT += component->get_deltaT(e,par, true);
         }
         return deltaT;
     }
 
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, double value) const {
-        const double logL = -2.0*(value-yield(par));
+        const double logL = -2.0*(value-get_yield(par));
 
         //Determine wether to show value
         nCalls++;
@@ -182,13 +182,13 @@ struct DspDsmKsPDF {
                         e.tag_q = i;
                         e.eta = i*values[1];
                     }
-                    pdf += getDeltaT(e, par);
+                    pdf += get_deltaT(e, par);
                 }
                 ++nEvents;
             }
         }
-        const double total_yield = yield(par,svdVs);
-        return pdf*total_yield/nEvents;
+        const double yield = get_yield(par,svdVs);
+        return pdf*yield/nEvents;
     }
 
     /** Load the chunk of data to be used by this process of the pdf

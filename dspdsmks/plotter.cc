@@ -42,35 +42,11 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
             }
         }
     }
-    double yield = pdf.yield(par,svdVs);
+    const double yield = pdf.get_yield(par,svdVs);
     h_pdf->Scale(h_pdf->GetXaxis()->GetBinWidth(1)*h_pdf->GetYaxis()->GetBinWidth(1));
-    std::cout << "mBCdE Integral for '" << name << "' = " << integral << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
+    std::cout << "mBCdE Integral for '" << name << "' = " << integral
+        << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
 }
-
-//template<class FCN> void plotPDF(FCN& pdf, const std::vector<double>& par, TH2D* fit, int svdVs, const std::string& name= ""){
-    //Event e;
-    //e.svdVs = svdVs;
-    //int flag = svdVs | DspDsmKsPDF::PLT_MBCDE;
-    //double integral(0);
-    //std::vector<double> values(2,0);
-    //ProgressBar pbar(fit->GetNbinsX()*fit->GetNbinsY());
-    ////size_t nEvents = bEnergy->GetEffectiveEntries();
-    //for(int ix=0; ix<fit->GetNbinsX(); ++ix){
-        //values[0] = fit->GetXaxis()->GetBinCenter(ix+1);
-        //for(int iy=0; iy<fit->GetNbinsY(); ++iy){
-            //std::cout << pbar(ix*fit->GetNbinsY()+iy);
-            //values[1] = fit->GetYaxis()->GetBinCenter(iy+1);
-            //double pdf_value = pdf.plot(flag,values,par);
-            //if(pdf_value >0 && pdf_value==pdf_value){
-                //integral += pdf_value * fit->GetXaxis()->GetBinWidth(ix+1) *  fit->GetYaxis()->GetBinWidth(ix+1);
-                //fit->Fill(values[0], values[1], pdf_value);
-            //}
-        //}
-    //}
-    ////double yield = pdf.yield(par);
-    //fit->Scale(fit->GetXaxis()->GetBinWidth(1)*fit->GetYaxis()->GetBinWidth(1));
-    //std::cout << "PDF Integral for '" << name << "' = " << integral << std::endl; // << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
-//}
 
 template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* dtpdf, int flavour, int svdVs, const std::string& name = ""){
     Event e;
@@ -90,10 +66,10 @@ template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* 
             dtpdf->Fill(values[0], pdf_value);
         }
     }
-    //double yield = pdf.localFCN().yield(par);
+    const double yield = pdf.localFCN().get_yield(par, svdVs);
     dtpdf->Scale(dtpdf->GetBinWidth(1));
-    std::cout << "dT Integral for '" << name << "' = " << integral << std::endl;
-    //<< ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
+    std::cout << "dT Integral for '" << name << "' = " << integral
+        << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
 }
 
 
@@ -116,7 +92,6 @@ struct PlotRoutine {
     template<class FCN> int operator()(FCN &parallel_pdf){
         const Range range_mBC = parallel_pdf.localFCN().getRange_mBC();
         const Range range_dE = parallel_pdf.localFCN().getRange_dE();
-        const Range range_dT = parallel_pdf.localFCN().getRange_dT();
 
         Parameters params;
         std::ifstream input(parameterIn.c_str());

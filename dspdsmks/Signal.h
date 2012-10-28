@@ -72,7 +72,7 @@ class SignalPDF: public Component {
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(&par[PAR::signal_svd1_dE_cheb1]);
 
-            return getDeltaT(e,par)*par[PAR::yield_svd1_signal] * signalPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_svd1_signal] * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
             signalPDF_svd2.set(par[PAR::signal_svd2_ratio]);
@@ -84,7 +84,7 @@ class SignalPDF: public Component {
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(&par[PAR::signal_svd2_dE_cheb1]);
 
-            return getDeltaT(e,par)*par[PAR::yield_svd2_signal] * signalPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_svd2_signal] * signalPDF_svd2(e.Mbc, e.dE);
         }
     }
 
@@ -97,6 +97,20 @@ class SignalPDF: public Component {
             yield += par[PAR::yield_svd2_signal];
         }
         return yield;
+    }
+
+    virtual Event get_maxEvent(const std::vector<double> &par, int svd){
+        Event e = Component::get_maxEvent(par, svd);
+        if(svd == SVD1){
+            e.svdVs = 0;
+            e.dE  = par[PAR::signal_svd1_dE_mean];
+            e.Mbc = par[PAR::signal_svd1_Mbc_mean_m0] + e.dE*par[PAR::signal_svd1_Mbc_mean_m1];
+        }else if(svd == SVD2){
+            e.svdVs = 1;
+            e.dE  = par[PAR::signal_svd2_dE_mean];
+            e.Mbc = par[PAR::signal_svd2_Mbc_mean_m0] + e.dE*par[PAR::signal_svd2_Mbc_mean_m1];
+        }
+        return e;
     }
 
     private:
