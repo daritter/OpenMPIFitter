@@ -3,8 +3,9 @@ import sys
 import os
 sys.path.insert(0,os.path.expanduser("~/belle/DspDsmKs/python"))
 import matplotlib
-from matplotlib import pyplot as pl
+matplotlib.use("Agg")
 matplotlib.rc("path", simplify = False)
+from matplotlib import pyplot as pl
 
 
 #command handling here
