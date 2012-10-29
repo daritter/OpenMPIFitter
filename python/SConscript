@@ -1,0 +1,8 @@
+from distutils import sysconfig
+
+Import('*')
+
+pyEnv = env.Clone()
+pyEnv.AppendUnique(CPPPATH=sysconfig.get_python_inc(), LIBS="boost_python")
+pymodule = pyEnv.SharedLibrary("dspdsmks", Glob("*.cc") + mpiSource)
+pyEnv.InstallAs("#python/dspdsmks$SHLIBSUFFIX",pymodule)

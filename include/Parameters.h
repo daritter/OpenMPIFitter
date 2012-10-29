@@ -11,6 +11,8 @@
 
 class Parameters {
     public:
+        typedef std::vector<Parameter>::iterator iterator;
+
         Parameters();
 
         void load(std::istream &in);
@@ -21,9 +23,13 @@ class Parameters {
         void update(const ROOT::Minuit2::MnUserParameters mnParams);
 
         std::vector<double> getValues() const;
+        size_t size() const { return m_parameters.size(); }
 
         Parameter& operator[](int id){ return m_parameters[id]; }
         Parameter& operator[](const std::string &name){ return m_parameters[ParameterList::getIndex(name)]; }
+
+        iterator begin() { return m_parameters.begin(); }
+        iterator end() { return m_parameters.end(); }
     protected:
         std::vector<Parameter> m_parameters;
 };

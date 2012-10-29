@@ -1,16 +1,18 @@
 import os
 Import('*')
 
-mpiFitter = env.Library("mpifitter",Glob('src/*.cc'))
+mpiSource = Glob("src/*.cc")
+mpiFitter = env.Library("mpifitter", mpiSource)
 
 for filename in Glob('src/fitter/*.cc'):
     basename = os.path.basename(filename.abspath)
     executable = "#fitter-" + os.path.splitext(basename)[0]
     env.Program(executable,[filename] + mpiFitter)
 
-Export(["env","mpiFitter"])
+Export(["env", "mpiFitter", "mpiSource"])
 env.SConscript('dspdsmks/SConscript')
 env.SConscript('note/SConscript')
+env.SConscript('python/SConscript')
 
 testEnv = env.Clone()
 testEnv.AppendUnique( CPPPATH = ["gtest/include", "gtest"])

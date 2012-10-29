@@ -112,7 +112,7 @@ template<int N> class Chebychev {
         Chebychev(double lower, double upper): norm(0) {
             if(N<0) throw std::logic_error("Chebychev with N<0 makes no sense");
             if(N>4) throw std::logic_error("Chebychev with N>4 not supported");
-            if(N>1) c[0] = std::numeric_limits<double>::quiet_NaN();
+            for(int i=0; i<N; ++i) c[i] = std::numeric_limits<double>::quiet_NaN();
             l[0] = lower;
             u[0] = upper;
             for(int i=1; i<N+1; ++i){

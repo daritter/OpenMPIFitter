@@ -16,7 +16,8 @@ def runtex(target,source,env):
     os.environ["TEXINPUTS"] = env["ENV"]["TEXINPUTS"]
     shell_env = copy.copy(env["ENV"])
     for var in "HOME USER USERNAME PWD".split():
-        shell_env[var] = os.environ[var]
+        if var in os.environ:
+            shell_env[var] = os.environ[var]
 
     tex = subprocess.Popen(["pdflatex","--interaction=nonstopmode","--synctex=1",source[0].abspath],
                            env=shell_env,
