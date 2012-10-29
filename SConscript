@@ -10,6 +10,7 @@ for filename in Glob('src/fitter/*.cc'):
 
 Export(["env","mpiFitter"])
 env.SConscript('dspdsmks/SConscript')
+env.SConscript('note/SConscript')
 
 testEnv = env.Clone()
 testEnv.AppendUnique( CPPPATH = ["gtest/include", "gtest"])

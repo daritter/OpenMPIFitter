@@ -2,9 +2,10 @@ import os
 import sys
 
 env = Environment(
+    tools=['default','output','inkscape','pdf'],
     ENV=os.environ,
     CXX="mpic++",
-    CXXFLAGS=["-O3", "-g", "-Wall"],
+    CXXFLAGS=["-O3", "-Wall"],
     #LINKFLAGS=["-Wl,--as-needed","-Wl,--strip-all"],
     RPATH = "$LIBPATH",
     CPPPATH=["#include"],
@@ -13,6 +14,8 @@ env = Environment(
         "Minuit2"
     ],
 )
+env.Quiet()
+
 #env.AppendUnique(LINKFLAGS= "-Wl,--strip-all")
 try:
     env.ParseConfig("root-config --libs --cflags --ldflags")
