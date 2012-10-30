@@ -1,5 +1,6 @@
 #include <boost/python.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/format.hpp>
 #include <Parameters.h>
 #include "../dspdsmks/DspDsmKs.h"
 #include <fstream>
@@ -22,6 +23,10 @@ struct ParameterHelper {
         load(*obj, filename);
         return obj;
     }
+
+    static const std::string tostring(Parameter &self){
+        return (boost::format("<%1% value=%2% error=%3%>") % self.name() % self.value() % self.error()).str();
+    }
 };
 
 BOOST_PYTHON_MODULE(dspdsmks)
@@ -41,6 +46,7 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .add_property("max", &Parameter::max)
         .add_property("has_min", &Parameter::hasMin)
         .add_property("has_max", &Parameter::hasMax)
+        .def("__repr__", &ParameterHelper::tostring)
     ;
 
     Parameter& (Parameters::*get_id)(int) = &Parameters::operator[];

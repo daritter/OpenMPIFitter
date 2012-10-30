@@ -14,12 +14,14 @@
 \def\MassWLimit{\SI{90}{\%}}
 \def\BestBSelectionEff{\SI{89}{\%}}
 \def\CorrectRecoEff{\SI{91}{\%}}
-\def\ReconstructedBR{\num{3.665e-03}}
 
-\def\RawReconstructionEffSVDOne{(0 \pm 0)\times 10^0}
-\def\RawReconstructionEffSVDTwo{(0 \pm 0)\times 10^0}
-\def\ReconstructionEffSVDOne{(0 \pm 0)\times 10^0}
-\def\ReconstructionEffSVDTwo{(0 \pm 0)\times 10^0}
+\def\ReconstructedBR{\num{2.851e-02}}
+\def\RawReconstructionEffSVDOne{(2.028 \pm 0.018) \times 10^{-3}}
+\def\RawReconstructionEffSVDTwo{(7.656 \pm 0.036) \times 10^{-3}}
+\def\ReconstructionEffSVDOne{(5.780 \pm 0.052) \times 10^{-5}}
+\def\ReconstructionEffSVDTwo{(21.825 \pm 0.102) \times 10^{-5}}
+
+\arraycolsep0pt
 
 \begin{document}
 \chapter{Event Selection}
@@ -230,8 +232,8 @@ Gaussian distributions
 \[
 \begin{array}{rll}
     \LH_{sig}(m) &= \sum_i^N G(\sigma_i,\mu_i)&\\
-    \LH_{bkg}(m) &= p_0*m + p_1&\text{ for \Pgpz, \PKzS or \PD}\\
-    \LH_{bkg}(m) &= m^{p_0}*e^{p_1*m+p_2*m^2}&\text{ for \PDstpm}
+    \LH_{bkg}(m) &= p_0 \cdot m + p_1&\text{ for \Pgpz, \PKzS or \PD}\\
+    \LH_{bkg}(m) &= m^{p_0} \cdot e^{p_1m+p_2m^2}&\text{ for \PDstpm}
 \end{array}
 \]
 The mass window is then determined from this distributions by taking the
@@ -268,6 +270,9 @@ determined using the standard Belle tools.
 
 \section{Reconstruction Efficiency}
 
+The raw reconstruction efficiency can be obtained easily by counting the number
+of events which were reconstructed correctly and divide it by the number of
+total simulated events
 \begin{align}
     \epsilon_{raw}^{\text{(SVD1)}} & = \RawReconstructionEffSVDOne &
     \epsilon_{raw}^{\text{(SVD2)}} & = \RawReconstructionEffSVDTwo
@@ -277,18 +282,24 @@ However, not all possible decays for \ddk are reconstructed. In fact, only a
 very small fraction of those decays can be reconstructed efficiently. However in
 the signal MC we only simulated decays we actually reconstruct and thus we
 have to weight the raw reconstruction efficiency with the total reconstructed
-Branching ratio for \ddk
+Branching ratio for \ddk. Given the reconstructed Branching ratio for \PDst
+\begin{align}
+    \BR_{rec}\big(\PDstp \rightarrow \PDz\Pgpps\big) &=
+    \BR\big(\PDstp \rightarrow \PDz\Pgpps\big) \times \sum_i \BR\big(\PDz_i\big)\\
+    \BR_{rec}\big(\PDstp \rightarrow \PDp\Pgpzs\big) &=
+    \BR\big(\PDstp \rightarrow \PDp\Pgpzs\big) \times \sum_i \BR\big(\PDp_i\big)
+\end{align}
+where $\PDp_i$ and $\PDz_i$ denote to the $i$th reconstructed decay channel for
+the \PD meson and assuming the same branching ratio for the charge conjugated
+decays it follows that
 \begin{multline}
     \BR_{rec}\big(\ddk\big) = \\
-    \arraycolsep1pt
-    \begin{array}[b]{*5{>{\displaystyle}l}}
-    &\BR\big(\PDstp \rightarrow \PDz\Pgpps\big) &\times \BR\big(\PDstm \rightarrow
-    \PDz\Pgpms\big) &\times \sum_{i,j} \BR\big(\PDz_i\big)&\BR\big(\PDz_j\big) \\
-     +&\BR\big(\PDstp \rightarrow \PDp\Pgpzs\big) &\times \BR\big(\PDstm \rightarrow
-    \PDz\Pgpms\big) &\times \sum_{i,j} \BR\big(\PDp_i\big)&\BR\big(\PDz_j\big)\\
-     +&\BR\big(\PDstp \rightarrow \PDz\Pgpps\big) &\times \BR\big(\PDstm \rightarrow
-    \PDm\Pgpzs\big) &\times \sum_{i,j} \BR\big(\PDz_i\big)&\BR\big(\PDm_j\big)
-    \end{array}
+    \BR\big(\PKzS \rightarrow \Pgpp\Pgpm \big) \times
+    \Big(
+    \BR_{rec}\big(\PDstp \rightarrow \PDz\Pgpps\big)
+    + \BR_{rec}\big(\PDstp
+    \rightarrow \PDp\Pgpzs\big)
+    \Big)^2
 \end{multline}
 and with the individual branching ratios given in Table \ref{tab:gen-decay} the
 total reconstructed branching ratio is
