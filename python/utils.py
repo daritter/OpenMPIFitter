@@ -1,5 +1,6 @@
 #coding: utf8
 import math
+import numpy as np
 
 def format_error(value,error, precision=3, exporder=3, exponent=None):
     if exponent is None: exponent = int(math.floor(math.log10(value)))
@@ -15,3 +16,10 @@ def format_error(value,error, precision=3, exporder=3, exponent=None):
     else:
         return r"{0:.{precision}f} \pm {1:.{precision}f}".format(
             value, error, precision=precision)
+
+def latex_matrix(matrix):
+    lines = []
+    matrix = np.array(matrix)
+    for row in matrix:
+        lines.append(" & ".join(str(e) for e in row))
+    return  "\\begin{pmatrix}\n    " + "\\\\\n    ".join(lines) + "\n\\end{pmatrix}"

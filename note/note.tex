@@ -21,7 +21,7 @@
 \def\ReconstructionEffSVDOne{(5.780 \pm 0.052) \times 10^{-5}}
 \def\ReconstructionEffSVDTwo{(21.825 \pm 0.102) \times 10^{-5}}
 
-\arraycolsep0pt
+%\arraycolsep0pt
 
 \begin{document}
 \chapter{Event Selection}
@@ -47,26 +47,27 @@ exclusively into \ddk where the products will continue to decay as seen in Table
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{lLrr}
+    \begin{tabular}{lLRr}
         \toprule
         \multicolumn{2}{l}{Decay}& relative \BR & generated \BR\\
         \midrule
-        \PBz   &\rightarrow \PDstp\PDstm\PKzS + \text{cc}&\SI{0.41}{\%}&\SI{100.00}{\%}\\
+        \PBz   &\rightarrow \PDstp\PDstm\PKzS + \text{cc} &( 0.41 \pm 0.35)\,\% &\SI{100.00}{\%}\\
         \midrule
-        \PDstp &\rightarrow \PDz\Pgpps + \text{cc} &\SI{67.70}{\%}&\SI{68.80}{\%}\\
-        &\rightarrow \PDp\Pgpzs + \text{cc}&\SI{30.70}{\%}&\SI{32.20}{\%}\\
+        \PDstp &\rightarrow \PDz\Pgpps + \text{cc}        &(67.70 \pm 0.50)\,\% &\SI{ 68.80}{\%}\\
+        &\rightarrow \PDp\Pgpzs + \text{cc}               &(30.70 \pm 0.50)\,\% &\SI{ 32.20}{\%}\\
         \midrule
-        \PDz   &\rightarrow \PKm\Pgpp + \text{cc}&\SI{3.87}{\%}&\SI{15.03}{\%}\\
-        &\rightarrow \PKm\Pgpp\Pgpz + \text{cc}&\SI{13.90}{\%}&\SI{53.71}{\%}\\
-        &\rightarrow \PKm\Pgpp\Pgpp\Pgpm + \text{cc}&\SI{8.07}{\%}&\SI{31.26}{\%}\\
+        \PDz   &\rightarrow \PKm\Pgpp + \text{cc}         &( 3.87 \pm 0.05)\,\% &\SI{ 15.03}{\%}\\
+        &\rightarrow \PKm\Pgpp\Pgpz + \text{cc}           &(13.90 \pm 0.50)\,\% &\SI{ 53.71}{\%}\\
+        &\rightarrow \PKm\Pgpp\Pgpp\Pgpm + \text{cc}      &( 8.07 \pm 0.20)\,\% &\SI{ 31.26}{\%}\\
         \midrule
-        \PDp   &\rightarrow \PKm\Pgpp\Pgpp + \text{cc}&\SI{9.13}{\%}&\SI{100.00}{\%}\\
+        \PDp   &\rightarrow \PKm\Pgpp\Pgpp + \text{cc}    &( 9.13 \pm 0.19)\,\% &\SI{100.00}{\%}\\
         \midrule
-        \PKzS  &\rightarrow \Pgpp\Pgpm &\SI{69.20}{\%} &\SI{100.00}{\%}\\
+        \PKzS  &\rightarrow \Pgpp\Pgpm                    &(69.20 \pm 0.05)\,\% &\SI{100.00}{\%}\\
         \bottomrule
     \end{tabular}
-    \caption{Real branching fractions and generated branching fractions for the
-    signal \PBz}
+    \caption{Real branching fractions according to \cite{PDG} and generated branching fractions for the
+    signal \PBz. Generated branching fractions are the central values of the
+    real branching fractions normalized to \SI{100}{\%}}
     \label{tab:gen-decay}
 \end{table}
 
@@ -267,6 +268,16 @@ determined using the standard Belle tools.
 \section{Control Sample}
 
 \chapter{Branching Fraction}
+The branching fraction of \ddk is given by
+\begin{equation}
+    \BR\big(\ddk\big) = \frac{Y\big(\ddk\big)}{\epsilon\big(\ddk\big)
+    N(\bbar)}
+    \label{eq:branching_fraction}
+\end{equation}
+were the signal yield $Y(\ddk)$ ist the number of \ddk events found in the total
+data set $N(\bbar)$. But due to inefficiences not all
+signal events will be detected and the term $\epsilon(\ddk)$ is the efficiency
+for detecting a \ddk event
 
 \section{Reconstruction Efficiency}
 
@@ -294,12 +305,13 @@ the \PD meson and assuming the same branching ratio for the charge conjugated
 decays it follows that
 \begin{multline}
     \BR_{rec}\big(\ddk\big) = \\
-    \BR\big(\PKzS \rightarrow \Pgpp\Pgpm \big) \times
     \Big(
     \BR_{rec}\big(\PDstp \rightarrow \PDz\Pgpps\big)
     + \BR_{rec}\big(\PDstp
     \rightarrow \PDp\Pgpzs\big)
     \Big)^2
+    \times \BR\big(\PKzS \rightarrow \Pgpp\Pgpm \big)
+    \label{eq:total-rec-br}
 \end{multline}
 and with the individual branching ratios given in Table \ref{tab:gen-decay} the
 total reconstructed branching ratio is
@@ -311,6 +323,82 @@ and the total reconstruction efficency is
     \epsilon_{MC}^{\text{(SVD1)}} & = \ReconstructionEffSVDOne &
     \epsilon_{MC}^{\text{(SVD2)}} & = \ReconstructionEffSVDTwo
 \end{align}
+where the large difference between SVD1 and SVD2 can be explained by the SVD
+only track finding which is only possible for SVD2
+
+\section{Systematic Uncertainties}
+
+\subsection{Daughter Branching Fractions}
+
+Each daughter branching fraction has an error associated with their world
+average as given in \cite{PDG} and seen in \ref{tab:gen-decay}. But to
+calculate the error of the total reconstructed branching ratio also the
+correlations between these branching ratios is required. We assume that
+branching ratios of different particles are uncorrelated and the correlations
+between single branching fractions can be also obtained from \cite{PDG}.
+The correlation matrix between all daughter branching fractions with their
+errors
+\begin{equation}
+    \mathbf{\BR} = \begin{pmatrix}
+    \BR\big(\PDstp \rightarrow \PDz\Pgpps\big)\\
+    \BR\big(\PDstp \rightarrow \PDp\Pgpzs\big)\\
+    \BR\big(\PDz   \rightarrow \PKm\Pgpp\big)\\
+    \BR\big(\PDz   \rightarrow \PKm\Pgpp\Pgpz\big)\\
+    \BR\big(\PDz   \rightarrow \PKm\Pgpp\Pgpp\Pgpm\big)\\
+    \BR\big(\PDp   \rightarrow \PKm\Pgpp\Pgpp\big)\\
+    \BR\big(\PKzS  \rightarrow \Pgpp\Pgpm\big)
+\end{pmatrix} =
+\begin{pmatrix}
+    67.7\\ 30.7\\ 3.87\\ 13.9\\
+    8.07\\ 9.13\\ 69.2
+\end{pmatrix} \times 10^{-2}
+\quad \delta \mathbf{\BR} =
+\begin{pmatrix}
+    0.5\\ 0.5\\ 0.05\\   0.5\\
+    0.2\\ 0.19\\ 0.05
+\end{pmatrix} \times 10^{-2}
+    \label{eq:br-list}
+\end{equation}
+can be obtained as
+\begin{equation}
+    \text{corr}\left(\mathbf{\BR}\right) = \begin{pmatrix}
+        1 & -0.66 & 0 & 0 & 0 & 0 & 0\\
+        -0.66 & 1 & 0 & 0 & 0 & 0 & 0\\
+        0 & 0 & 1 & -0.04 & 0.22 & 0 & 0\\
+        0 & 0 & -0.04 & 1 & 0.55 & 0 & 0\\
+        0 & 0 & 0.22 & 0.55 & 1 & 0 & 0\\
+        0 & 0 & 0 & 0 & 0 & 1 & 0\\
+        0 & 0 & 0 & 0 & 0 & 0 & 1
+    \end{pmatrix}
+    \label{eq:br-correlations}
+\end{equation}
+and the error on the total reconstructed branching ratio
+$\BR_{rec}\big(\ddk\big)$ can be calculated using standard error propagation
+\cite{errorprop}
+
+\begin{equation}
+    \delta y =\sqrt{\sum_{i=1}^{n}\sum_{j=1}^n\left(\frac{\partial
+    y}{\partial x_i}\right)\left(\frac{\partial y}{\partial x_j}\right)\cdot
+    \text{cov}(x_i, x_j)}
+    \label{eq:error-prop}
+\end{equation}
+were the covariance matrix $\text{cov}\left(\mathbf{\BR}\right)$
+can be obtained by multiplying the correlation matrix
+$\text{corr}\left(\mathbf{\BR}\right)$ with the errors from both
+sides
+\begin{equation}
+    \text{cov}\left(\mathbf{\BR}\right) =
+    \text{diag}\left(\delta \mathbf{\BR} \right)
+    \text{corr}\left(\mathbf{\BR}\right)
+    \text{diag}\left(\delta \mathbf{\BR} \right)
+    \label{eq:corr-to-cov}
+\end{equation}
+
+With equations \ref{eq:total-rec-br} and \ref{eq:error-prop}  the total error turns out to be
+\begin{equation}
+    \delta \BR_{rec}\big(\ddk\big) = \SI{4.4}{\%}
+    \label{eq:total-rec-br-err}
+\end{equation}
 
 
 \end{document}

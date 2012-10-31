@@ -23,10 +23,9 @@ br_DDK = 8.1e-3
 
 eff_DsDp = br_DsDp * sum(br_Dp)
 eff_DsD0 = br_DsD0 * sum(br_D0)
-eff_DsDs = eff_DsDp*eff_DsDp + 2*eff_DsD0*eff_DsDp + eff_DsD0*eff_DsD0;
-eff_Ks   = br_K0Ks * br_KsPP
+eff_DsDs = (eff_DsDp + eff_DsD0)**2;
 eff_DDKs = eff_DsDs * br_KsPP
-eff_DDK  = eff_DDKs * br_K0Ks
+#eff_DDK  = eff_DDKs * br_K0Ks
 
 #signal_mc = (6e6,6e6)
 #signal_yield_par = ("yield_svd1_signal", "yield_svd2_signal")
