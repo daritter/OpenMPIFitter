@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <limits>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 //#include "func.h"
 
@@ -145,6 +146,7 @@ struct DspDsmKsPDF {
 
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, double value) const {
+        static boost::format output("call #%-5d: -2logL =%18.10g\n");
         const double logL = -2.0*(value-get_yield(par));
 
         //Determine wether to show value
@@ -152,9 +154,7 @@ struct DspDsmKsPDF {
         const int order = (nCalls == 0) ? 1 : std::max(std::min((int)std::log10(nCalls), maxPrintOrder), 0);
         const int interval = static_cast<int>(std::pow(10., order));
         if(nCalls % interval == 0){
-            std::cout << "call #" << std::setw(5) << std::left << nCalls << ": ";
-            std::cout << "-2logL =" << std::setw(18) << std::setprecision(10) <<
-                std::scientific << std::right << logL << std::endl;
+            std::cout << output % nCalls % logL;
         }
         return logL;
     }

@@ -4,7 +4,10 @@ import os
 sys.path.insert(0,os.path.expanduser("~/belle/DspDsmKs/python"))
 import matplotlib
 matplotlib.use("Agg")
-matplotlib.rc("path", simplify = False)
+matplotlib.rc("path", simplify=False)
+matplotlib.rc("font", family="serif")
+matplotlib.rc("text", usetex=True)
+matplotlib.rc("text.latex", unicode="true", preamble=r"\usepackage{sistyle},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
 from matplotlib import pyplot as pl
 
 
@@ -18,14 +21,12 @@ import r2mpl
 rootfile = root.TFile(filename + ".root")
 
 def rescale(data,*fits):
-    nData = data.GetNbinsX()
-    nFit = fits[0].GetNbinsX()
-    if(nData != nFit):
-        scale = nFit/nData
-        if isinstance(fits[0],root.TH2):
-            for f in fits: f.Scale(scale**2)
-        else:
-            for f in fits: f.Scale(scale)
+    scaleX = fits[0].GetNbinsX() / data.GetNbinsX()
+    scaleY = 1
+    if isinstance(fits[0], root.TH2):
+        scaleY = fits[0].GetNbinsY() / data.GetNbinsY()
+
+    for f in fits: f.Scale(scaleX*scaleY)
 
 
 def calc_sigmas(name, data, fit):
@@ -56,7 +57,7 @@ def plotMbcDe(data, label=None, title=None, **argk):
     a = f.add_subplot(111)
     p = r2mpl.plot(data, a, **argk)
     if label is None:
-        label = "Entries / $%s \\times %s GeV^2$" % (data.GetXaxis().GetBinWidth(1), data.GetYaxis().GetBinWidth(1))
+        label = r"Entries / $\num{%.3g} \times \num{%.3g}\text{ GeV}^2$" % (data.GetXaxis().GetBinWidth(1), data.GetYaxis().GetBinWidth(1))
     if title is not None:
         a.set_title(title)
     f.colorbar(p).set_label(label)
@@ -93,11 +94,11 @@ def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, uni
     sigma_axes.axhline( 0, color="k")
     sigma_axes.axhline(+2, color="r")
     sigma_axes.set_yticks([-4,-3,-2,-1,0,1,2,3,4])
-    sigma_axes.set_yticklabels(["","",-2,"","","",2,"",""])
+    sigma_axes.set_yticklabels(["","","$-2$","","","","$2$","",""])
     sigma_axes.grid()
     sigma_axes.set_xlabel(label)
     sigma_axes.set_ylabel("normalized\nresiduals")
-    data_axes.set_ylabel("Entries / %s %s" % (data.GetBinWidth(1), unit))
+    data_axes.set_ylabel(r"Entries / \num{%.3g} %s" % (data.GetBinWidth(1), unit))
     #data_axes.get_yaxis().set_label_coords(-0.2,0.5)
     #sigma_axes.get_yaxis().set_label_coords(-0.2,0.5)
     loc = matplotlib.ticker.MaxNLocator(nbins=5)
@@ -163,8 +164,8 @@ def make_mbcde_plots(name, title):
             fits.append((component,fit))
 
     if not mbcde_data or not mbcde_fit:
-        print "Could not find M_BC:dE histograms"
-        sys.exit(1)
+        print "Could not find M_BC:dE histograms for", name
+        return
 
     scale = mbcde_fit.GetNbinsX()/mbcde_data.GetNbinsX()
     mbcde_fit2 = mbcde_fit.Clone(name+"_fit2")
@@ -224,6 +225,10 @@ def make_dt_plots(name, title):
         if(fit_m):
             rescale(dt_data_m, fit_m)
             fits_m.append((component,fit_m))
+
+    if not (dt_data_p and dt_data_m and fits_p and fits_m):
+        print "Could not make dT plots for", name
+        return
 
     f = pl.figure(figsize=(8,4))
     a_Mbc  = f.add_axes((0.13,0.38,0.35,0.55))

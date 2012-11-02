@@ -55,10 +55,10 @@ void Parameter::save(ostream& out, bool istty) const {
         else if(loose) out << ANSI_RED;
         else if(m_changed) out << ANSI_BLUE;
         end = loose | m_changed;
-        out << format("%s %|32t| %17.10e %17.10e %17.10e %17.10e %12.2f\n")
+        out << format("%s %|32t| %17.10e %17.10e %17.10g %17.10g %12.2f\n")
             % m_name % m_value % m_error % m_min % m_max % significance;
     }else{
-        out << format("%s %|32t| %17.10e %17.10e %17.10e %17.10e %5s\n")
+        out << format("%s %|32t| %17.10e %17.10e %17.10g %17.10g %5s\n")
             % m_name % m_value % m_error % m_min % m_max % (m_fixed?"Y":"N");
     }
 

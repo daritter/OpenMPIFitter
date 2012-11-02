@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
     std::vector<std::string> files;
     int maxPrintOrder(2);
     Range range_mBC(5.24,5.3);
-    Range range_dE(-0.1,0.1);
+    Range range_dE(-0.15,0.1);
     Range range_dT(-70,70);
     std::string bestB("bestLHsig");
     DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;

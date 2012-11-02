@@ -20,8 +20,8 @@ namespace PAR {
     PARAM(signal_svd1_dE_norm1);
     PARAM(signal_svd1_dE_meanshift1);
     PARAM(signal_svd1_dE_sigmascale1);
-    PARAM(signal_svd1_dE_cheb1);
-    PARAM(signal_svd1_dE_cheb2);
+    PARAM(signal_svd1_dE_bkg_mean);
+    PARAM(signal_svd1_dE_bkg_sigma);
 
     PARAM(yield_svd2_signal);
     PARAM(signal_svd2_ratio);
@@ -37,8 +37,8 @@ namespace PAR {
     PARAM(signal_svd2_dE_norm1);
     PARAM(signal_svd2_dE_meanshift1);
     PARAM(signal_svd2_dE_sigmascale1);
-    PARAM(signal_svd2_dE_cheb1);
-    PARAM(signal_svd2_dE_cheb2);
+    PARAM(signal_svd2_dE_bkg_mean);
+    PARAM(signal_svd2_dE_bkg_sigma);
 
     PARAM(signal_dt_blifetime);
     PARAM(signal_dt_Jc);
@@ -70,7 +70,7 @@ class SignalPDF: public Component {
             );
             signalPDF_svd1.fcn1.fcny.set(&par[PAR::signal_svd1_dE_mean]);
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
-            signalPDF_svd1.fcn2.fcny.set(&par[PAR::signal_svd1_dE_cheb1]);
+            signalPDF_svd1.fcn2.fcny.set(par[PAR::signal_svd1_dE_bkg_mean], par[PAR::signal_svd1_dE_bkg_sigma]);
 
             return get_deltaT(e,par)*par[PAR::yield_svd1_signal] * signalPDF_svd1(e.Mbc, e.dE);
         }else{
@@ -82,7 +82,7 @@ class SignalPDF: public Component {
             );
             signalPDF_svd2.fcn1.fcny.set(&par[PAR::signal_svd2_dE_mean]);
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
-            signalPDF_svd2.fcn2.fcny.set(&par[PAR::signal_svd2_dE_cheb1]);
+            signalPDF_svd2.fcn2.fcny.set(par[PAR::signal_svd2_dE_bkg_mean], par[PAR::signal_svd2_dE_bkg_sigma]);
 
             return get_deltaT(e,par)*par[PAR::yield_svd2_signal] * signalPDF_svd2(e.Mbc, e.dE);
         }
@@ -118,12 +118,12 @@ class SignalPDF: public Component {
     /** PDF function components */
     Add2DFcn<
         CompoundFcn2D<MultiGauss<2>, MultiGauss<2> >,
-        CompoundFcn2D<Argus, Chebychev<2> >
+        CompoundFcn2D<Argus, Gauss>
     > signalPDF_svd1;
 
     Add2DFcn<
         CompoundFcn2D<MultiGauss<2>, MultiGauss<2> >,
-        CompoundFcn2D<Argus, Chebychev<2> >
+        CompoundFcn2D<Argus, Gauss>
     > signalPDF_svd2;
 };
 

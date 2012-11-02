@@ -76,16 +76,18 @@ template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* 
 struct PlotRoutine {
     /** Set some default options */
     PlotRoutine(): parameterIn("params-in.txt"), rootFile("plots"), plotrange_dT(-70,70),
-    nBins(40), sampling(5), nBins_dt(40), sampling_dt(5), activeComponents(DspDsmKsPDF::CMP_all)
+    bins_mBC(60), bins_dE(50), bins_dT(40), sampling_mBC(5), sampling_dE(5), sampling_dT(5), activeComponents(DspDsmKsPDF::CMP_all)
     {}
 
     std::string parameterIn;
     std::string rootFile;
     Range plotrange_dT;
-    int nBins;
-    int sampling;
-    int nBins_dt;
-    int sampling_dt;
+    int bins_mBC;
+    int bins_dE;
+    int bins_dT;
+    int sampling_mBC;
+    int sampling_dE;
+    int sampling_dT;
     DspDsmKsPDF::EnabledComponents activeComponents;
 
     /** Do the plotting */
@@ -108,9 +110,9 @@ struct PlotRoutine {
 
 
         TH2D *total_MbcdE_fit_svd1 = new TH2D("mbcde_svd1_fit",
-                "M_{BC}#DeltaE fit, SVD1", nBins*sampling, range_mBC.vmin, range_mBC.vmax, nBins*sampling, range_dE.vmin, range_dE.vmax);
+                "M_{BC}#DeltaE fit, SVD1", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
         TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
-                "M_{BC}#DeltaE fit, SVD2", nBins*sampling, range_mBC.vmin, range_mBC.vmax, nBins*sampling, range_dE.vmin, range_dE.vmax);
+                "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
 
         std::string names[] = {"signal","mixed","charged"};
         int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
@@ -122,10 +124,10 @@ struct PlotRoutine {
                 if(!name.empty()) name = "_"+name;
                 parallel_pdf.setOptions(cmp);
 
-                TH1D *h_dT_fit_svd1_p = new TH1D(("dT_svd1_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD1", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
-                TH1D *h_dT_fit_svd1_m = new TH1D(("dT_svd1_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD1", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
-                TH1D *h_dT_fit_svd2_p = new TH1D(("dT_svd2_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD2", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
-                TH1D *h_dT_fit_svd2_m = new TH1D(("dT_svd2_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD2", nBins_dt*sampling_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+                TH1D *h_dT_fit_svd1_p = new TH1D(("dT_svd1_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD1", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+                TH1D *h_dT_fit_svd1_m = new TH1D(("dT_svd1_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD1", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+                TH1D *h_dT_fit_svd2_p = new TH1D(("dT_svd2_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD2", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+                TH1D *h_dT_fit_svd2_m = new TH1D(("dT_svd2_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD2", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
                 plotDT(parallel_pdf,par,h_dT_fit_svd1_p,+1,DspDsmKsPDF::PLT_SVD1, names[i] + ", SVD1");
                 plotDT(parallel_pdf,par,h_dT_fit_svd1_m,-1,DspDsmKsPDF::PLT_SVD1, names[i] + ", SVD1");
                 plotDT(parallel_pdf,par,h_dT_fit_svd2_p,+1,DspDsmKsPDF::PLT_SVD2, names[i] + ", SVD2");
@@ -137,12 +139,12 @@ struct PlotRoutine {
         parallel_pdf.close();
         DspDsmKsPDF &local_pdf = parallel_pdf.localFCN();
         local_pdf.load(0,1);
-        TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", nBins, range_mBC.vmin, range_mBC.vmax, nBins, range_dE.vmin, range_dE.vmax);
-        TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", nBins, range_mBC.vmin, range_mBC.vmax, nBins, range_dE.vmin, range_dE.vmax);
-        TH1D *h_dT_data_svd1_p = new TH1D("dT_svd1_data_p", "#Deltat data q=-1, SVD1", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
-        TH1D *h_dT_data_svd1_m = new TH1D("dT_svd1_data_m", "#Deltat data q=+1, SVD1", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
-        TH1D *h_dT_data_svd2_p = new TH1D("dT_svd2_data_p", "#Deltat data q=-1, SVD2", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
-        TH1D *h_dT_data_svd2_m = new TH1D("dT_svd2_data_m", "#Deltat data q=+1, SVD2", nBins_dt, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
+        TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
+        TH1D *h_dT_data_svd1_p = new TH1D("dT_svd1_data_p", "#Deltat data q=-1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd1_m = new TH1D("dT_svd1_data_m", "#Deltat data q=+1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd2_p = new TH1D("dT_svd2_data_p", "#Deltat data q=-1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd2_m = new TH1D("dT_svd2_data_m", "#Deltat data q=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
 
         TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 2000, 0,0);
         TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 2000, 0,0);
@@ -178,9 +180,9 @@ struct PlotRoutine {
 
             local_pdf.setOptions(cmp);
             TH2D *h_MbcdE_fit_svd1 = new TH2D(("mbcde_svd1_fit" + name).c_str(),
-                    "M_{BC}#DeltaE fit, SVD1", nBins*sampling, range_mBC.vmin, range_mBC.vmax, nBins*sampling, range_dE.vmin, range_dE.vmax);
+                    "M_{BC}#DeltaE fit, SVD1", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
             TH2D *h_MbcdE_fit_svd2 = new TH2D(("mbcde_svd2_fit" + name).c_str(),
-                    "M_{BC}#DeltaE fit, SVD2", nBins*sampling, range_mBC.vmin, range_mBC.vmax, nBins*sampling, range_dE.vmin, range_dE.vmax);
+                    "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
 
             plot_mBCdE(local_pdf,par,h_MbcdE_fit_svd1, h_bEnergy_svd1, Component::SVD1, names[i] + ", SVD1");
             plot_mBCdE(local_pdf,par,h_MbcdE_fit_svd2, h_bEnergy_svd2, Component::SVD2, names[i] + ", SVD2");
@@ -222,7 +224,7 @@ int main(int argc, char* argv[]){
     PlotRoutine plotter;
     std::vector<std::string> files;
     Range range_mBC(5.24,5.3);
-    Range range_dE(-0.1,0.1);
+    Range range_dE(-0.15,0.1);
     Range range_dT(-70,70);
     std::string bestB("bestLHsig");
     //DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
@@ -258,13 +260,17 @@ int main(int argc, char* argv[]){
          "The maximal dT value for the plot")
         ("bestB", po::value<std::string>(&bestB)->default_value(bestB),
          "BestB Selection method to use")
-        ("bins", po::value<int>(&plotter.nBins)->default_value(plotter.nBins),
+        ("bins_Mbc", po::value<int>(&plotter.bins_mBC)->default_value(plotter.bins_mBC),
          "Number of Bins per axis for the data")
-        ("sampling", po::value<int>(&plotter.sampling)->default_value(plotter.sampling),
+        ("sampling_Mbc", po::value<int>(&plotter.sampling_mBC)->default_value(plotter.sampling_mBC),
          "sampling for the fit")
-        ("bins_dt", po::value<int>(&plotter.nBins_dt)->default_value(plotter.nBins_dt),
+        ("bins_dE", po::value<int>(&plotter.bins_dE)->default_value(plotter.bins_dE),
          "Number of Bins per axis for the data")
-        ("sampling_dt", po::value<int>(&plotter.sampling_dt)->default_value(plotter.sampling_dt),
+        ("sampling_dE", po::value<int>(&plotter.sampling_dE)->default_value(plotter.sampling_dE),
+         "sampling for the fit")
+        ("bins_dT", po::value<int>(&plotter.bins_dT)->default_value(plotter.bins_dT),
+         "Number of Bins per axis for the data")
+        ("sampling_dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
          "sampling for the fit")
         ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
          "Components to use for the fit")
