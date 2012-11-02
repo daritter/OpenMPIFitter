@@ -30,17 +30,17 @@ correlations = {
 
 np.set_printoptions(precision=4, linewidth=120)
 cor = np.matrix(np.identity(len(br)))
-note_cor = np.matrix(np.identity(len(br)))
-note_rep = {0:2,1:3,2:4,3:5,4:0,5:1,6:6}
+#note_cor = np.matrix(np.identity(len(br)))
+#note_rep = {0:2,1:3,2:4,3:5,4:0,5:1,6:6}
 for (i,j),v in correlations.items():
     cor[i,j] = v
     cor[j,i] = v
-    i = note_rep[i]
-    j = note_rep[j]
-    note_cor[i,j] = v
-    note_cor[j,i] = v
+#    i = note_rep[i]
+#    j = note_rep[j]
+#    note_cor[i,j] = v
+#    note_cor[j,i] = v
 
-print utils.latex_matrix(note_cor)
+#print utils.latex_matrix(note_cor)
 
 diag_err = np.matrix(np.diag(br_err))
 
@@ -48,13 +48,13 @@ cov = diag_err * cor *  diag_err
 
 print "Branching Ratio Indicies:"
 print channels
-print "Branching Ratio (from PDG):"
+print "Branching Ratio Br (from PDG):"
 print br
-print "Branching Ratio errors (from PDG):"
+print "Branching Ratio errors δBr (from PDG):"
 print br_err
-print "Correlation matrix (from PDG):"
+print "Correlation matrix corr(Br) (from PDG):"
 print cor
-print "Covarianve matrix:"
+print "Covarianve matrix cov(Br) = diag(δBr)*corr(Br)*diag(δBr):"
 print cov
 
 def get_br(br, deriv, index, scale):
