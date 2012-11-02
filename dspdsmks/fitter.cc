@@ -86,6 +86,20 @@ int main(int argc, char* argv[]){
         activeComponents = DspDsmKsPDF::getComponents(componentList);
     }
 
+    std::string names[] = {"signal","misrecon","mixed","charged"};
+    int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_misrecon,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
+    for(int i=0; i<4; ++i){
+        if(!(activeComponents & components[i])){
+            if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
+            std::string name = names[i];
+            fitter.fixParameters += name+".*|yield_.*_"+name;
+        }
+    }
+    if(!(activeComponents & DspDsmKsPDF::CMP_deltat)){
+        if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
+        fitter.fixParameters += ".*_dt_.*";
+    }
+
     DspDsmKsPDF pdf(range_mBC, range_dE, range_dT, files, bestB, activeComponents, maxPrintOrder);
 
     /** Call the MPI Fitting core and return the result */

@@ -65,10 +65,7 @@ def plotMbcDe(data, label=None, title=None, **argk):
     a.set_ylabel("$\Delta E$ / GeV")
 
 def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, unit="GeV"):
-    colors = {"signal":"r", "mixed":"g", "charged":"b", "all":"b",
-              "signal, +1":"r", "signal, -1":"b",
-              "mixed, +1":"r", "mixed, -1":"b",
-              "charged, +1":"r", "charged, -1":"b",
+    colors = {"signal":"r", "misrecon":"c", "mixed":"g", "charged":"b", "all":"b",
              }
     last = None
     for i,(l,f) in enumerate(fits):
@@ -157,7 +154,7 @@ def make_mbcde_plots(name, title):
     mbcde_fit  = rootfile.Get(name + "_fit")
     #fits = [("all",mbcde_fit)]
     fits = []
-    for component in ["charged","mixed","signal"]:
+    for component in ["charged","mixed","misrecon","signal"]:
         fit = rootfile.Get(name + "_fit_" + component)
         if(fit):
             fits.append((component,fit))
@@ -215,7 +212,7 @@ def make_dt_plots(name, title):
 
     fits_p = []
     fits_m = []
-    for component in ["charged","mixed","signal"]:
+    for component in ["charged","mixed","misrecon","signal"]:
         fit_p = rootfile.Get(name + "_fit_p_" + component)
         if(fit_p):
             rescale(dt_data_p, fit_p)

@@ -114,10 +114,10 @@ struct PlotRoutine {
         TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
                 "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
 
-        std::string names[] = {"signal","mixed","charged"};
-        int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
+        std::string names[] = {"signal","misrecon","mixed","charged"};
+        int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_misrecon,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
-        for(int i=0; i<3; ++i){
+        for(int i=0; i<4; ++i){
                 int cmp = components[i];
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
@@ -172,7 +172,7 @@ struct PlotRoutine {
         h_bEnergy_svd1->BufferEmpty();
         h_bEnergy_svd2->BufferEmpty();
 
-        for(int i=0; i<3; ++i){
+        for(int i=0; i<4; ++i){
             int cmp = components[i];
             std::string name = names[i];
             if(!(cmp & activeComponents)) continue;

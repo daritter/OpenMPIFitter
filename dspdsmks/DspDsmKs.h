@@ -10,6 +10,7 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <algorithm>
 //#include "func.h"
 
 #include <TChain.h>
@@ -17,6 +18,7 @@
 #include "Range.h"
 #include "Event.h"
 #include "Signal.h"
+#include "Misrecon.h"
 #include "Mixed.h"
 #include "Charged.h"
 
@@ -39,12 +41,13 @@ struct DspDsmKsPDF {
 
     /** Define all possible components to be able to enable/disable them individually */
     enum EnabledComponents {
-        CMP_NONE    = 0,
-        CMP_signal  = 1<<0,
-        CMP_mixed   = 1<<1,
-        CMP_charged = 1<<2,
-        CMP_deltat  = 1<<3,
-        CMP_all     = CMP_signal | CMP_mixed | CMP_charged | CMP_deltat
+        CMP_NONE     = 0,
+        CMP_signal   = 1<<0,
+        CMP_misrecon = 1<<1,
+        CMP_mixed    = 1<<2,
+        CMP_charged  = 1<<3,
+        CMP_deltat   = 1<<4,
+        CMP_all      = CMP_signal | CMP_misrecon | CMP_mixed | CMP_charged | CMP_deltat
     };
 
     enum PlotFlags {
@@ -63,6 +66,7 @@ struct DspDsmKsPDF {
             boost::to_lower(component);
             boost::trim(component);
             DspDsmKsPDF__checkComponent(signal);
+            DspDsmKsPDF__checkComponent(misrecon);
             DspDsmKsPDF__checkComponent(mixed);
             DspDsmKsPDF__checkComponent(charged);
             DspDsmKsPDF__checkComponent(deltat);
@@ -93,6 +97,9 @@ struct DspDsmKsPDF {
         components.clear();
         if(cmp & CMP_signal){
             components.push_back(new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+        }
+        if(cmp & CMP_misrecon){
+            components.push_back(new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
         if(cmp & CMP_mixed){
             components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
@@ -234,6 +241,9 @@ struct DspDsmKsPDF {
             if(event.flag!=0 || event.tag_q==0) continue;
             data[event.svdVs].push_back(event);
         }
+
+        std::sort(data[0].begin(),data[0].end());
+        std::sort(data[1].begin(),data[1].end());
 
         std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
             << ") events and is ready for pillaging" << std::endl;

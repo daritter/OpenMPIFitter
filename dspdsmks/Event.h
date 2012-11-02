@@ -42,9 +42,11 @@ struct Event {
     static const double deltaM = 0.507;
 
     enum dtCachePosition {
-        dt_signal  = 0,
-        dt_mixed   = 1,
-        dt_charged = 2
+        dt_signal,
+        dt_misrecon,
+        dt_mixed,
+        dt_charged,
+        MAX_DTCACHE
     };
 
     int expNo;
@@ -80,7 +82,7 @@ struct Event {
     double tag_r;
     int    tag_isL;
 
-    mutable dTCache dTcache[3];
+    mutable dTCache dTcache[MAX_DTCACHE];
 
     //Calculated variables
     int rbin;
@@ -90,6 +92,10 @@ struct Event {
     double Ck;
     double deltaT;
     int eta;
+
+    bool operator<(const Event& b) const {
+        return benergy<b.benergy;
+    }
 
     void calculateValues(){
         deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
