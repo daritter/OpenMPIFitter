@@ -201,7 +201,7 @@ struct PlotRoutine {
         r_rootFile->Write();
         r_rootFile->Close();
 
-        return std::system(("./make_plots.py " + rootFile).c_str());
+        return std::system(("./python/make_plots.py " + rootFile).c_str());
         //return 0;
     }
 };

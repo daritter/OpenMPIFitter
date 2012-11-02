@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import os
-sys.path.insert(0,os.path.expanduser("~/belle/DspDsmKs/python"))
 import matplotlib
 matplotlib.use("Agg")
 matplotlib.rc("path", simplify=False)

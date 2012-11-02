@@ -257,14 +257,14 @@ def plot2D(hist, axes=None, sparse=True, contour=None, color=None, log=False, **
 
     return axes.imshow(data.T, extent=[xmin,xmax,ymin,ymax], origin='lower', **argk)
 
-def plotF1(func, axes=None, use_range=False, samples=200, **argk):
+def plotF1(func, axes=None, use_range=False, samples=200, scale=1, **argk):
     if axes is None: axes = pl.gca()
     x1,x2 = axes.get_xlim()
     if use_range:
         x1 = max(x1,func.GetXmin())
         x2 = min(x2,func.GetXmax())
     x = np.linspace(x1,x2,samples)
-    y = np.array([func(xi) for xi in x])
+    y = np.array([func(xi)*scale for xi in x])
     axes.set_autoscalex_on(False)
     return axes.plot(x,y,**argk)
 
