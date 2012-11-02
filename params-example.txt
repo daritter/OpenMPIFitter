@@ -1,6 +1,0 @@
-#Name                                  value             error              min               max        fixed
-sig_N                             4.9710479422e+04  2.4586299099e+02              -inf               inf     N
-sig_mean                          5.2799909424e+00  1.4268825436e-05              -inf               inf     N
-sig_sigma                         3.0189172250e-03  1.1977354119e-05              -inf               inf     N
-bkg_N                             5.2909689956e+03  1.2674469504e+02              -inf               inf     N
-bkg_shape                        -3.4825130080e+00  7.2103917353e+00              -inf               inf     N
