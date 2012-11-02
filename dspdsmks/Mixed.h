@@ -6,7 +6,7 @@
 #include "Component.h"
 
 namespace PAR {
-    PARAM(yield_svd1_mixed);
+    PARAM(yield_mixed_svd1);
     PARAM(mixed_svd1_ratio);
     PARAM(mixed_svd1_Mbc_mean);
     PARAM(mixed_svd1_Mbc_sigma);
@@ -15,7 +15,7 @@ namespace PAR {
     PARAM(mixed_svd1_dE_sigma);
     PARAM(mixed_svd1_dE_cheb1);
 
-    PARAM(yield_svd2_mixed);
+    PARAM(yield_mixed_svd2);
     PARAM(mixed_svd2_ratio);
     PARAM(mixed_svd2_Mbc_mean);
     PARAM(mixed_svd2_Mbc_sigma);
@@ -53,7 +53,7 @@ class MixedPDF: public Component {
             mixedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
             mixedPDF_svd1.fcn2.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
 
-            return get_deltaT(e,par)*par[PAR::yield_svd1_mixed] * mixedPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_mixed_svd1] * mixedPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for mixed component
             mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
@@ -62,17 +62,17 @@ class MixedPDF: public Component {
             mixedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
             mixedPDF_svd2.fcn2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
 
-            return get_deltaT(e,par)*par[PAR::yield_svd2_mixed] * mixedPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_mixed_svd2] * mixedPDF_svd2(e.Mbc, e.dE);
         }
     }
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_svd1_mixed];
+            yield += par[PAR::yield_mixed_svd1];
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_svd2_mixed];
+            yield += par[PAR::yield_mixed_svd2];
         }
         return yield;
     }

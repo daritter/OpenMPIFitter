@@ -92,7 +92,7 @@ int main(int argc, char* argv[]){
         if(!(activeComponents & components[i])){
             if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
             std::string name = names[i];
-            fitter.fixParameters += name+".*|yield_.*_"+name;
+            fitter.fixParameters += name+".*|yield_"+name+".*";
         }
     }
     if(!(activeComponents & DspDsmKsPDF::CMP_deltat)){

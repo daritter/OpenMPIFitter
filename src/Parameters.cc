@@ -23,42 +23,94 @@ Parameters::Parameters(){
 
 void Parameters::load(istream &in){
     int lineNr=0;
+    //Read in the whole file and store enough information that we can reproduce it completely (modulo white space change)
     while(!in.eof()){
+        //Keep track of the line number for error messages
         ++lineNr;
+        //Get the line, if end of file we are done
         string line;
         getline(in,line);
+        if(line.empty() && in.eof()) return;
+        //Check if there is a comment in the line. If so split comment from rest of the line
+        std::string comment;
         size_t comment_pos = line.find('#');
         if(comment_pos!=string::npos){
+            //Ignore first line because it is normally just the header which we put in ourselfes
+            if(line[0]=='#' && lineNr==1) continue;
+            comment = line.substr(comment_pos);
             line = line.substr(0,comment_pos);
+            trim(comment);
         }
+        //So, remove remaining whitespace and check if there is a parameter left in the line. If so remember which parameter
         trim(line);
-        if(line=="") continue;
-
-        string name;
-        stringstream buffer(line);
-        buffer >> name;
-        try{
-            int index = ParameterList::getIndex(name);
-            m_parameters[index].load(buffer);
-        }catch(bad_lexical_cast &e){
-            cerr << "ERROR reading parameter '" << name << "' (line " << lineNr << "): " << e.what() << endl;
-            throw e;
-        }catch(invalid_argument &e){
-            cerr << "WARNING: Unknown parameter '" << name << "' (line " << lineNr << ")\n";
+        int index(-1);
+        if(!line.empty()) {
+            string name;
+            stringstream buffer(line);
+            buffer >> name;
+            try{
+                index = ParameterList::getIndex(name);
+                m_parameters[index].load(buffer);
+            }catch(bad_lexical_cast &e){
+                cerr << "ERROR reading parameter '" << name << "' (line " << lineNr << "): " << e.what() << endl;
+                throw e;
+            }catch(invalid_argument &e){
+                cerr << "WARNING: Unknown parameter '" << name << "' (line " << lineNr << ")\n";
+                if(!comment.empty()) {
+                    line += " " + comment;
+                    trim(line);
+                }
+            }
         }
+        //Remember which parameter (-1 for none) and the comment for this line
+        m_originalLines.push_back(std::make_pair(index,comment));
     }
 }
 
 void Parameters::save(ostream &out, bool istty) const {
+    //If istty is set we want nice color output of the non fixed parameters only
     if(istty){
-        out << boost::format("#Name %|32t| %=17s %=17s %=17s %=17s %12s\n")
-            % "value" % "error" % "min" % "max" % "significance";
+        out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %12s\n")
+            % "value" % "error" % "min" % "max" % "significance" << ANSI_END;
     }else{
-       out << boost::format("#Name %|32t| %=17s %=17s %=17s %=17s %5s\n")
+       out << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %5s\n")
            % "value" % "error" % "min" % "max" % "fixed";
     }
-    BOOST_FOREACH(const Parameter &p, m_parameters){
-        p.save(out, istty);
+    //Bookkeeping to see if we have saved all parameters
+    std::vector<bool> saved(m_parameters.size(),false);
+    size_t nsaved(0);
+    //Go over all the info saved when loading and print the corresponding
+    //parameter and comment for each line
+    BOOST_FOREACH(const line_info &l, m_originalLines){
+        //Write parameter if present
+        if(l.first>=0){
+            const Parameter &p = m_parameters[l.first];
+            //Remember we saved this parameter
+            if(!saved[l.first]) ++nsaved;
+            saved[l.first] = true;
+            //If the parameter is fixed we don't show it or its comment in tty
+            //mode, go to the next line
+            if(!p.save(out, istty)) continue;
+        }
+        //Write comment if present
+        if(!l.second.empty()){
+            if(l.first>=0) out << " ";
+            if(istty) out << ANSI_BLUE;
+            out << l.second;
+            if(istty) out << ANSI_END;
+        }
+        //Write newline when appropriate
+        if(!istty || l.first>=0 || !l.second.empty()) out << std::endl;
+    }
+
+    //Print all parameters which are not saved yet
+    if(nsaved < m_parameters.size()){
+        if(istty) out << ANSI_BLUE;
+        out << std::endl << "# Parameters not present in initial file" << std::endl;
+        if(istty) out << ANSI_END;
+        for(size_t i=0; i<m_parameters.size(); ++i){
+            if(!saved[i]) out << m_parameters[i] << std::endl;
+        }
     }
 }
 

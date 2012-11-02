@@ -12,39 +12,60 @@
 #define ANSI_BLUE   "\033[94m"
 #define ANSI_PURPLE "\033[95m"
 #define ANSI_CYAN   "\033[96m"
+#define ANSI_WHITE  "\033[97m"
 #define ANSI_END    "\033[0m"
-
 
 class Parameter {
     public:
+        //Create a new parameter, also works as default constructor
         Parameter(const std::string &name="", double value=0, double error=0,
                 double min=-std::numeric_limits<double>::infinity(),
                 double max=std::numeric_limits<double>::infinity(), bool fixed=false):
-            m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(false){};
+            m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(false), m_changed(false){};
 
+        //Return the name of the parameter
         const  std::string &name() const { return m_name; }
+        //Set the value
         void   value(double value) { m_changed=std::fabs(m_value-value)/m_error>1.0; m_value = value;}
+        //Get the value
         double value() const { return m_value; }
+        //Set the error
         void   error(double error)  { m_error = error; }
+        //Get the error
         double error() const { return m_error; }
+        //Get the lower limit
         double min() const { return m_min; }
+        //Get the upper limit
         double max() const { return m_max; }
+        //Check if the parameter is fixed
         bool   isFixed() const { return m_fixed || m_min>=m_max || m_dynfix; }
+        //Check if ther is a lower limit
         bool   hasMin() const { return m_min != -std::numeric_limits<double>::infinity(); }
+        //Check if ther is a upper limit
         bool   hasMax() const { return m_max !=  std::numeric_limits<double>::infinity(); }
-
+        //Load the parameter from the given stream
         void load(std::istream& in);
-        void save(std::ostream& out, bool istty=false) const;
+        //Save the parameter to the given stream, if istty=true, only save non fixed and use color
+        bool save(std::ostream& out, bool istty=false) const;
+        //Set a dynamic fix: Parameter will be fixed in fit but this will not be saved to file
         void setDynamicFix(bool fix){ m_dynfix = fix; }
 
     protected:
+        //name of the parameter
         std::string m_name;
+        //value of the parameter
         double m_value;
+        //error of the parameter
         double m_error;
+        //lower limit of the parameter
         double m_min;
+        //upper limit of the parameter
         double m_max;
+        //indicates wether the parameter is permanently fixed
         bool   m_fixed;
+        //indicates wether the parameter is temporarily fixed
         bool   m_dynfix;
+        //indicates wether the parameter was changed
         bool   m_changed;
 };
 inline std::istream& operator>>(std::istream &in,  Parameter &p){ p.load(in);  return in; }

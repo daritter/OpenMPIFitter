@@ -59,5 +59,6 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("__iter__", iterator<Parameters>())
         .def("load", &ParameterHelper::load)
         .def("save", &ParameterHelper::save)
+        .def("print", &Parameters::print)
     ;
 }

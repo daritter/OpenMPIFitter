@@ -6,7 +6,7 @@
 #include "Component.h"
 
 namespace PAR {
-    PARAM(yield_svd1_signal);
+    PARAM(yield_signal_svd1);
     PARAM(signal_svd1_ratio);
     PARAM(signal_svd1_Mbc_mean_m0);
     PARAM(signal_svd1_Mbc_mean_m1);
@@ -23,7 +23,7 @@ namespace PAR {
     PARAM(signal_svd1_dE_bkg_mean);
     PARAM(signal_svd1_dE_bkg_sigma);
 
-    PARAM(yield_svd2_signal);
+    PARAM(yield_signal_svd2);
     PARAM(signal_svd2_ratio);
     PARAM(signal_svd2_Mbc_mean_m0);
     PARAM(signal_svd2_Mbc_mean_m1);
@@ -72,7 +72,7 @@ class SignalPDF: public Component {
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(par[PAR::signal_svd1_dE_bkg_mean], par[PAR::signal_svd1_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)*par[PAR::yield_svd1_signal] * signalPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_signal_svd1] * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
             signalPDF_svd2.set(par[PAR::signal_svd2_ratio]);
@@ -84,17 +84,17 @@ class SignalPDF: public Component {
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(par[PAR::signal_svd2_dE_bkg_mean], par[PAR::signal_svd2_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)*par[PAR::yield_svd2_signal] * signalPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_signal_svd2] * signalPDF_svd2(e.Mbc, e.dE);
         }
     }
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_svd1_signal];
+            yield += par[PAR::yield_signal_svd1];
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_svd2_signal];
+            yield += par[PAR::yield_signal_svd2];
         }
         return yield;
     }

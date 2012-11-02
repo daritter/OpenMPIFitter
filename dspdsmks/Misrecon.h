@@ -6,37 +6,23 @@
 #include "Component.h"
 
 namespace PAR {
-    PARAM(yield_svd1_misrecon);
+    PARAM(yield_misrecon_svd1);
     PARAM(misrecon_svd1_ratio);
     PARAM(misrecon_svd1_Mbc_mean);
-    //PARAM(misrecon_svd1_Mbc_mean_m1);
     PARAM(misrecon_svd1_Mbc_sigma);
-    //PARAM(misrecon_svd1_Mbc_norm1);
-    //PARAM(misrecon_svd1_Mbc_meanshift1);
-    //PARAM(misrecon_svd1_Mbc_sigmascale1);
     PARAM(misrecon_svd1_Mbc_argusC);
     PARAM(misrecon_svd1_dE_mean);
     PARAM(misrecon_svd1_dE_sigma);
-    //PARAM(misrecon_svd1_dE_norm1);
-    //PARAM(misrecon_svd1_dE_meanshift1);
-    //PARAM(misrecon_svd1_dE_sigmascale1);
     PARAM(misrecon_svd1_dE_bkg_mean);
     PARAM(misrecon_svd1_dE_bkg_sigma);
 
-    PARAM(yield_svd2_misrecon);
+    PARAM(yield_misrecon_svd2);
     PARAM(misrecon_svd2_ratio);
     PARAM(misrecon_svd2_Mbc_mean);
-    //PARAM(misrecon_svd2_Mbc_mean_m1);
     PARAM(misrecon_svd2_Mbc_sigma);
-    //PARAM(misrecon_svd2_Mbc_norm1);
-    //PARAM(misrecon_svd2_Mbc_meanshift1);
-    //PARAM(misrecon_svd2_Mbc_sigmascale1);
     PARAM(misrecon_svd2_Mbc_argusC);
     PARAM(misrecon_svd2_dE_mean);
     PARAM(misrecon_svd2_dE_sigma);
-    //PARAM(misrecon_svd2_dE_norm1);
-    //PARAM(misrecon_svd2_dE_meanshift1);
-    //PARAM(misrecon_svd2_dE_sigmascale1);
     PARAM(misrecon_svd2_dE_bkg_mean);
     PARAM(misrecon_svd2_dE_bkg_sigma);
 
@@ -69,7 +55,7 @@ class MisreconPDF: public Component {
             misreconPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd1_Mbc_argusC]);
             misreconPDF_svd1.fcn2.fcny.set(par[PAR::misrecon_svd1_dE_bkg_mean], par[PAR::misrecon_svd1_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)*par[PAR::yield_svd1_misrecon] * misreconPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_misrecon_svd1] * misreconPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for misrecon component
             misreconPDF_svd2.set(par[PAR::misrecon_svd2_ratio]);
@@ -77,17 +63,17 @@ class MisreconPDF: public Component {
             misreconPDF_svd2.fcn1.fcny.set(&par[PAR::misrecon_svd2_dE_mean]);
             misreconPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd2_Mbc_argusC]);
             misreconPDF_svd2.fcn2.fcny.set(par[PAR::misrecon_svd2_dE_bkg_mean], par[PAR::misrecon_svd2_dE_bkg_sigma]);
-            return get_deltaT(e,par)*par[PAR::yield_svd2_misrecon] * misreconPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*par[PAR::yield_misrecon_svd2] * misreconPDF_svd2(e.Mbc, e.dE);
         }
     }
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_svd1_misrecon];
+            yield += par[PAR::yield_misrecon_svd1];
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_svd2_misrecon];
+            yield += par[PAR::yield_misrecon_svd2];
         }
         return yield;
     }

@@ -12,6 +12,7 @@ using namespace boost;
 
 namespace {
     inline void readValue(istream &in, double &val){
+        //Read floating point from stream and convert nan and inf accordingly
         if(in.eof()) return;
         string tmp;
         in >> tmp;
@@ -23,10 +24,10 @@ namespace {
     }
 
     inline void readBool(istream &in, bool &val){
+        //Read a bool value from stream
         if(in.eof()) return;
         string tmp;
         in >> tmp;
-        trim_if(tmp,is_any_of("*"));
         if(tmp == "" || tmp=="0" || tmp=="false" || tmp=="no" || tmp=="N" || tmp=="n"){
             val = false;
         }else{
@@ -43,24 +44,23 @@ void Parameter::load(istream& in){
     readBool(in,m_fixed);
 }
 
-void Parameter::save(ostream& out, bool istty) const {
-    if(istty && isFixed()) return;
-    //string fixed = (m_dynfix && istty)?"*":"";
-    //fixed += m_fixed?"Y":"N";
+bool Parameter::save(ostream& out, bool istty) const {
+    if(istty && isFixed()) return false;
     bool end=false;
     if(istty){
         double significance = std::fabs(m_value / m_error);
         bool loose = (significance <= 1.0);
         if(m_changed && loose) out << ANSI_PURPLE;
         else if(loose) out << ANSI_RED;
-        else if(m_changed) out << ANSI_BLUE;
+        else if(m_changed) out << ANSI_GREEN;
         end = loose | m_changed;
-        out << format("%s %|32t| %17.10e %17.10e %17.10g %17.10g %12.2f\n")
+        out << format("%s %|32t| %17.10e %17.10e %6.6g %6.6g %12.2f")
             % m_name % m_value % m_error % m_min % m_max % significance;
     }else{
-        out << format("%s %|32t| %17.10e %17.10e %17.10g %17.10g %5s\n")
+        out << format("%s %|32t| %17.10e %17.10e %6.6g %6.6g %5s")
             % m_name % m_value % m_error % m_min % m_max % (m_fixed?"Y":"N");
     }
 
     if(end) out << ANSI_END;
+    return true;
 }
