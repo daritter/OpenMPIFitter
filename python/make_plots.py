@@ -6,9 +6,9 @@ matplotlib.use("Agg")
 matplotlib.rc("path", simplify=False)
 matplotlib.rc("font", family="serif")
 matplotlib.rc("text", usetex=True)
-matplotlib.rc("text.latex", unicode="true", preamble=r"\usepackage{sistyle},\SIthousandsep{},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
+matplotlib.rc("text.latex", unicode="true",
+              preamble=r"\usepackage{sistyle},\SIthousandsep{},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
 from matplotlib import pyplot as pl
-
 
 #command handling here
 filename = sys.argv[1]
@@ -20,6 +20,7 @@ import r2mpl
 rootfile = root.TFile(filename + ".root")
 
 def rescale(data,*fits):
+    """Rescale histogram according to difference in binsize. Used for oversampling of fit function"""
     scaleX = fits[0].GetNbinsX() / data.GetNbinsX()
     scaleY = 1
     if isinstance(fits[0], root.TH2):
@@ -27,8 +28,18 @@ def rescale(data,*fits):
 
     for f in fits: f.Scale(scaleX*scaleY)
 
+def accumulate(fits):
+    """Accumulate all given histograms into one new histogram"""
+    last = None
+    for l,f in fits:
+        if last is None:
+            last = f.Clone("tmp")
+        else:
+            last.Add(f)
+    return last
 
 def calc_sigmas(name, data, fit):
+    """Calculate normalized residuals between data and fit histogram"""
     sigmas = data.Clone(name)
     nData = data.GetNbinsX()
     nFit = fit.GetNbinsX()
@@ -51,22 +62,46 @@ def calc_sigmas(name, data, fit):
         sigmas.SetBinError(i,1)
     return sigmas
 
-def plotMbcDe(data, label=None, title=None, **argk):
-    f = pl.figure(figsize=(8,8))
-    a = f.add_subplot(111)
+formatter = matplotlib.ticker.ScalarFormatter(False,False)
+formatter.set_powerlimits((-3,3))
+
+def get_plotaxes():
+    """Return axes suitable for fit + residuals or dT + asymmetry plots"""
+    f = pl.figure(figsize=(4,4))
+    a1  = f.add_axes((0.20,0.38,0.73,0.55))
+    a2 = f.add_axes((0.20,0.13,0.73,0.25))
+    for a,p in (a1,None), (a2,"upper"):
+        a.get_xaxis().set_major_formatter(formatter)
+        a.get_yaxis().set_major_formatter(formatter)
+        if p is not None:
+            locy = matplotlib.ticker.MaxNLocator(prune=p, nbins=5)
+            a.get_yaxis().set_major_locator(locy)
+        a.grid()
+        a.get_yaxis().set_label_coords(-0.15,0.5)
+
+    a1.set_xticklabels([])
+    return a1,a2
+
+def plot_mBCdE(data, label=None, title=None, **argk):
+    """Make a 2D Plot of mBC and dE"""
+    f = pl.figure(figsize=(4,4))
+    a = f.add_axes((0.20,0.13,0.70,0.80))
     p = r2mpl.plot(data, a, **argk)
     if label is None:
-        label = r"Entries / $\num{%.3g} \times \num{%.3g}\text{ GeV}^2$" % (data.GetXaxis().GetBinWidth(1), data.GetYaxis().GetBinWidth(1))
+        label = r"Entries / $\num{%.3g} \times \num{%.3g}\text{ GeV}^2$" % \
+                (data.GetXaxis().GetBinWidth(1), data.GetYaxis().GetBinWidth(1))
     if title is not None:
         a.set_title(title)
-    f.colorbar(p).set_label(label)
+    cb = f.colorbar(p, format=formatter)
+    cb.set_label(label)
     a.grid()
     a.set_xlabel("$M_{BC}$ / GeV")
     a.set_ylabel("$\Delta E$ / GeV")
 
-def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, unit="GeV"):
-    colors = {"signal":"r", "misrecon":"c", "mixed":"g", "charged":"b", "all":"b",
-             }
+def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
+    """Plot data, fit and normalized residuals"""
+    data_axes, sigma_axes = get_plotaxes()
+    colors = {"signal":"r", "misrecon":"c", "mixed":"g", "charged":"b"}
     last = None
     for i,(l,f) in enumerate(fits):
         if last is not None:
@@ -81,25 +116,16 @@ def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, uni
 
     sigma = calc_sigmas(name + "_sigma",data, last)
     r2mpl.plot(sigma,errors=True,axes=sigma_axes, color="k", linewidth=0.5, capsize=1.0)
-    data_axes.grid()
-#    data_axes.legend(loc="best")
     data_axes.set_ylim(ymin=0)
-    data_axes.set_xticklabels([])
     sigma_axes.set_ylim(-4,4)
     sigma_axes.axhline(-2, color="r")
     sigma_axes.axhline( 0, color="k")
     sigma_axes.axhline(+2, color="r")
     sigma_axes.set_yticks([-4,-3,-2,-1,0,1,2,3,4])
-    sigma_axes.set_yticklabels(["","","$-2$","","","","$2$","",""])
-    sigma_axes.grid()
+    sigma_axes.set_yticklabels(["","","$-2$","","$0$","","$2$","",""])
     sigma_axes.set_xlabel(label)
     sigma_axes.set_ylabel("normalized\nresiduals")
     data_axes.set_ylabel(r"Entries / \num{%.3g} %s" % (data.GetBinWidth(1), unit))
-    #data_axes.get_yaxis().set_label_coords(-0.2,0.5)
-    #sigma_axes.get_yaxis().set_label_coords(-0.2,0.5)
-    loc = matplotlib.ticker.MaxNLocator(nbins=5)
-    sigma_axes.get_xaxis().set_major_locator(loc)
-    data_axes.get_xaxis().set_major_locator(loc)
     data_axes.set_title(title)
 
     if log:
@@ -110,17 +136,10 @@ def plot_dfs(name,data,fits,data_axes,sigma_axes,label,title=None,log=False, uni
         #data_axes.set_ylim(ymin=data.GetMinimum(0.5)/2.0)
         data_axes.set_ylim(ymin)
 
-def accumulate(fits):
-    last = None
-    for l,f in fits:
-        if last is None:
-            last = f.Clone("tmp")
-        else:
-            last.Add(f)
-    return last
+def plot_asymmetry(name, data_p, data_m, fits_p, fits_m):
+    """Plot 2 dT flavours and the asymmetry between them"""
+    a1, a2 = get_plotaxes()
 
-
-def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, a1, a2):
     fp = accumulate(fits_p)
     fm = accumulate(fits_m)
     asym_data = data_p.GetAsymmetry(data_m)
@@ -134,25 +153,14 @@ def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, a1, a2):
     r2mpl.plotSmooth(asym_fit, axes=a2, zorder=1, color="r", samples=2000)
     r2mpl.plot(asym_data, axes=a2, errors=True, color="k", zorder=2, linewidth=0.5, capsize=1.0)
     a2.set_ylim(-1.0,1.0)
-    a2.grid()
-    a1.grid()
-    a1.set_xticklabels([])
-    a1.set_ylabel("Entries / %s %s" % (data_p.GetBinWidth(1), "ps"))
+    a1.set_ylabel(r"Entries / \num{%.3g} %s" % (data_p.GetBinWidth(1), "ps"))
     a2.set_xlabel(r"$\Delta t$ / ps")
-    loc = matplotlib.ticker.MaxNLocator(prune="upper", nbins=5)
-    a2.get_yaxis().set_major_locator(loc)
-    loc = matplotlib.ticker.MaxNLocator(nbins=5)
-    a2.get_xaxis().set_major_locator(loc)
-    a1.get_xaxis().set_major_locator(loc)
 
-
-
-
-def make_mbcde_plots(name, title):
+def make_mBCdE_plots(name, title):
+    """Make all mBC and dE plots for a given data set"""
     print "Make mBC dE plots for ", name
     mbcde_data = rootfile.Get(name + "_data")
     mbcde_fit  = rootfile.Get(name + "_fit")
-    #fits = [("all",mbcde_fit)]
     fits = []
     for component in ["charged","mixed","misrecon","signal"]:
         fit = rootfile.Get(name + "_fit_" + component)
@@ -171,11 +179,10 @@ def make_mbcde_plots(name, title):
 
     vmax = max(mbcde_data.GetMaximum(),mbcde_fit2.GetMaximum())
 
-    plotMbcDe(mbcde_data, vmax=vmax, title=title)
-    plotMbcDe(mbcde_fit2, vmax=vmax, title=title, sparse=0.01)
-    plotMbcDe(mbcde_sigma, vmin=-5, vmax=5, label="normalized residuals", title=title)
-    #plotMbcDe(mbcde_data, vmax=vmax, vmin=0.1, log=True, title=title)
-    #plotMbcDe(mbcde_fit2, vmax=vmax, vmin=0.1, log=True, sparse=0.1, title=title)
+    cmap = matplotlib.cm.get_cmap("binary")
+    plot_mBCdE(mbcde_data, vmin=0, vmax=vmax, title=title, cmap=cmap)
+    plot_mBCdE(mbcde_fit2, vmin=0, vmax=vmax, title=title, cmap=cmap)
+    plot_mBCdE(mbcde_sigma, vmin=-5, vmax=5, label="normalized residuals", title=title)
 
     mbc_data = mbcde_data.ProjectionX()
     de_data = mbcde_data.ProjectionY()
@@ -188,24 +195,13 @@ def make_mbcde_plots(name, title):
         mbc_fits.append((component,mbc_fit))
         de_fits.append((component,de_fit))
 
+    plot_dfs("mbc", mbc_data, mbc_fits, "$M_{BC}$ / GeV",   title=title)
+    plot_dfs("mbc", mbc_data, mbc_fits, "$M_{BC}$ / GeV",   title=title, log=True)
+    plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title)
+    plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title, log=True)
 
-    f = pl.figure(figsize=(8,4))
-    a_Mbc  = f.add_axes((0.13,0.38,0.35,0.55))
-    a_sMbc = f.add_axes((0.13,0.13,0.35,0.25))
-    a_dE   = f.add_axes((0.60,0.38,0.35,0.55))
-    a_sdE  = f.add_axes((0.60,0.13,0.35,0.25))
-    plot_dfs("mbc", mbc_data,mbc_fits,a_Mbc,a_sMbc,"$M_{BC}$ / GeV", title=title)
-    plot_dfs("de", de_data,de_fits,a_dE,a_sdE,"$\Delta E$ / GeV", title=title)
-
-    f = pl.figure(figsize=(8,4))
-    a_Mbc  = f.add_axes((0.13,0.38,0.35,0.55))
-    a_sMbc = f.add_axes((0.13,0.13,0.35,0.25))
-    a_dE   = f.add_axes((0.60,0.38,0.35,0.55))
-    a_sdE  = f.add_axes((0.60,0.13,0.35,0.25))
-    plot_dfs("mbc", mbc_data,mbc_fits,a_Mbc,a_sMbc,"$M_{BC}$ / GeV", title=title, log=True)
-    plot_dfs("de", de_data,de_fits,a_dE,a_sdE,"$\Delta E$ / GeV", title=title, log=True)
-
-def make_dt_plots(name, title):
+def make_dT_plots(name, title):
+    """Make all deltaT plots for a given data set"""
     print "Make dT plot for", name
     dt_data_p = rootfile.Get(name + "_data_p")
     dt_data_m = rootfile.Get(name + "_data_m")
@@ -226,38 +222,19 @@ def make_dt_plots(name, title):
         print "Could not make dT plots for", name
         return
 
-    f = pl.figure(figsize=(8,4))
-    a_Mbc  = f.add_axes((0.13,0.38,0.35,0.55))
-    a_sMbc = f.add_axes((0.13,0.13,0.35,0.25))
-    a_dE   = f.add_axes((0.60,0.38,0.35,0.55))
-    a_sdE  = f.add_axes((0.60,0.13,0.35,0.25))
+    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title=title, unit="ps")
+    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title=title, unit="ps", log=True)
+    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title=title, unit="ps")
+    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title=title, unit="ps", log=True)
+    plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m)
 
-    plot_dfs("dt_p", dt_data_p, fits_p, a_Mbc,a_sMbc,"$\Delta t$ / ps", title=title, unit="ps")
-    plot_dfs("dt_m", dt_data_m, fits_m, a_dE,a_sdE,"$\Delta t$ / ps", title=title, unit="ps")
-
-    f = pl.figure(figsize=(8,4))
-    a_Mbc  = f.add_axes((0.13,0.38,0.35,0.55))
-    a_sMbc = f.add_axes((0.13,0.13,0.35,0.25))
-    a_dE   = f.add_axes((0.60,0.38,0.35,0.55))
-    a_sdE  = f.add_axes((0.60,0.13,0.35,0.25))
-
-    plot_dfs("dt_p", dt_data_p, fits_p, a_Mbc,a_sMbc,"$\Delta t$ / ps", title=title, unit="ps", log=True)
-    plot_dfs("dt_m", dt_data_m, fits_m, a_dE,a_sdE,"$\Delta t$ / ps", title=title, unit="ps", log=True)
-
-    f = pl.figure(figsize=(4,4))
-    a1  = f.add_axes((0.20,0.38,0.73,0.55))
-    a2 = f.add_axes((0.20,0.13,0.73,0.25))
-    plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, a1, a2)
-
-
-
-make_mbcde_plots("mbcde_svd1", "SVD 1")
-make_mbcde_plots("mbcde_svd2", "SVD 2")
-make_mbcde_plots("mbcde", "Both")
+make_mBCdE_plots("mbcde_svd1", "SVD 1")
+make_mBCdE_plots("mbcde_svd2", "SVD 2")
+make_mBCdE_plots("mbcde", "Both")
 r2mpl.save_all(filename + "-mBCdE", png=False)
 
-make_dt_plots("dT_svd1", "SVD1")
-make_dt_plots("dT_svd2", "SVD2")
+make_dT_plots("dT_svd1", "SVD1")
+make_dT_plots("dT_svd2", "SVD2")
 r2mpl.save_all(filename + "-dT", png=False)
 
 #pl.show()
