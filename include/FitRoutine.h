@@ -25,6 +25,7 @@ struct FitRoutine {
     template<class FCN> int operator()(FCN &fcn){
         Parameters params;
         if(!fixParameters.empty()) params.fixParameters(fixParameters);
+        if(!releaseParameters.empty()) params.releaseParameters(releaseParameters);
         std::ifstream input(parameterIn.c_str());
         if(!input){
             std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
@@ -72,6 +73,8 @@ struct FitRoutine {
     std::string parameterOut;
     /** Regular expression to determine the parameters we want to fix in addition to the ones in the parameter file */
     std::string fixParameters;
+    /** Regular expression to determine the parameters we want to release in addition to the ones in the parameter file */
+    std::string releaseParameters;
     /** Which strategy to use */
     int fitStrategy;
     /** Wether to call minos after the Fit. Not implemented yet */

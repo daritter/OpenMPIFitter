@@ -23,6 +23,8 @@ class Parameters {
         void print() const { save(std::cout, true); }
         //Dynamically fix the parameters which match the given regular expression
         void fixParameters(const std::string& fixParameters = "");
+        //Dynamically release the parameters which match the given regular expression
+        void releaseParameters(const std::string& releaseParameters = "");
         //Return Minut2 user parameter object
         ROOT::Minuit2::MnUserParameters getMnParams() const;
         //Update the parameters from the Minuit2 user parameter object

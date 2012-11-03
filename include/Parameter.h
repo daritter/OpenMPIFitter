@@ -21,7 +21,7 @@ class Parameter {
         Parameter(const std::string &name="", double value=0, double error=0,
                 double min=-std::numeric_limits<double>::infinity(),
                 double max=std::numeric_limits<double>::infinity(), bool fixed=false):
-            m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(false), m_changed(false){};
+            m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(0), m_changed(false){};
 
         //Return the name of the parameter
         const  std::string &name() const { return m_name; }
@@ -38,7 +38,7 @@ class Parameter {
         //Get the upper limit
         double max() const { return m_max; }
         //Check if the parameter is fixed
-        bool   isFixed() const { return m_fixed || m_min>=m_max || m_dynfix; }
+        bool   isFixed() const { return m_dynfix>0 || (m_fixed && m_dynfix>=0) || m_min>=m_max; }
         //Check if ther is a lower limit
         bool   hasMin() const { return m_min != -std::numeric_limits<double>::infinity(); }
         //Check if ther is a upper limit
@@ -48,7 +48,7 @@ class Parameter {
         //Save the parameter to the given stream, if istty=true, only save non fixed and use color
         bool save(std::ostream& out, bool istty=false) const;
         //Set a dynamic fix: Parameter will be fixed in fit but this will not be saved to file
-        void setDynamicFix(bool fix){ m_dynfix = fix; }
+        void setDynamicFix(int fix){ m_dynfix = fix; }
 
     protected:
         //name of the parameter
@@ -63,8 +63,8 @@ class Parameter {
         double m_max;
         //indicates wether the parameter is permanently fixed
         bool   m_fixed;
-        //indicates wether the parameter is temporarily fixed
-        bool   m_dynfix;
+        //indicates wether the parameter is temporarily fixed (>0) or released (<0)
+        int   m_dynfix;
         //indicates wether the parameter was changed
         bool   m_changed;
 };

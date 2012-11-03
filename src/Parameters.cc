@@ -125,7 +125,18 @@ std::vector<double> Parameters::getValues() const {
 void Parameters::fixParameters(const std::string& fixParameters){
     boost::regex fixed(fixParameters);
     BOOST_FOREACH(Parameter& p, m_parameters){
-        p.setDynamicFix(boost::regex_match(p.name(),fixed));
+        if(boost::regex_match(p.name(),fixed)){
+            p.setDynamicFix(+1);
+        }
+    }
+}
+
+void Parameters::releaseParameters(const std::string& fixParameters){
+    boost::regex fixed(fixParameters);
+    BOOST_FOREACH(Parameter& p, m_parameters){
+        if(boost::regex_match(p.name(),fixed)){
+            p.setDynamicFix(-1);
+        }
     }
 }
 
