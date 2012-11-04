@@ -62,15 +62,14 @@ def calc_sigmas(name, data, fit):
         sigmas.SetBinError(i,1)
     return sigmas
 
-formatter = matplotlib.ticker.ScalarFormatter(False,False)
-formatter.set_powerlimits((-3,3))
-
 def get_plotaxes():
     """Return axes suitable for fit + residuals or dT + asymmetry plots"""
     f = pl.figure(figsize=(4,4))
     a1  = f.add_axes((0.20,0.38,0.73,0.55))
     a2 = f.add_axes((0.20,0.13,0.73,0.25))
     for a,p in (a1,None), (a2,"upper"):
+        formatter = matplotlib.ticker.ScalarFormatter(False,False)
+        formatter.set_powerlimits((-3,3))
         a.get_xaxis().set_major_formatter(formatter)
         a.get_yaxis().set_major_formatter(formatter)
         if p is not None:
@@ -92,6 +91,9 @@ def plot_mBCdE(data, label=None, title=None, **argk):
                 (data.GetXaxis().GetBinWidth(1), data.GetYaxis().GetBinWidth(1))
     if title is not None:
         a.set_title(title)
+
+    formatter = matplotlib.ticker.ScalarFormatter(False,False)
+    formatter.set_powerlimits((-3,3))
     cb = f.colorbar(p, format=formatter)
     cb.set_label(label)
     a.grid()
