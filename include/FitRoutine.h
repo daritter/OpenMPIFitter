@@ -23,9 +23,8 @@ struct FitRoutine {
 
     /** Do the fitting */
     template<class FCN> int operator()(FCN &fcn){
+        //Loading parameters from file
         Parameters params;
-        if(!fixParameters.empty()) params.fixParameters(fixParameters);
-        if(!releaseParameters.empty()) params.releaseParameters(releaseParameters);
         std::ifstream input(parameterIn.c_str());
         if(!input){
             std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
@@ -33,25 +32,41 @@ struct FitRoutine {
         }
         input >> params;
         input.close();
-
+        //See if we want to fix, release or override some parameters based on command line parameters
+        try {
+            if(!fixParameters.empty()) params.fixParameters(fixParameters);
+            if(!releaseParameters.empty()) params.releaseParameters(releaseParameters);
+            if(!overrideParameters.empty()) params.overrideParameters(overrideParameters);
+        }catch(std::invalid_argument &e){
+            std::cout << e.what() << std::endl;
+            return 2;
+        }
         std::cout << "Aye, this be thy initial parrrrrameters: " << std::endl;
         std::cout << params << std::endl;
 
-        std::ios_base::fmtflags originalFormat = std::cout.flags();
-        ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams();
-        ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
-        ROOT::Minuit2::FunctionMinimum min = migrad(10000);
-        std::cout.flags(originalFormat);
 
-        std::cout << min << std::endl;
-        std::cout << "Function Minimum: " << std::setprecision(10)
-		  << min.Fval() << std::endl;
-        if(!min.IsValid()){
-            std::cout << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
-        }else{
-            std::cout << "Avast, Minuit be converrrrging." << std::endl;
+        bool success(true);
+        //Call Minuit2 to do the actual fit
+        if(fitStrategy>0){
+            std::ios_base::fmtflags originalFormat = std::cout.flags();
+            ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams();
+            ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
+            ROOT::Minuit2::FunctionMinimum min = migrad(10000);
+            std::cout.flags(originalFormat);
+
+            std::cout << min << std::endl;
+            std::cout << "Function Minimum: " << std::setprecision(10)
+                      << min.Fval() << std::endl;
+            if(!min.IsValid()){
+                std::cout << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
+            }else{
+                std::cout << "Avast, Minuit be converrrrging." << std::endl;
+            }
+            params.update(min.UserParameters());
+            success &= min.IsValid();
         }
-        params.update(min.UserParameters());
+
+        //Print the non fixed parameters and save all parameters to file
         std::cout << "This be thy final non fixed parrrrameters ye lubber:" << std::endl;
         params.print();
         std::cout << std::endl;
@@ -64,17 +79,23 @@ struct FitRoutine {
             output.close();
         }
 
-        return min.IsValid()?0:1;
+        return success?0:1;
     }
 
     /** Filename to read parameters */
     std::string parameterIn;
     /** Filename to write parameters */
     std::string parameterOut;
-    /** Regular expression to determine the parameters we want to fix in addition to the ones in the parameter file */
+    /** Regular expression to determine the parameters we want to fix in
+     * addition to the ones in the parameter file */
     std::string fixParameters;
-    /** Regular expression to determine the parameters we want to release in addition to the ones in the parameter file */
+    /** Regular expression to determine the parameters we want to release in
+     * addition to the ones in the parameter file */
     std::string releaseParameters;
+    /** List of <name>:<value> pairs, possible more than one per string
+     * separated by comma for parameter ovverrides to dynamically set a
+     * parameter to a different value */
+    std::string overrideParameters;
     /** Which strategy to use */
     int fitStrategy;
     /** Wether to call minos after the Fit. Not implemented yet */

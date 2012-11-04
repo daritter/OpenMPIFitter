@@ -81,6 +81,7 @@ struct PlotRoutine {
 
     std::string parameterIn;
     std::string rootFile;
+    std::string overrideParameters;
     Range plotrange_dT;
     int bins_mBC;
     int bins_dE;
@@ -103,6 +104,12 @@ struct PlotRoutine {
         }
         input >> params;
         input.close();
+        try {
+            if(!overrideParameters.empty()) params.overrideParameters(overrideParameters);
+        }catch(std::invalid_argument &e){
+            std::cout << e.what() << std::endl;
+            return 2;
+        }
         std::vector<double> par = params.getValues();
 
 
@@ -228,7 +235,7 @@ int main(int argc, char* argv[]){
     Range range_dT(-70,70);
     std::string bestB("bestLHsig");
     //DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
-    std::vector<std::string> componentList;
+    std::string componentList;
 
     /** Read program options using boost::program_options. Could be anything else */
     po::options_description desc("Avast, thy options be:");
@@ -272,8 +279,10 @@ int main(int argc, char* argv[]){
          "Number of Bins per axis for the data")
         ("sampling_dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
          "sampling for the fit")
-        ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
+        ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
          "Components to use for the fit")
+        ("override", po::value<std::string>(&plotter.overrideParameters)->default_value(plotter.overrideParameters),
+         "Aye, give the order to be releasin the parrrameters which match against this rrrregular expression")
         ;
 
     po::variables_map vm;
@@ -291,9 +300,13 @@ int main(int argc, char* argv[]){
     }
     po::notify(vm);
 
-
     if(!componentList.empty()){
-        plotter.activeComponents = DspDsmKsPDF::getComponents(componentList);
+        try{
+            plotter.activeComponents = DspDsmKsPDF::getComponents(componentList);
+        }catch(std::invalid_argument &e){
+            std::cout << e.what() << std::endl;
+            return 2;
+        }
     }
 
     DspDsmKsPDF pdf(range_mBC, range_dE, range_dT, files, bestB, (DspDsmKsPDF::EnabledComponents)(plotter.activeComponents ^ DspDsmKsPDF::CMP_deltat), 0);

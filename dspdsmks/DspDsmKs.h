@@ -10,6 +10,7 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 #include <algorithm>
 //#include "func.h"
 
@@ -59,18 +60,21 @@ struct DspDsmKsPDF {
         PLT_DT_QE  = 1<<4
     };
 
-    static EnabledComponents getComponents(const std::vector<std::string> &components){
+    static EnabledComponents getComponents(const std::string &components){
         EnabledComponents result = CMP_NONE;
 #define DspDsmKsPDF__checkComponent(name) if(component == #name) result = (EnabledComponents) (result | CMP_##name)
-        BOOST_FOREACH(std::string component, components){
+        boost::char_separator<char> sep(", ");
+        boost::tokenizer<boost::char_separator<char> > tokens(components,sep);
+        BOOST_FOREACH(std::string component, tokens){
             boost::to_lower(component);
             boost::trim(component);
             DspDsmKsPDF__checkComponent(signal);
-            DspDsmKsPDF__checkComponent(misrecon);
-            DspDsmKsPDF__checkComponent(mixed);
-            DspDsmKsPDF__checkComponent(charged);
-            DspDsmKsPDF__checkComponent(deltat);
-            DspDsmKsPDF__checkComponent(all);
+            else DspDsmKsPDF__checkComponent(misrecon);
+            else DspDsmKsPDF__checkComponent(mixed);
+            else DspDsmKsPDF__checkComponent(charged);
+            else DspDsmKsPDF__checkComponent(deltat);
+            else DspDsmKsPDF__checkComponent(all);
+            else throw std::invalid_argument("Unknown component: '" + component + "'");
         }
 #undef DspDsmKsPDF__checkComponent
         return result;

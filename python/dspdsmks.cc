@@ -29,6 +29,12 @@ struct ParameterHelper {
     }
 };
 
+struct RangeHelper {
+    static const std::string tostring(Range &self){
+        return (boost::format("<Range vmin=%2% vmax=%3%>") % self.vmin % self.vmax).str();
+    }
+};
+
 BOOST_PYTHON_MODULE(dspdsmks)
 {
     using namespace boost::python;

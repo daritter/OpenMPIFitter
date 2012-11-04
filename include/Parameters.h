@@ -1,8 +1,8 @@
 #ifndef MPIFitter_Parameters_H
 #define MPIFitter_Parameters_H
 
+#include <vector>
 #include <string>
-#include <boost/array.hpp>
 
 #include "Parameter.h"
 #include "ParameterList.h"
@@ -25,6 +25,8 @@ class Parameters {
         void fixParameters(const std::string& fixParameters = "");
         //Dynamically release the parameters which match the given regular expression
         void releaseParameters(const std::string& releaseParameters = "");
+        //Dynamically override parameters
+        void overrideParameters(const std::string &overrides);
         //Return Minut2 user parameter object
         ROOT::Minuit2::MnUserParameters getMnParams() const;
         //Update the parameters from the Minuit2 user parameter object

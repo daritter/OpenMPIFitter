@@ -9,6 +9,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
+#include <boost/tokenizer.hpp>
 
 using namespace std;
 using namespace boost;
@@ -136,6 +137,23 @@ void Parameters::releaseParameters(const std::string& fixParameters){
     BOOST_FOREACH(Parameter& p, m_parameters){
         if(boost::regex_match(p.name(),fixed)){
             p.setDynamicFix(-1);
+        }
+    }
+}
+
+void Parameters::overrideParameters(const std::string &overrides){
+    boost::char_separator<char> sep(", ");
+    boost::tokenizer<boost::char_separator<char> > tokens(overrides,sep);
+    BOOST_FOREACH(const string & tok, tokens) {
+        size_t pos = tok.find(':');
+        if(pos==string::npos)
+            throw std::invalid_argument("Override '" + tok + "' not well formed, expected <name>:<value>");
+        Parameter &p = (*this)[tok.substr(0,pos)];
+        try{
+            const double value = boost::lexical_cast<double>(tok.substr(pos+1));
+            p.value(value);
+        }catch(bad_lexical_cast &e){
+            throw std::invalid_argument("Override '" + tok + "' not well formed, value cannot be parsed");
         }
     }
 }

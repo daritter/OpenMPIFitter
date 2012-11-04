@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
     Range range_dT(-70,70);
     std::string bestB("bestLHsig");
     DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
-    std::vector<std::string> componentList;
+    std::string componentList("all");
 
     /** Read program options using boost::program_options. Could be anything else */
     po::options_description desc("Avast, thy options be:");
@@ -47,9 +47,11 @@ int main(int argc, char* argv[]){
          "Declare thy preferrrrred strategy to be fittin with")
         ("print,p", po::value<int>(&maxPrintOrder)->default_value(maxPrintOrder),
          "Only print -2logL for each 10^N call")
-        ("fix-parameters", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
+        ("fix", po::value<std::string>(&fitter.fixParameters)->default_value(fitter.fixParameters),
          "Aye, give the order to be fixin the parrrameters which match against this rrrregular expression")
-        ("release-parameters", po::value<std::string>(&fitter.releaseParameters)->default_value(fitter.releaseParameters),
+        ("release", po::value<std::string>(&fitter.releaseParameters)->default_value(fitter.releaseParameters),
+         "Aye, give the order to be releasin the parrrameters which match against this rrrregular expression")
+        ("override", po::value<std::string>(&fitter.overrideParameters)->default_value(fitter.overrideParameters),
          "Aye, give the order to be releasin the parrrameters which match against this rrrregular expression")
         ("minMbc", po::value<float>(&range_mBC.vmin)->default_value(range_mBC.vmin),
          "The minimal mBC value for the fit")
@@ -65,8 +67,8 @@ int main(int argc, char* argv[]){
          "The maximal dT value for the fit")
         ("bestB", po::value<std::string>(&bestB)->default_value(bestB),
          "BestB Selection method to use")
-        ("cmp", po::value<std::vector<std::string> >(&componentList)->composing(),
-         "Components to use for the fit")
+        ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
+         "Comma separated list of components to use for the fit")
         ;
 
     po::variables_map vm;
@@ -85,7 +87,12 @@ int main(int argc, char* argv[]){
     po::notify(vm);
 
     if(!componentList.empty()){
-        activeComponents = DspDsmKsPDF::getComponents(componentList);
+        try{
+            activeComponents = DspDsmKsPDF::getComponents(componentList);
+        }catch(std::invalid_argument &e){
+            std::cout << e.what() << std::endl;
+            return 2;
+        }
     }
 
     std::string names[] = {"signal","misrecon","mixed","charged"};
