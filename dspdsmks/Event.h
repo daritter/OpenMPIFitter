@@ -54,24 +54,16 @@ struct Event {
     };
 
     int expNo;
-    //int runNo;
-    //int evtNo;
     int svdVs;
     bool isMC;
-    //double nB0;
     double benergy;
     int flag;
     double Mbc;
     double dE;
-    //double channelP;
-    //double channelM;
-    //int mcInfo;
     double m2DspKs;
     double m2DsmKs;
     double cosTheta;
     double deltaZ;
-    //int q;
-    //double r;
 
     int    vtx_ntrk;
     double vtx_zerr;
@@ -101,11 +93,17 @@ struct Event {
         return benergy<b.benergy;
     }
 
-    bool calculateValues(){
-        deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
-        tag_r = fabs(tag_r);
+    bool calculateValues(bool toyMC=false){
+        if(toyMC){
+            m2DspKs = 1;
+            m2DsmKs = eta;
+            deltaZ = deltaT / Belle::dt_resol_global::inv_bgc;
+        }else{
+            deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
+            tag_r = fabs(tag_r);
+            eta = (m2DsmKs>m2DspKs)?1:-1;
+        }
         rbin = Belle::set_rbin(tag_r);
-        eta = (m2DsmKs>m2DspKs)?1:-1;
 
         //Check quality flag
         if(flag!=0 || tag_q==0) return false;
@@ -134,6 +132,7 @@ struct Event {
 #define BADDRESS__(x,var) tree->SetBranchAddress((prefix + x).c_str(),&var)
 #define BADDRESS(x) BADDRESS__(#x,x)
 #define BODDRESS(g,x) BADDRESS__(#g+"."+#x, g##_##x)
+#define BUDDRESS(g,x,y) BADDRESS__(#g+"."+#x, g##_##y)
         BADDRESS(expNo);
         BADDRESS(svdVs);
         BADDRESS(isMC);
@@ -151,8 +150,8 @@ struct Event {
         BODDRESS(tag,chi2);
         BODDRESS(tag,ndf);
         BODDRESS(tag,isL);
-        tree->SetBranchAddress((prefix + "tag.flavour").c_str(), &tag_q);
-        tree->SetBranchAddress((prefix + "tag.qr").c_str(),      &tag_r);
+        BUDDRESS(tag,flavour,q);
+        BUDDRESS(tag,qr,r);
         BODDRESS(vtx,ntrk);
         BODDRESS(vtx,zerr);
         BODDRESS(vtx,chi2);
@@ -164,6 +163,7 @@ struct Event {
 #define ADDBRANCH__(name,var,type)   tree->Branch((prefix + name).c_str(),&var,(prefix+name+"/"+#type).c_str())
 #define ADDBRANCH(x,type)            ADDBRANCH__(#x,x,type)
 #define ADDBRONCH(g,x,type)          ADDBRANCH__(#g+"."+#x,g##_##x,type)
+#define ADDBRUNCH(g,x,y,type)        ADDBRANCH__(#g+"."+#x,g##_##y,type)
         ADDBRANCH(expNo,I);
         ADDBRANCH(svdVs,I);
         ADDBRANCH(isMC,O);
@@ -181,17 +181,12 @@ struct Event {
         ADDBRONCH(tag,chi2,D);
         ADDBRONCH(tag,ndf,D);
         ADDBRONCH(tag,isL,D);
-        tree->Branch((prefix + "tag.flavour").c_str(), &tag_q, (prefix + "tag.flavour/I").c_str());
-        tree->Branch((prefix + "tag.qr").c_str(),      &tag_r, (prefix + "tag.qr/D").c_str());
+        ADDBRUNCH(tag,flavour,q,I);
+        ADDBRUNCH(tag,qr,r,D);
         ADDBRONCH(vtx,ntrk,I);
         ADDBRONCH(vtx,zerr,D);
         ADDBRONCH(vtx,chi2,D);
         ADDBRONCH(vtx,ndf,I);
-    }
-
-    void fill(TTree* tree){
-        deltaZ = deltaT/Belle::dt_resol_global::inv_bgc;
-        tree->Fill();
     }
 
     void reset(){
