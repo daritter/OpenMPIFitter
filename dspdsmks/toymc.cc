@@ -17,18 +17,23 @@ namespace po = boost::program_options;
 
 struct ToyMCRoutine {
     /** Set some default options */
-    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root")
+    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.3), scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0)
     {}
 
     std::string parameterIn;
     std::string overrideParameters;
     std::string output;
+    Range scan_dT;
+    double fudge;
+    int scansteps_mBC;
+    int scansteps_dE;
+    int scansteps_dT;
+    unsigned int seed;
 
     /** Do the plotting */
     template<class FCN> int operator()(FCN &parallel_pdf){
         const Range range_mBC = parallel_pdf.localFCN().getRange_mBC();
         const Range range_dE = parallel_pdf.localFCN().getRange_dE();
-        const Range range_dT = parallel_pdf.localFCN().getRange_dT();
 
         Parameters params;
         if(!params.load(parameterIn, overrideParameters)){
@@ -37,11 +42,9 @@ struct ToyMCRoutine {
         std::vector<double> par = params.getValues();
 
         //Now we need to get the maximal value of the pdf
-        double step_mBC = (range_mBC.vmax-range_mBC.vmin)/100;
-        double step_dE = (range_dE.vmax-range_dE.vmin)/100;
-        double step_dT = 0.01;
-        double min_dT = -4;
-        double max_dT =  4;
+        double step_mBC = (range_mBC.vmax-range_mBC.vmin)/scansteps_mBC;
+        double step_dE = (range_dE.vmax-range_dE.vmin)/scansteps_dE;
+        double step_dT = (scan_dT.vmax-scan_dT.vmin)/scansteps_dT;
 
         std::vector<double> values(10,0);
         values[0] = 5.289;
@@ -51,11 +54,10 @@ struct ToyMCRoutine {
         values[4] = range_dE.vmin;
         values[5] = range_dE.vmax;
         values[6] = step_dE;
-        values[7] = min_dT;
-        values[8] = max_dT;
+        values[7] = scan_dT.vmin;
+        values[8] = scan_dT.vmax;
         values[9] = step_dT;
         double maxVal[2];
-        double fudge = 1.2;
         maxVal[0] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD1 | DspDsmKsPDF::PLT_MAX, values, par, OP_MAX);
         maxVal[1] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD2 | DspDsmKsPDF::PLT_MAX, values, par, OP_MAX);
 
@@ -66,16 +68,13 @@ struct ToyMCRoutine {
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");
-        local_pdf.generateToyMC(tree,par,maxVal,1);
+        local_pdf.generateToyMC(tree,par,maxVal,seed);
         tree->Write();
         f->Write();
         f->Close();
         return 0;
     }
 };
-
-
-
 
 /** This is the main function and will be called on all processes with the same
  * arguments.
@@ -128,6 +127,20 @@ int main(int argc, char* argv[]){
          "Components to use for the fit")
         ("override", po::value<std::string>(&toymc.overrideParameters)->default_value(toymc.overrideParameters),
          "Aye, give the order to be modyfying parrrameters given with this list")
+        ("scan-min-dT", po::value<float>(&toymc.scan_dT.vmin)->default_value(toymc.scan_dT.vmin),
+         "Specify thy minimal dT value to scan for thy maximal pdf value")
+        ("scan-max-dT", po::value<float>(&toymc.scan_dT.vmax)->default_value(toymc.scan_dT.vmax),
+         "Specify thy maximal dT value to scan for thy maximal pdf value")
+        ("steps-Mbc", po::value<int>(&toymc.scansteps_mBC)->default_value(toymc.scansteps_mBC),
+         "Name the number of steps to be used in scanning thy Mbc range")
+        ("steps-dE", po::value<int>(&toymc.scansteps_dE)->default_value(toymc.scansteps_dE),
+         "Name the number of steps to be used in scanning thy dE range")
+        ("steps-dT", po::value<int>(&toymc.scansteps_dT)->default_value(toymc.scansteps_dT),
+         "Name the number of steps to be used in scanning thy dT range")
+        ("fudge", po::value<double>(&toymc.fudge)->default_value(toymc.fudge),
+         "Fudgefactor we'd be applying to the maximal pdf value to be on the safe side")
+        ("seed", po::value<unsigned int>(&toymc.seed)->default_value(toymc.seed),
+         "Seed to use for the number generator, 0=initialize from /dev/urandom")
         ;
 
     po::variables_map vm;
