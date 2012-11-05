@@ -11,8 +11,12 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/random/random_device.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/variate_generator.hpp>
 #include <algorithm>
-//#include "func.h"
 
 #include <TChain.h>
 #include <Functions.h>
@@ -22,6 +26,7 @@
 #include "Misrecon.h"
 #include "Mixed.h"
 #include "Charged.h"
+#include "progress.h"
 
 /** DspDsmKs PDF function.
  *
@@ -57,7 +62,9 @@ struct DspDsmKsPDF {
         PLT_SVD2   = 1<<1,
         PLT_DT_Q   = 1<<2,
         PLT_DT_E   = 1<<3,
-        PLT_DT_QE  = 1<<4
+        PLT_DT_QE  = 1<<4,
+        PLT_DT     = PLT_DT_Q | PLT_DT_E | PLT_DT_QE,
+        PLT_MAX    = 1<<5,
     };
 
     static EnabledComponents getComponents(const std::string &components){
@@ -95,6 +102,7 @@ struct DspDsmKsPDF {
     }
 
     void setComponents(EnabledComponents cmp=CMP_all){
+        enabledComponents = cmp;
         BOOST_FOREACH(Component* component, components){
             delete component;
         }
@@ -171,35 +179,150 @@ struct DspDsmKsPDF {
     }
 
     double plot(int flag, const std::vector<double> values, const std::vector<double> &par){
-        long double pdf(0.0);
         int svdVs=0;
         if(flag & PLT_SVD1) svdVs |= Component::SVD1;
         if(flag & PLT_SVD2) svdVs |= Component::SVD2;
-        int nEvents(0);
-        for(int svd=0; svd<2; ++svd){
-            if((svd==0) && !(flag & PLT_SVD1)) continue;
-            if((svd==1) && !(flag & PLT_SVD2)) continue;
-            for(unsigned int i=0; i<data[svd].size(); i++ ){
-                Event e = data[svd][i];
-                e.deltaT = values[0];
-                for(int i=-1; i<=2; i+=2){
-                    if(flag & PLT_DT_Q){
-                        e.tag_q = values[1];
-                        e.eta = i;
-                    }else if(flag & PLT_DT_E){
-                        e.tag_q = i;
-                        e.eta = values[1];
-                    }else if(flag & PLT_DT_QE){
-                        e.tag_q = i;
-                        e.eta = i*values[1];
+
+        if(flag & PLT_DT){
+            long double pdf(0.0);
+            int nEvents(0);
+            for(int svd=0; svd<2; ++svd){
+                if((svd==0) && !(flag & PLT_SVD1)) continue;
+                if((svd==1) && !(flag & PLT_SVD2)) continue;
+                for(unsigned int i=0; i<data[svd].size(); i++ ){
+                    Event e = data[svd][i];
+                    e.deltaT = values[0];
+                    for(int i=-1; i<=2; i+=2){
+                        if(flag & PLT_DT_Q){
+                            e.tag_q = values[1];
+                            e.eta = i;
+                        }else if(flag & PLT_DT_E){
+                            e.tag_q = i;
+                            e.eta = values[1];
+                        }else if(flag & PLT_DT_QE){
+                            e.tag_q = i;
+                            e.eta = i*values[1];
+                        }
+                        pdf += get_deltaT(e, par);
                     }
-                    pdf += get_deltaT(e, par);
+                    ++nEvents;
                 }
-                ++nEvents;
+            }
+            const double yield = get_yield(par,svdVs);
+            return pdf*yield/nEvents;
+        }
+        if(flag & PLT_MAX){
+            std::cout << "Calculating max PDF value" << std::endl;
+            double pdf(0.0);
+            int svd = (flag & PLT_SVD1)?0:1;
+            int oldComponents = enabledComponents;
+            if(oldComponents & CMP_deltat) setOptions(oldComponents ^ CMP_deltat);
+            const double &mbc_start = values[1];
+            const double &mbc_end   = values[2];
+            const double &mbc_step  = values[3];
+            const double &de_start  = values[4];
+            const double &de_end    = values[5];
+            const double &de_step   = values[6];
+            Event e;
+            e.svdVs = svd;
+            e.benergy = values[0];
+            for(e.Mbc=mbc_start; e.Mbc <= mbc_end; e.Mbc+=mbc_step){
+                for(e.dE=de_start; e.dE <= de_end; e.dE+=de_step){
+                    pdf = std::max(pdf, PDF(e,par));
+                }
+            }
+            if(oldComponents & CMP_deltat){
+                const double &dt_start  = values[7];
+                const double &dt_end    = values[8];
+                const double &dt_step   = values[9];
+                double dtpdf(0);
+                std::string name = "dt_max_svd";
+                name += svd?"2":"1";
+                for(double dt=dt_start; dt <= dt_end; dt+=dt_step){
+                    for(unsigned int i=0; i<std::min((size_t)10u,data[svd].size()); i++){
+                        e = data[svd][i];
+                        e.deltaT = dt;
+                        for(e.tag_q=-1; e.tag_q<=2; e.tag_q+=2){
+                            for(e.eta=-1; e.eta<=2; e.eta+=2){
+                                dtpdf = std::max(dtpdf,get_deltaT(e,par));
+                            }
+                        }
+                    }
+                }
+                pdf *= dtpdf;
+                setOptions(oldComponents);
+            }
+            return pdf;
+        }
+        return 0;
+    }
+
+    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], int seed=0){
+        boost::random::mt19937 random_generator(seed);
+        if(seed == 0){
+            boost::random::random_device rseed;
+            random_generator.seed(rseed);
+        }
+        Event e;
+        e.createBranches(output, bestBSelection);
+        e.isMC = 1;
+        e.flag = 0;
+        e.m2DspKs = 0;
+        typedef boost::variate_generator<boost::random::mt19937&, boost::random::uniform_int_distribution<> > int_variate;
+        typedef boost::variate_generator<boost::random::mt19937&, boost::random::uniform_real_distribution<> > real_variate;
+        for(int svd=0; svd<2; ++svd){
+            int_variate  random_event(random_generator, boost::random::uniform_int_distribution<>(0,data[svd].size()-1));
+            real_variate random_mBC(random_generator, boost::random::uniform_real_distribution<>(range_mBC.vmin,range_mBC.vmax));
+            real_variate random_dE(random_generator, boost::random::uniform_real_distribution<>(range_dE.vmin,range_dE.vmax));
+            real_variate random_dT(random_generator, boost::random::uniform_real_distribution<>(range_dT.vmin,range_dT.vmax));
+            real_variate random_pdf(random_generator, boost::random::uniform_real_distribution<>(0,maxval[svd]));
+            int nEvents = (int)round(get_yield(par, svd==0?Component::SVD1:Component::SVD2));
+            if(nEvents==0) continue;
+            e.svdVs = svd;
+            ProgressBar pbar(nEvents);
+            std::cout << "Generating Events for SVD" << (svd+1) << ":" << pbar;
+            for(int i=0; i<nEvents; ++i){
+                double pdf(0);
+                double calc_pdf(-1);
+                do{
+                    pdf = random_pdf();
+                    calc_pdf = -1;
+                    if(pdf>maxval[svd]){
+                        throw std::runtime_error(
+                                (boost::format("PDF larger than maximimum value: %.10e > %.10e") % pdf % maxval[svd]).str());
+                    }
+                    e.Mbc = random_mBC();
+                    e.dE = random_dE();
+                    Event &e2 = data[svd][random_event()];
+                    e.benergy = e2.benergy;
+                    e.expNo = e2.expNo;
+                    if(e.Mbc>e.benergy) continue;
+                    if(enabledComponents & CMP_deltat){
+                        e.cosTheta = data[svd][random_event()].cosTheta;
+                        //Eta gets calculated so this should work
+                        e.m2DsmKs = data[svd][random_event()].eta;
+                        e.tag_ntrk = data[svd][random_event()].tag_ntrk;
+                        e.tag_zerr = data[svd][random_event()].tag_zerr;
+                        e.tag_chi2 = data[svd][random_event()].tag_chi2;
+                        e.tag_ndf = data[svd][random_event()].tag_ndf;
+                        e.tag_isL = data[svd][random_event()].tag_isL;
+                        e.tag_q = data[svd][random_event()].tag_q;
+                        e.tag_r = data[svd][random_event()].tag_r;
+                        e.vtx_ntrk = data[svd][random_event()].vtx_ntrk;
+                        e.vtx_zerr = data[svd][random_event()].vtx_zerr;
+                        e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
+                        e.vtx_ndf = data[svd][random_event()].vtx_ndf;
+                        if(!e.calculateValues()) continue;
+                        e.deltaT = random_dT();
+                        e.reset();
+                    }
+                    calc_pdf = PDF(e,par);
+                }while(pdf > calc_pdf);
+
+                std::cout << ++pbar;
+                e.fill(output);
             }
         }
-        const double yield = get_yield(par,svdVs);
-        return pdf*yield/nEvents;
     }
 
     /** Load the chunk of data to be used by this process of the pdf
@@ -240,9 +363,8 @@ struct DspDsmKsPDF {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
                 std::exit(5);
             }
-            event.calculateValues();
+            if(!event.calculateValues()) continue;
             if(!range_mBC(event.Mbc) || !range_dE(event.dE) || !range_dT(event.deltaT)) continue;
-            if(event.flag!=0 || event.tag_q==0) continue;
             data[event.svdVs].push_back(event);
         }
 
@@ -283,6 +405,7 @@ struct DspDsmKsPDF {
 
     /** PDF function components */
     mutable std::vector<Component*> components;
+    EnabledComponents enabledComponents;
 };
 
 #endif //MPIFitter_DspDsmKsPDF_h

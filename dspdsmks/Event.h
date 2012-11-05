@@ -40,6 +40,10 @@ class dTCache {
 
 struct Event {
     static const double deltaM = 0.507;
+    static const double quality_cut = 50;
+    static const double sigmaz_mult_cut = 0.02;
+    static const double sigmaz_sngl_cut = 0.05;
+
 
     enum dtCachePosition {
         dt_signal,
@@ -50,8 +54,8 @@ struct Event {
     };
 
     int expNo;
-    int runNo;
-    int evtNo;
+    //int runNo;
+    //int evtNo;
     int svdVs;
     bool isMC;
     //double nB0;
@@ -61,7 +65,7 @@ struct Event {
     double dE;
     //double channelP;
     //double channelM;
-    int mcInfo;
+    //int mcInfo;
     double m2DspKs;
     double m2DsmKs;
     double cosTheta;
@@ -97,11 +101,21 @@ struct Event {
         return benergy<b.benergy;
     }
 
-    void calculateValues(){
+    bool calculateValues(){
         deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
         tag_r = fabs(tag_r);
         rbin = Belle::set_rbin(tag_r);
         eta = (m2DsmKs>m2DspKs)?1:-1;
+
+        //Check quality flag
+        if(flag!=0 || tag_q==0) return false;
+        //Random cuts imposed by ipcv for whatever reason
+        if(vtx_ntrk > 1  && vtx_chi2/vtx_ndf > quality_cut) return false;
+        if(tag_ntrk > 1  && tag_chi2/tag_ndf > quality_cut) return false;
+        if(vtx_ntrk == 1 && vtx_zerr > sigmaz_sngl_cut) return false;
+        if(vtx_ntrk > 1  && vtx_zerr > sigmaz_mult_cut) return false;
+        if(tag_ntrk == 1 && tag_zerr > sigmaz_sngl_cut) return false;
+        if(tag_ntrk > 1  && tag_zerr > sigmaz_mult_cut) return false;
 
         Ak = 0.0;
         Ck = 0.0;
@@ -111,39 +125,77 @@ struct Event {
 
         wrongTag_w = Belle::set_wtag( expNo, rbin, isMC );
         wrongTag_dw = Belle::set_dwtag( expNo, rbin, isMC );
+
+        return true;
     }
 
-
-
-    void setBranches(TTree* tree, const std::string &bselection="bestLHsig"){
+    void setBranches(TTree* tree, const std::string &bselection){
         std::string prefix("");
-#define BADDRESS(x) tree->SetBranchAddress((prefix + #x).c_str(),&x)
+#define BADDRESS__(x,var) tree->SetBranchAddress((prefix + x).c_str(),&var)
+#define BADDRESS(x) BADDRESS__(#x,x)
+#define BODDRESS(g,x) BADDRESS__(#g+"."+#x, g##_##x)
         BADDRESS(expNo);
-        BADDRESS(runNo);
-        BADDRESS(evtNo);
         BADDRESS(svdVs);
         BADDRESS(isMC);
         BADDRESS(benergy);
-        if(!bselection.empty()) prefix += bselection + ".";
+        prefix += bselection + ".";
         BADDRESS(flag);
         BADDRESS(Mbc);
         BADDRESS(dE);
-        BADDRESS(mcInfo);
         BADDRESS(m2DspKs);
         BADDRESS(m2DsmKs);
         BADDRESS(cosTheta);
         BADDRESS(deltaZ);
-        tree->SetBranchAddress((prefix + "tag.ntrk").c_str(),    &tag_ntrk);
-        tree->SetBranchAddress((prefix + "tag.zerr").c_str(),    &tag_zerr);
-        tree->SetBranchAddress((prefix + "tag.chi2").c_str(),    &tag_chi2);
-        tree->SetBranchAddress((prefix + "tag.ndf").c_str(),     &tag_ndf);
+        BODDRESS(tag,ntrk);
+        BODDRESS(tag,zerr);
+        BODDRESS(tag,chi2);
+        BODDRESS(tag,ndf);
+        BODDRESS(tag,isL);
         tree->SetBranchAddress((prefix + "tag.flavour").c_str(), &tag_q);
         tree->SetBranchAddress((prefix + "tag.qr").c_str(),      &tag_r);
-        tree->SetBranchAddress((prefix + "tag.isL").c_str(),     &tag_isL);
-        tree->SetBranchAddress((prefix + "vtx.ntrk").c_str(),    &vtx_ntrk);
-        tree->SetBranchAddress((prefix + "vtx.zerr").c_str(),    &vtx_zerr);
-        tree->SetBranchAddress((prefix + "vtx.chi2").c_str(),    &vtx_chi2);
-        tree->SetBranchAddress((prefix + "vtx.ndf").c_str(),     &vtx_ndf);
+        BODDRESS(vtx,ntrk);
+        BODDRESS(vtx,zerr);
+        BODDRESS(vtx,chi2);
+        BODDRESS(vtx,ndf);
+    }
+
+    void createBranches(TTree* tree, const std::string &bselection){
+        std::string prefix("");
+#define ADDBRANCH__(name,var,type)   tree->Branch((prefix + name).c_str(),&var,(prefix+name+"/"+#type).c_str())
+#define ADDBRANCH(x,type)            ADDBRANCH__(#x,x,type)
+#define ADDBRONCH(g,x,type)          ADDBRANCH__(#g+"."+#x,g##_##x,type)
+        ADDBRANCH(expNo,I);
+        ADDBRANCH(svdVs,I);
+        ADDBRANCH(isMC,O);
+        ADDBRANCH(benergy,D);
+        prefix += bselection + ".";
+        ADDBRANCH(flag,I);
+        ADDBRANCH(Mbc,D);
+        ADDBRANCH(dE,D);
+        ADDBRANCH(m2DspKs,D);
+        ADDBRANCH(m2DsmKs,D);
+        ADDBRANCH(cosTheta,D);
+        ADDBRANCH(deltaZ,D);
+        ADDBRONCH(tag,ntrk,I);
+        ADDBRONCH(tag,zerr,D);
+        ADDBRONCH(tag,chi2,D);
+        ADDBRONCH(tag,ndf,D);
+        ADDBRONCH(tag,isL,D);
+        tree->Branch((prefix + "tag.flavour").c_str(), &tag_q, (prefix + "tag.flavour/I").c_str());
+        tree->Branch((prefix + "tag.qr").c_str(),      &tag_r, (prefix + "tag.qr/D").c_str());
+        ADDBRONCH(vtx,ntrk,I);
+        ADDBRONCH(vtx,zerr,D);
+        ADDBRONCH(vtx,chi2,D);
+        ADDBRONCH(vtx,ndf,I);
+    }
+
+    void fill(TTree* tree){
+        deltaZ = deltaT/Belle::dt_resol_global::inv_bgc;
+        tree->Fill();
+    }
+
+    void reset(){
+        for(int i=0; i<MAX_DTCACHE; ++i) dTcache[i].reset();
     }
 };
 

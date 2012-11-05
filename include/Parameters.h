@@ -15,6 +15,8 @@ class Parameters {
         typedef std::pair<int, std::string> line_info;
 
         Parameters();
+
+        bool load(const std::string &filename, const std::string &overrides, const std::string &fixes="", const std::string &releases="");
         //Load the parameters from a stream, usually used with the >> operator
         void load(std::istream &in);
         //Save the parameters to a stream, is istty is true, use color and show only non-fixed parameters

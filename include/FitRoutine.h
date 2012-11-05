@@ -25,20 +25,7 @@ struct FitRoutine {
     template<class FCN> int operator()(FCN &fcn){
         //Loading parameters from file
         Parameters params;
-        std::ifstream input(parameterIn.c_str());
-        if(!input){
-            std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
-            return 2;
-        }
-        input >> params;
-        input.close();
-        //See if we want to fix, release or override some parameters based on command line parameters
-        try {
-            if(!fixParameters.empty()) params.fixParameters(fixParameters);
-            if(!releaseParameters.empty()) params.releaseParameters(releaseParameters);
-            if(!overrideParameters.empty()) params.overrideParameters(overrideParameters);
-        }catch(std::invalid_argument &e){
-            std::cout << e.what() << std::endl;
+        if(!params.load(parameterIn, overrideParameters, fixParameters, releaseParameters)){
             return 2;
         }
         std::cout << "Aye, this be thy initial parrrrrameters: " << std::endl;

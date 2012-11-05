@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
+#include <fstream>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
@@ -20,6 +21,25 @@ Parameters::Parameters(){
     BOOST_FOREACH(const std::string &name, parameterList){
         m_parameters.push_back(Parameter(name));
     }
+}
+
+bool Parameters::load(const std::string &filename, const std::string &overrides, const std::string &fixes, const std::string &releases){
+    std::ifstream input(filename.c_str());
+    if(!input){
+        std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
+        return false;
+    }
+    try{
+        load(input);
+        input.close();
+        if(!overrides.empty()) overrideParameters(overrides);
+        if(!fixes.empty()) fixParameters(fixes);
+        if(!releases.empty()) releaseParameters(releases);
+    }catch(std::invalid_argument &e){
+        std::cerr << e.what() << std::endl;
+        return false;
+    }
+    return true;
 }
 
 void Parameters::load(istream &in){
@@ -74,8 +94,8 @@ void Parameters::save(ostream &out, bool istty) const {
         out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %12s\n")
             % "value" % "error" % "min" % "max" % "significance" << ANSI_END;
     }else{
-       out << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %5s\n")
-           % "value" % "error" % "min" % "max" % "fixed";
+        out << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %5s\n")
+            % "value" % "error" % "min" % "max" % "fixed";
     }
     //Bookkeeping to see if we have saved all parameters
     std::vector<bool> saved(m_parameters.size(),false);

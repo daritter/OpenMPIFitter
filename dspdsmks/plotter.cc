@@ -97,25 +97,12 @@ struct PlotRoutine {
         const Range range_dE = parallel_pdf.localFCN().getRange_dE();
 
         Parameters params;
-        std::ifstream input(parameterIn.c_str());
-        if(!input){
-            std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
-            return 2;
-        }
-        input >> params;
-        input.close();
-        try {
-            if(!overrideParameters.empty()) params.overrideParameters(overrideParameters);
-        }catch(std::invalid_argument &e){
-            std::cout << e.what() << std::endl;
+        if(!params.load(parameterIn, overrideParameters)){
             return 2;
         }
         std::vector<double> par = params.getValues();
 
-
         TFile *r_rootFile = new TFile((rootFile+".root").c_str(),"RECREATE");
-
-
         TH2D *total_MbcdE_fit_svd1 = new TH2D("mbcde_svd1_fit",
                 "M_{BC}#DeltaE fit, SVD1", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
         TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",

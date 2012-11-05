@@ -31,6 +31,14 @@ enum MPIFitterCommand {
     OPTIONS    =  8
 };
 
+enum MPIPlotOperator {
+    OP_SUM=1,
+    OP_AVG=3,
+    OP_MUL=4,
+    OP_MAX=8,
+    OP_MIN=16
+};
+
 struct MPICommand {
     MPICommand(short cmd=0, unsigned short size=0, short flag=0):cmd(cmd), size(size), flag(flag) {}
     short cmd;
@@ -133,7 +141,7 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             return fcn.finalize(params, result);
         }
 
-        double plot(int flag, std::vector<double> values, const std::vector<double> &params) const {
+        double plot(int flag, std::vector<double> values, const std::vector<double> &params, int op=OP_SUM) const {
             sendParameters(params);
             MPICommand cmd(PLOTTER,values.size(),flag);
             broadcast_cmd(world, cmd, 0);
@@ -145,10 +153,19 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             result = 0;
             BOOST_FOREACH(double &r, results){
                 if(r!=r) continue;
-                result += r;
+                if(op & OP_SUM){
+                    result += r;
+                }else if(op & OP_MUL){
+                    result *= r;
+                }else if(op & OP_MAX){
+                    result = std::max(result, r);
+                }else if(op & OP_MIN){
+                    result = std::min(result, r);
+                }
                 ++nresults;
             }
-            return result / nresults;
+            if(op & OP_AVG) result /= nresults;
+            return result;
         }
 
         void setOptions(int flag) {

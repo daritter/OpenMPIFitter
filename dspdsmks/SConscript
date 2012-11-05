@@ -3,4 +3,5 @@ Import('*')
 ddkEnv = env.Clone()
 ddkEnv.Program("#ddk-fitter", ["fitter.cc"] + mpiFitter)
 ddkEnv.Program("#ddk-plotter", ["plotter.cc"] + mpiFitter)
+ddkEnv.Program("#ddk-toymc", ["toymc.cc"] + mpiFitter)
 

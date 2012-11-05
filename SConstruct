@@ -10,7 +10,7 @@ env = Environment(
     RPATH = "$LIBPATH",
     CPPPATH=["#include"],
     LIBS=[
-        "boost_mpi", "boost_serialization", "boost_program_options", "boost_regex",
+        "boost_mpi", "boost_serialization", "boost_program_options", "boost_regex", "boost_random",
         "Minuit2"
     ],
 )
