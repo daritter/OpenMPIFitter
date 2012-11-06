@@ -15,6 +15,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
+#include <boost/random/poisson_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <algorithm>
 
@@ -278,6 +279,8 @@ struct DspDsmKsPDF {
             real_variate random_dT(random_generator, uniform_real(range_dT.vmin, range_dT.vmax));
 
             int nEvents = (int)round(get_yield(par, svd==0?Component::SVD1:Component::SVD2));
+            boost::random::poisson_distribution<> poisson(nEvents);
+            nEvents = poisson(random_generator);
             if(nEvents==0) continue;
 
             e.svdVs = svd;
