@@ -25,7 +25,7 @@ struct ParameterHelper {
     }
 
     static const std::string tostring(Parameter &self){
-        return (boost::format("<%1% value=%2% error=%3%>") % self.name() % self.value() % self.error()).str();
+        return (boost::format("<%1% at %2% value=%3% error=%4%>") % self.name() % &self % self.value() % self.error()).str();
     }
 };
 
