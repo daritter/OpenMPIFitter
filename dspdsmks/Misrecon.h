@@ -4,9 +4,10 @@
 #include <Functions.h>
 #include "Event.h"
 #include "Component.h"
+#include "Signal.h"
 
 namespace PAR {
-    PARAM(yield_misrecon_svd1);
+    PARAM(ratio_misrecon_svd1);
     PARAM(misrecon_svd1_ratio);
     PARAM(misrecon_svd1_Mbc_mean);
     PARAM(misrecon_svd1_Mbc_sigma);
@@ -16,7 +17,7 @@ namespace PAR {
     PARAM(misrecon_svd1_dE_bkg_mean);
     PARAM(misrecon_svd1_dE_bkg_sigma);
 
-    PARAM(yield_misrecon_svd2);
+    PARAM(ratio_misrecon_svd2);
     PARAM(misrecon_svd2_ratio);
     PARAM(misrecon_svd2_Mbc_mean);
     PARAM(misrecon_svd2_Mbc_sigma);
@@ -55,7 +56,7 @@ class MisreconPDF: public Component {
             misreconPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd1_Mbc_argusC]);
             misreconPDF_svd1.fcn2.fcny.set(par[PAR::misrecon_svd1_dE_bkg_mean], par[PAR::misrecon_svd1_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)*par[PAR::yield_misrecon_svd1] * misreconPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*get_yield(par, Component::SVD1)*misreconPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for misrecon component
             misreconPDF_svd2.set(par[PAR::misrecon_svd2_ratio]);
@@ -63,17 +64,17 @@ class MisreconPDF: public Component {
             misreconPDF_svd2.fcn1.fcny.set(&par[PAR::misrecon_svd2_dE_mean]);
             misreconPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd2_Mbc_argusC]);
             misreconPDF_svd2.fcn2.fcny.set(par[PAR::misrecon_svd2_dE_bkg_mean], par[PAR::misrecon_svd2_dE_bkg_sigma]);
-            return get_deltaT(e,par)*par[PAR::yield_misrecon_svd2] * misreconPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*get_yield(par, Component::SVD2)*misreconPDF_svd2(e.Mbc, e.dE);
         }
     }
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_misrecon_svd1];
+            yield += par[PAR::ratio_misrecon_svd1]*par[PAR::yield_signal_svd1];
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_misrecon_svd2];
+            yield += par[PAR::ratio_misrecon_svd2]*par[PAR::yield_signal_svd2];
         }
         return yield;
     }

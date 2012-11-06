@@ -4,9 +4,10 @@
 #include <Functions.h>
 #include "Event.h"
 #include "Component.h"
+#include "Mixed.h"
 
 namespace PAR {
-    PARAM(yield_charged_svd1);
+    PARAM(ratio_charged_svd1);
     PARAM(charged_svd1_ratio);
     PARAM(charged_svd1_Mbc_mean);
     PARAM(charged_svd1_Mbc_sigma);
@@ -15,7 +16,7 @@ namespace PAR {
     PARAM(charged_svd1_dE_sigma);
     PARAM(charged_svd1_dE_cheb1);
 
-    PARAM(yield_charged_svd2);
+    PARAM(ratio_charged_svd2);
     PARAM(charged_svd2_ratio);
     PARAM(charged_svd2_Mbc_mean);
     PARAM(charged_svd2_Mbc_sigma);
@@ -53,7 +54,7 @@ class ChargedPDF: public Component {
             chargedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::charged_svd1_Mbc_argusC]);
             chargedPDF_svd1.fcn2.fcny.set(&par[PAR::charged_svd1_dE_cheb1]);
 
-            return get_deltaT(e,par)*par[PAR::yield_charged_svd1]*chargedPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)*get_yield(par, Component::SVD1)*chargedPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for charged component
             chargedPDF_svd2.set(par[PAR::charged_svd2_ratio]);
@@ -62,17 +63,17 @@ class ChargedPDF: public Component {
             chargedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::charged_svd2_Mbc_argusC]);
             chargedPDF_svd2.fcn2.fcny.set(&par[PAR::charged_svd2_dE_cheb1]);
 
-            return get_deltaT(e,par)*par[PAR::yield_charged_svd2]*chargedPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)*get_yield(par, Component::SVD2)*chargedPDF_svd2(e.Mbc, e.dE);
         }
     }
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_charged_svd1];
+            yield += par[PAR::ratio_charged_svd1]*par[PAR::yield_mixed_svd1];
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_charged_svd2];
+            yield += par[PAR::ratio_charged_svd2]*par[PAR::yield_mixed_svd2];
         }
         return yield;
     }
