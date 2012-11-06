@@ -103,7 +103,7 @@ struct Event {
 
     bool calculateValues(bool toyMC=false){
         if(toyMC){
-            m2DspKs = 1;
+            m2DspKs = 0;
             m2DsmKs = eta;
             deltaZ = deltaT / Belle::dt_resol_global::inv_bgc;
         }else{
