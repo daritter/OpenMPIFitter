@@ -16,6 +16,7 @@ sys.argv = sys.argv[:1]
 
 import pyroot as pr
 import r2mpl
+import utils
 
 rootfile = root.TFile(filename + ".root")
 
@@ -62,29 +63,11 @@ def calc_sigmas(name, data, fit):
         sigmas.SetBinError(i,1)
     return sigmas
 
-def get_plotaxes():
-    """Return axes suitable for fit + residuals or dT + asymmetry plots"""
-    f = pl.figure(figsize=(4,4))
-    a1  = f.add_axes((0.20,0.38,0.73,0.55))
-    a2 = f.add_axes((0.20,0.13,0.73,0.25))
-    for a,p in (a1,None), (a2,"upper"):
-        formatter = matplotlib.ticker.ScalarFormatter(False,False)
-        formatter.set_powerlimits((-3,3))
-        a.get_xaxis().set_major_formatter(formatter)
-        a.get_yaxis().set_major_formatter(formatter)
-        if p is not None:
-            locy = matplotlib.ticker.MaxNLocator(prune=p, nbins=5)
-            a.get_yaxis().set_major_locator(locy)
-        a.grid()
-        a.get_yaxis().set_label_coords(-0.15,0.5)
-
-    a1.set_xticklabels([])
-    return a1,a2
-
 def plot_mBCdE(data, label=None, title=None, **argk):
     """Make a 2D Plot of mBC and dE"""
-    f = pl.figure(figsize=(4,4))
-    a = f.add_axes((0.20,0.13,0.70,0.80))
+    f, a = utils.get_plotaxes()
+    #f = pl.figure(figsize=(4,4))
+    #a = f.add_axes((0.20,0.13,0.70,0.80))
     p = r2mpl.plot(data, a, **argk)
     if label is None:
         label = r"Entries / $\num{%.3g} \times \num{%.3g}\text{ GeV}^2$" % \
@@ -94,7 +77,7 @@ def plot_mBCdE(data, label=None, title=None, **argk):
 
     formatter = matplotlib.ticker.ScalarFormatter(False,False)
     formatter.set_powerlimits((-3,3))
-    cb = f.colorbar(p, format=formatter)
+    cb = f.colorbar(p, format=formatter, fraction=0.2)
     cb.set_label(label)
     a.grid()
     a.set_xlabel("$M_{BC}$ / GeV")
@@ -102,7 +85,7 @@ def plot_mBCdE(data, label=None, title=None, **argk):
 
 def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
     """Plot data, fit and normalized residuals"""
-    data_axes, sigma_axes = get_plotaxes()
+    fig, data_axes, sigma_axes = utils.get_plotaxes_stacked()
     colors = {"signal":"r", "misrecon":"c", "mixed":"g", "charged":"b"}
     last = None
     for i,(l,f) in enumerate(fits):
@@ -138,9 +121,9 @@ def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
         #data_axes.set_ylim(ymin=data.GetMinimum(0.5)/2.0)
         data_axes.set_ylim(ymin)
 
-def plot_asymmetry(name, data_p, data_m, fits_p, fits_m):
+def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, label):
     """Plot 2 dT flavours and the asymmetry between them"""
-    a1, a2 = get_plotaxes()
+    fig, a1, a2 = utils.get_plotaxes_stacked()
 
     fp = accumulate(fits_p)
     fm = accumulate(fits_m)
@@ -149,11 +132,12 @@ def plot_asymmetry(name, data_p, data_m, fits_p, fits_m):
 
     r2mpl.plotSmooth(fp, axes=a1, color="r", zorder=1, samples=2000)
     r2mpl.plotSmooth(fm, axes=a1, color="b", zorder=1, samples=2000)
-    r2mpl.plot(data_p, axes=a1, errors=True, color="r", zorder=2, linewidth=0.5, capsize=1.0)
-    r2mpl.plot(data_m, axes=a1, errors=True, color="b", zorder=2, linewidth=0.5, capsize=1.0)
+    r2mpl.plot(data_p, axes=a1, errors=True, color="r", zorder=2, linewidth=0.5, capsize=1.0, label="$%s=+1$"%label)#, marker="^")
+    r2mpl.plot(data_m, axes=a1, errors=True, color="b", zorder=2, linewidth=0.5, capsize=1.0, label="$%s=-1$"%label)#, marker="o")
 
     r2mpl.plotSmooth(asym_fit, axes=a2, zorder=1, color="r", samples=2000)
     r2mpl.plot(asym_data, axes=a2, errors=True, color="k", zorder=2, linewidth=0.5, capsize=1.0)
+    #a1.legend(numpoints=1)
     a2.set_ylim(-1.0,1.0)
     a1.set_ylabel(r"Entries / \num{%.3g} %s" % (data_p.GetBinWidth(1), "ps"))
     a2.set_xlabel(r"$\Delta t$ / ps")
@@ -202,7 +186,7 @@ def make_mBCdE_plots(name, title):
     plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title)
     plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title, log=True)
 
-def make_dT_plots(name, title):
+def make_dT_plots(name, title, label):
     """Make all deltaT plots for a given data set"""
     print "Make dT plot for", name
     dt_data_p = rootfile.Get(name + "_data_p")
@@ -224,19 +208,21 @@ def make_dT_plots(name, title):
         print "Could not make dT plots for", name
         return
 
-    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title=title, unit="ps")
-    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title=title, unit="ps", log=True)
-    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title=title, unit="ps")
-    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title=title, unit="ps", log=True)
-    plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m)
+    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps")
+    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps", log=True)
+    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps")
+    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps", log=True)
+    plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, label)
 
 make_mBCdE_plots("mbcde_svd1", "SVD 1")
 make_mBCdE_plots("mbcde_svd2", "SVD 2")
 make_mBCdE_plots("mbcde", "Both")
 r2mpl.save_all(filename + "-mBCdE", png=False)
 
-make_dT_plots("dT_svd1", "SVD1")
-make_dT_plots("dT_svd2", "SVD2")
+make_dT_plots("dT_svd1_q", "SVD1", "q")
+make_dT_plots("dT_svd2_q", "SVD2", "q")
+make_dT_plots("dT_svd1_qe", "SVD1", "q\eta")
+make_dT_plots("dT_svd2_qe", "SVD2", "q\eta")
 r2mpl.save_all(filename + "-dT", png=False)
 
 #pl.show()

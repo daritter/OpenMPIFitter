@@ -48,11 +48,10 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
         << ", yield = " << yield << ", norm = " << (integral/yield) << std::endl;
 }
 
-template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* dtpdf, int flavour, int svdVs, const std::string& name = ""){
+template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* dtpdf, int flavour, int flag, const std::string& name = ""){
     Event e;
     double integral(0);
-    int flag = svdVs;
-    flag |= DspDsmKsPDF::PLT_DT_QE;
+    int svdVs = flag & ( DspDsmKsPDF::PLT_SVD1 | DspDsmKsPDF::PLT_SVD2);
     std::vector<double> values(2,0);
     values[1] = flavour;
     ProgressBar pbar(dtpdf->GetNbinsX());
@@ -75,7 +74,7 @@ template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* 
 
 struct PlotRoutine {
     /** Set some default options */
-    PlotRoutine(): parameterIn("params-in.txt"), rootFile("plots"), plotrange_dT(-70,70),
+    PlotRoutine(): parameterIn("params-in.txt"), rootFile("plots"), plotrange_dT(-20,20),
     bins_mBC(60), bins_dE(50), bins_dT(40), sampling_mBC(5), sampling_dE(5), sampling_dT(5), activeComponents(DspDsmKsPDF::CMP_all)
     {}
 
@@ -111,21 +110,26 @@ struct PlotRoutine {
         std::string names[] = {"signal","misrecon","mixed","charged"};
         int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_misrecon,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
-        for(int i=0; i<4; ++i){
+            for(int i=0; i<4; ++i){
                 int cmp = components[i];
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
-                if(!name.empty()) name = "_"+name;
                 parallel_pdf.setOptions(cmp);
 
-                TH1D *h_dT_fit_svd1_p = new TH1D(("dT_svd1_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD1", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                TH1D *h_dT_fit_svd1_m = new TH1D(("dT_svd1_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD1", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                TH1D *h_dT_fit_svd2_p = new TH1D(("dT_svd2_fit_p" + name).c_str(), "#Deltat fit q=-1, SVD2", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                TH1D *h_dT_fit_svd2_m = new TH1D(("dT_svd2_fit_m" + name).c_str(), "#Deltat fit q=+1, SVD2", bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                plotDT(parallel_pdf,par,h_dT_fit_svd1_p,+1,DspDsmKsPDF::PLT_SVD1, names[i] + ", SVD1");
-                plotDT(parallel_pdf,par,h_dT_fit_svd1_m,-1,DspDsmKsPDF::PLT_SVD1, names[i] + ", SVD1");
-                plotDT(parallel_pdf,par,h_dT_fit_svd2_p,+1,DspDsmKsPDF::PLT_SVD2, names[i] + ", SVD2");
-                plotDT(parallel_pdf,par,h_dT_fit_svd2_m,-1,DspDsmKsPDF::PLT_SVD2, names[i] + ", SVD2");
+                for(int i=0;i<2;++i){
+                    int flag = i==0?DspDsmKsPDF::PLT_DT_Q:DspDsmKsPDF::PLT_DT_QE;
+                    std::string qname = i==0?"q":"qe";
+                    for(int svd=0; svd<2; ++svd){
+                        int svdVs = svd==0?DspDsmKsPDF::PLT_SVD1:DspDsmKsPDF::PLT_SVD2;
+                        for(int flavour=-1; flavour<2; flavour+=2){
+                            char fname = flavour<0?'m':'p';
+                            std::string histname = (boost::format("dT_svd%d_%s_fit_%s_%s") % (svd+1) % qname % fname % name).str();
+                            std::string histtitle = (boost::format("#Deltat fit %s=%+d, SVD%d") % qname % flavour % (svd+1)).str();
+                            TH1D* h_dT_fit = new TH1D(histname.c_str(), histtitle.c_str(), bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+                            plotDT(parallel_pdf,par,h_dT_fit,flavour,svdVs | flag, (boost::format("%s, %s=%+d SVD%d") % name % qname % flavour % (svd+1)).str());
+                        }
+                    }
+                }
             }
         }
 
@@ -135,10 +139,14 @@ struct PlotRoutine {
         if(parallel_pdf.size()>1) local_pdf.load(0,1);
         TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
         TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
-        TH1D *h_dT_data_svd1_p = new TH1D("dT_svd1_data_p", "#Deltat data q=-1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-        TH1D *h_dT_data_svd1_m = new TH1D("dT_svd1_data_m", "#Deltat data q=+1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-        TH1D *h_dT_data_svd2_p = new TH1D("dT_svd2_data_p", "#Deltat data q=-1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-        TH1D *h_dT_data_svd2_m = new TH1D("dT_svd2_data_m", "#Deltat data q=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd1_qep = new TH1D("dT_svd1_qe_data_p", "#Deltat data qe=+1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd1_qem = new TH1D("dT_svd1_qe_data_m", "#Deltat data qe=-1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd2_qep = new TH1D("dT_svd2_qe_data_p", "#Deltat data qe=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd2_qem = new TH1D("dT_svd2_qe_data_m", "#Deltat data qe=-1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd1_qp = new TH1D("dT_svd1_q_data_p", "#Deltat data q=+1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd1_qm = new TH1D("dT_svd1_q_data_m", "#Deltat data q=-1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd2_qp = new TH1D("dT_svd2_q_data_p", "#Deltat data q=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D *h_dT_data_svd2_qm = new TH1D("dT_svd2_q_data_m", "#Deltat data q=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
 
         TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 2000, 0,0);
         TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 2000, 0,0);
@@ -148,20 +156,14 @@ struct PlotRoutine {
         BOOST_FOREACH(const Event& e, local_pdf.getData(0)){
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
-            if(e.tag_q>0){
-                h_dT_data_svd1_p->Fill(e.deltaT);
-            } else {
-                h_dT_data_svd1_m->Fill(e.deltaT);
-            }
+            ((e.tag_q*e.eta>0)?h_dT_data_svd1_qep:h_dT_data_svd1_qem)->Fill(e.deltaT);
+            ((e.tag_q>0)?h_dT_data_svd1_qp:h_dT_data_svd1_qm)->Fill(e.deltaT);
         }
         BOOST_FOREACH(const Event& e, local_pdf.getData(1)){
             h_bEnergy_svd2->Fill(e.benergy);
             h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
-            if(e.tag_q>0){
-                h_dT_data_svd2_p->Fill(e.deltaT);
-            } else {
-                h_dT_data_svd2_m->Fill(e.deltaT);
-            }
+            ((e.tag_q*e.eta>0)?h_dT_data_svd2_qep:h_dT_data_svd2_qem)->Fill(e.deltaT);
+            ((e.tag_q>0)?h_dT_data_svd2_qp:h_dT_data_svd2_qm)->Fill(e.deltaT);
         }
         h_bEnergy_svd1->BufferEmpty();
         h_bEnergy_svd2->BufferEmpty();
