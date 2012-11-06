@@ -53,6 +53,14 @@ struct Event {
         MAX_DTCACHE
     };
 
+    Event():
+        expNo(0), svdVs(0), isMC(1), benergy(0),
+        flag(0), Mbc(0), dE(0), m2DspKs(0), m2DsmKs(0), cosTheta(0), deltaZ(0),
+        vtx_ntrk(0), vtx_zerr(0), vtx_chi2(0), vtx_ndf(0),
+        tag_ntrk(0), tag_zerr(0), tag_chi2(0), tag_ndf(0), tag_q(1), tag_r(0), tag_isL(0),
+        rbin(0), wrongTag_w(0), wrongTag_dw(0), Ak(0), Ck(0), deltaT(0), eta(0)
+    {}
+
     int expNo;
     int svdVs;
     bool isMC;
@@ -99,7 +107,7 @@ struct Event {
             m2DsmKs = eta;
             deltaZ = deltaT / Belle::dt_resol_global::inv_bgc;
         }else{
-            deltaT = deltaZ*Belle::dt_resol_global::inv_bgc;
+            deltaT = deltaZ * Belle::dt_resol_global::inv_bgc;
             tag_r = fabs(tag_r);
             eta = (m2DsmKs>m2DspKs)?1:-1;
         }

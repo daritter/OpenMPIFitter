@@ -132,7 +132,7 @@ struct PlotRoutine {
         //Parallel is done now, rest is faster in single core. close all other processes and reload all data
         parallel_pdf.close();
         DspDsmKsPDF &local_pdf = parallel_pdf.localFCN();
-        local_pdf.load(0,1);
+        if(parallel_pdf.size()>1) local_pdf.load(0,1);
         TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
         TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
         TH1D *h_dT_data_svd1_p = new TH1D("dT_svd1_data_p", "#Deltat data q=-1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);

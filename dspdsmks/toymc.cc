@@ -64,7 +64,7 @@ struct ToyMCRoutine {
         //Parallel is done now, rest is only possible in single core. Close all other processes and reload all data
         parallel_pdf.close();
         DspDsmKsPDF &local_pdf = parallel_pdf.localFCN();
-        local_pdf.load(0,1);
+        if(parallel_pdf.size()>1) local_pdf.load(0,1);
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");

@@ -180,6 +180,8 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             return FCN::error_def;
         }
 
+        size_t size() const { return world.size(); }
+
         FCN& localFCN() { return fcn; }
 
     protected:
