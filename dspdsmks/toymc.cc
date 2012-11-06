@@ -17,7 +17,7 @@ namespace po = boost::program_options;
 
 struct ToyMCRoutine {
     /** Set some default options */
-    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.3), scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0)
+    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.3), scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false)
     {}
 
     std::string parameterIn;
@@ -29,6 +29,7 @@ struct ToyMCRoutine {
     int scansteps_dE;
     int scansteps_dT;
     unsigned int seed;
+    bool gsim;
 
     /** Do the plotting */
     template<class FCN> int operator()(FCN &parallel_pdf){
@@ -58,8 +59,9 @@ struct ToyMCRoutine {
         values[8] = scan_dT.vmax;
         values[9] = step_dT;
         double maxVal[2];
-        maxVal[0] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD1 | DspDsmKsPDF::PLT_MAX, values, par, OP_MAX);
-        maxVal[1] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD2 | DspDsmKsPDF::PLT_MAX, values, par, OP_MAX);
+        int flag = gsim?DspDsmKsPDF::PLT_MAXDT:DspDsmKsPDF::PLT_MAX;
+        maxVal[0] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD1 | flag, values, par, OP_MAX);
+        maxVal[1] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD2 | flag, values, par, OP_MAX);
 
         //Parallel is done now, rest is only possible in single core. Close all other processes and reload all data
         parallel_pdf.close();
@@ -68,7 +70,7 @@ struct ToyMCRoutine {
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");
-        local_pdf.generateToyMC(tree,par,maxVal,seed);
+        local_pdf.generateToyMC(tree,par,maxVal,seed,gsim);
         tree->Write();
         f->Write();
         f->Close();
@@ -141,6 +143,8 @@ int main(int argc, char* argv[]){
          "Fudgefactor we'd be applying to the maximal pdf value to be on the safe side")
         ("seed", po::value<unsigned int>(&toymc.seed)->default_value(toymc.seed),
          "Seed to use for the number generator, 0=initialize from /dev/urandom")
+        ("gsim", po::value<bool>(&toymc.gsim)->default_value(toymc.gsim),
+         "Wether to generate from PDF or from gsim")
         ;
 
     po::variables_map vm;

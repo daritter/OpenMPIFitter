@@ -66,6 +66,7 @@ struct DspDsmKsPDF {
         PLT_DT_QE  = 1<<4,
         PLT_DT     = PLT_DT_Q | PLT_DT_E | PLT_DT_QE,
         PLT_MAX    = 1<<5,
+        PLT_MAXDT  = 1<<6
     };
 
     static EnabledComponents getComponents(const std::string &components){
@@ -212,24 +213,28 @@ struct DspDsmKsPDF {
             const double yield = get_yield(par,svdVs);
             return pdf*yield/nEvents;
         }
-        if(flag & PLT_MAX){
+        if(flag & (PLT_MAX | PLT_MAXDT)){
             double pdf(0.0);
-            int svd = (flag & PLT_SVD1)?0:1;
             int oldComponents = enabledComponents;
-            if(oldComponents & CMP_deltat) setOptions(oldComponents ^ CMP_deltat);
-            const double &mbc_start = values[1];
-            const double &mbc_end   = values[2];
-            const double &mbc_step  = values[3];
-            const double &de_start  = values[4];
-            const double &de_end    = values[5];
-            const double &de_step   = values[6];
+            int svd = (flag & PLT_SVD1)?0:1;
             Event e;
             e.svdVs = svd;
             e.benergy = values[0];
-            for(e.Mbc=mbc_start; e.Mbc <= mbc_end; e.Mbc+=mbc_step){
-                for(e.dE=de_start; e.dE <= de_end; e.dE+=de_step){
-                    pdf = std::max(pdf, PDF(e,par));
+            if(flag & PLT_MAX){
+                if(oldComponents & CMP_deltat) setOptions(oldComponents ^ CMP_deltat);
+                const double &mbc_start = values[1];
+                const double &mbc_end   = values[2];
+                const double &mbc_step  = values[3];
+                const double &de_start  = values[4];
+                const double &de_end    = values[5];
+                const double &de_step   = values[6];
+                for(e.Mbc=mbc_start; e.Mbc <= mbc_end; e.Mbc+=mbc_step){
+                    for(e.dE=de_start; e.dE <= de_end; e.dE+=de_step){
+                        pdf = std::max(pdf, PDF(e,par));
+                    }
                 }
+            }else{
+                pdf = 1.0;
             }
             if(oldComponents & CMP_deltat){
                 const double &dt_start  = values[7];
@@ -250,14 +255,14 @@ struct DspDsmKsPDF {
                     }
                 }
                 pdf *= dtpdf;
-                setOptions(oldComponents);
+                if(flag & PLT_MAX) setOptions(oldComponents);
             }
             return pdf;
         }
         return 0;
     }
 
-    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], int seed=0){
+    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], int seed=0, bool gsim=false){
         boost::random::mt19937 random_generator(seed);
         if(seed == 0){
             boost::random::random_device rseed;
@@ -289,31 +294,43 @@ struct DspDsmKsPDF {
             double min_distance(std::numeric_limits<double>::infinity());
             for(int i=0; i<nEvents; ++i){
                 while(true){
-                    e.Mbc = random_mBC();
-                    e.dE = random_dE();
-                    Event &e2 = data[svd][random_event()];
-                    e.benergy = e2.benergy;
-                    e.expNo = e2.expNo;
-                    if(e.Mbc>e.benergy) continue;
-                    if(enabledComponents & CMP_deltat){
-                        e.deltaT = random_dT();
-                        e.cosTheta = data[svd][random_event()].cosTheta;
+                    double calc_pdf(-1);
+                    if(gsim){
+                        e = data[svd][random_event()];
+                        //If there is no deltaT, nothing else to do, just grab a random event
+                        if(!(enabledComponents & CMP_deltat)) break;
+                        e.deltaT   = random_dT();
                         e.eta      = data[svd][random_event()].eta;
-                        e.tag_ntrk = data[svd][random_event()].tag_ntrk;
-                        e.tag_zerr = data[svd][random_event()].tag_zerr;
-                        e.tag_chi2 = data[svd][random_event()].tag_chi2;
-                        e.tag_ndf  = data[svd][random_event()].tag_ndf;
-                        e.tag_isL  = data[svd][random_event()].tag_isL;
                         e.tag_q    = data[svd][random_event()].tag_q;
-                        e.tag_r    = data[svd][random_event()].tag_r;
-                        e.vtx_ntrk = data[svd][random_event()].vtx_ntrk;
-                        e.vtx_zerr = data[svd][random_event()].vtx_zerr;
-                        e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
-                        e.vtx_ndf  = data[svd][random_event()].vtx_ndf;
                         if(!e.calculateValues(true)) continue;
-                        e.reset();
+                        calc_pdf = get_deltaT(e,par);
+                    }else{
+                        e.Mbc = random_mBC();
+                        e.dE = random_dE();
+                        Event &e2 = data[svd][random_event()];
+                        e.benergy = e2.benergy;
+                        e.expNo = e2.expNo;
+                        if(e.Mbc>e.benergy) continue;
+                        if(enabledComponents & CMP_deltat){
+                            e.deltaT   = random_dT();
+                            e.cosTheta = data[svd][random_event()].cosTheta;
+                            e.eta      = data[svd][random_event()].eta;
+                            e.tag_ntrk = data[svd][random_event()].tag_ntrk;
+                            e.tag_zerr = data[svd][random_event()].tag_zerr;
+                            e.tag_chi2 = data[svd][random_event()].tag_chi2;
+                            e.tag_ndf  = data[svd][random_event()].tag_ndf;
+                            e.tag_isL  = data[svd][random_event()].tag_isL;
+                            e.tag_q    = data[svd][random_event()].tag_q;
+                            e.tag_r    = data[svd][random_event()].tag_r;
+                            e.vtx_ntrk = data[svd][random_event()].vtx_ntrk;
+                            e.vtx_zerr = data[svd][random_event()].vtx_zerr;
+                            e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
+                            e.vtx_ndf  = data[svd][random_event()].vtx_ndf;
+                            if(!e.calculateValues(true)) continue;
+                            e.reset();
+                        }
+                        calc_pdf = PDF(e,par);
                     }
-                    const double calc_pdf = PDF(e,par);
                     if(calc_pdf>maxval[svd]){
                         throw std::runtime_error(
                                 (boost::format("PDF larger than maximimum value: %.10e > %.10e") % calc_pdf % maxval[svd]).str());
