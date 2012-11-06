@@ -144,7 +144,8 @@ def plotError(hist, axes = None, **argk):
         points+=1
 
     argk.setdefault("fmt",",")
-    argk.setdefault("capsize",0)
+    argk.setdefault("linewidth",0.5)
+    argk.setdefault("capsize",1.0)
     argk.setdefault("marker","None")
 
     xmin = hist.GetXaxis().GetXmin()
