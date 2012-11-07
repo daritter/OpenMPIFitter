@@ -59,6 +59,7 @@ class SignalPDF: public Component {
                 PAR::signal_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
                 PAR::signal_dt_fractionscale, useDeltaT?Event::dt_signal:-1);
     }
+    virtual ~SignalPDF(){}
 
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){

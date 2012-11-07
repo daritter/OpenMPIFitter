@@ -47,6 +47,8 @@ class MisreconPDF: public Component {
                 PAR::misrecon_dt_fractionscale, useDeltaT?Event::dt_misrecon:-1);
     }
 
+    virtual ~MisreconPDF(){}
+
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){
             //Set Parameters for misrecon component

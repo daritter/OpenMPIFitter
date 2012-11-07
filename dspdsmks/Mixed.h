@@ -44,6 +44,8 @@ class MixedPDF: public Component {
                 PAR::mixed_dt_fractionscale, useDeltaT?Event::dt_mixed:-1);
     }
 
+    virtual ~MixedPDF(){}
+
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs==0){
             //Set Parameters for mixed component

@@ -16,6 +16,8 @@ class Component {
     Component(Range range_dT, bool isCharged, bool useDeltaT):useDeltaT(useDeltaT), deltaT(range_dT, isCharged?1:0)
     {}
 
+    virtual ~Component(){}
+
     virtual double operator()(const Event& e, const std::vector<double> &par) = 0;
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH) = 0;
 

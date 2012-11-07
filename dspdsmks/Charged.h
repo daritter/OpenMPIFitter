@@ -45,6 +45,8 @@ class ChargedPDF: public Component {
                 PAR::charged_dt_fractionscale, useDeltaT?Event::dt_charged:-1);
     }
 
+    virtual ~ChargedPDF(){}
+
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){
             //Set Parameters for charged component
