@@ -17,7 +17,7 @@ namespace po = boost::program_options;
 
 struct ToyMCRoutine {
     /** Set some default options */
-    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.3), scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false)
+    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.35), scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false)
     {}
 
     std::string parameterIn;
@@ -143,14 +143,14 @@ int main(int argc, char* argv[]){
          "Fudgefactor we'd be applying to the maximal pdf value to be on the safe side")
         ("seed", po::value<unsigned int>(&toymc.seed)->default_value(toymc.seed),
          "Seed to use for the number generator, 0=initialize from /dev/urandom")
-        ("gsim", po::value<bool>(&toymc.gsim)->default_value(toymc.gsim),
+        ("gsim", po::bool_switch(&toymc.gsim),
          "Wether to generate from PDF or from gsim")
         ;
 
     po::variables_map vm;
     po::positional_options_description pod;
     pod.add("input", -1);
-    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).allow_unregistered().run(), vm);
     std::ifstream config(vm["config"].as<std::string>().c_str());
     if(config.is_open()){
         po::store(po::parse_config_file(config, desc, true), vm);

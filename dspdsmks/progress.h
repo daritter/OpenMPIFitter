@@ -12,7 +12,7 @@ class ProgressBar {
     public:
         ProgressBar(int max_value):maxval(max_value),lastpos(-1),curpos(0), lastVal(0){};
         ProgressBar &  operator() (int value){
-            curpos = std::min(round(value*60.0/maxval),60.0);
+            curpos = (int)std::min(round(value*60.0/maxval),60.0);
             return *this;
         }
         ProgressBar & operator++() {

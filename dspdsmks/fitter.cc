@@ -74,7 +74,7 @@ int main(int argc, char* argv[]){
     po::variables_map vm;
     po::positional_options_description pod;
     pod.add("input", -1);
-    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).allow_unregistered().run(), vm);
     std::ifstream config(vm["config"].as<std::string>().c_str());
     if(config.is_open()){
         po::store(po::parse_config_file(config, desc, true), vm);
