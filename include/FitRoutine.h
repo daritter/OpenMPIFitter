@@ -38,7 +38,7 @@ struct FitRoutine {
             std::ios_base::fmtflags originalFormat = std::cout.flags();
             ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams();
             ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
-            ROOT::Minuit2::FunctionMinimum min = migrad(10000);
+            ROOT::Minuit2::FunctionMinimum min = migrad(50000);
             std::cout.flags(originalFormat);
 
             std::cout << min << std::endl;
