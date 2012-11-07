@@ -2,12 +2,23 @@
 import math
 import numpy as np
 import matplotlib
+matplotlib.use("Agg")
+matplotlib.rc("path", simplify=False)
+matplotlib.rc("font", family="serif")
+matplotlib.rc("text", usetex=True)
+matplotlib.rc("text.latex", unicode="true", preamble=r"\usepackage{sistyle},\SIthousandsep{},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
 from matplotlib import pyplot as pl
 
 efficiency_mc = np.array([
-    [5.63679e-05, 5.17507e-07],
-    [2.17889e-04, 1.01746e-06],
+   [8.15824e-05, 6.22585e-07],
+   [3.19346e-04, 1.23177e-06],
 ])
+
+#efficiency_mc = np.array([
+    #[5.63679e-05, 5.17507e-07],
+    #[2.17889e-04, 1.01746e-06],
+#])
+
 nbb = np.array([
     [151.961, 1.241],
     [619.620, 9.441],
@@ -18,6 +29,10 @@ cpv = np.array([
     [0.03,0.21],
     [0.24,0.22],
 ])
+
+br = 4.1e-3
+
+nevents = nbb[:,0] * efficiency_mc[:,0] * br
 
 def get_plotaxes():
     """Return axes"""
