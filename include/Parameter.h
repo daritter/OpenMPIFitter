@@ -21,12 +21,12 @@ class Parameter {
         Parameter(const std::string &name="", double value=0, double error=0,
                 double min=-std::numeric_limits<double>::infinity(),
                 double max=std::numeric_limits<double>::infinity(), bool fixed=false):
-            m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(0), m_changed(false){};
+            m_name(name),m_value(value),m_error(error),m_min(min),m_max(max),m_fixed(fixed), m_dynfix(0), m_oldvalue(0){};
 
         //Return the name of the parameter
         const  std::string &name() const { return m_name; }
         //Set the value
-        void   value(double value) { m_changed=std::fabs(m_value-value)/m_error>1.0; m_value = value;}
+        void   value(double value) { m_value = value;}
         //Get the value
         double value() const { return m_value; }
         //Set the error
@@ -66,7 +66,7 @@ class Parameter {
         //indicates wether the parameter is temporarily fixed (>0) or released (<0)
         int   m_dynfix;
         //indicates wether the parameter was changed
-        bool   m_changed;
+        double m_oldvalue;
 };
 inline std::istream& operator>>(std::istream &in,  Parameter &p){ p.load(in);  return in; }
 inline std::ostream& operator<<(std::ostream &out, const Parameter &p){ p.save(out); return out;}

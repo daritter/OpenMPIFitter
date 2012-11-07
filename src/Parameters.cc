@@ -91,10 +91,10 @@ void Parameters::load(istream &in){
 void Parameters::save(ostream &out, bool istty) const {
     //If istty is set we want nice color output of the non fixed parameters only
     if(istty){
-        out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %12s\n")
-            % "value" % "error" % "min" % "max" % "significance" << ANSI_END;
+        out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %6s %6s %9s %9s\n")
+            % "value" % "error" % "min" % "max" % "sig" % "change" << ANSI_END;
     }else{
-        out << boost::format("# Name %|32t| %=17s %=17s %=6s %=6s %5s\n")
+        out << boost::format("# Name %|32t| %=17s %=17s %6s %6s %5s\n")
             % "value" % "error" % "min" % "max" % "fixed";
     }
     //Bookkeeping to see if we have saved all parameters
