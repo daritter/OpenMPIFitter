@@ -126,7 +126,7 @@ def plotSmooth(hist, axes=None, smoothing=0, samples=1024, **argk):
     return axes.plot(x,y,**argk)
 
 
-def plotError(hist, axes = None, **argk):
+def plotError(hist, axes = None, sparse=True, **argk):
     """Plot 1D ROOT Histogram with errorbars"""
     if axes is None: axes = pl.gca()
     #hist.Sumw2()
@@ -134,7 +134,7 @@ def plotError(hist, axes = None, **argk):
     data = np.zeros((nbins,4))
     points = 0
     for bin in range(1,nbins+1):
-        if not hist.GetBinContent(bin): continue
+        if sparse and not hist.GetBinContent(bin): continue
         data[points] = (
             hist.GetBinCenter(bin),
             hist.GetBinContent(bin),
@@ -142,6 +142,8 @@ def plotError(hist, axes = None, **argk):
             hist.GetBinWidth(bin)/2.0,
         )
         points+=1
+
+    if points==0: return None
 
     argk.setdefault("fmt",",")
     argk.setdefault("linewidth",0.5)
