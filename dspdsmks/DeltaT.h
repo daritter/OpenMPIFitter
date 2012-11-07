@@ -29,27 +29,27 @@ class DeltaTPDF {
                 life_pdf = Belle::EfRkRdetRnp_fullrec(
                         e.deltaT, isCharged, abs_tau, e.Ak, e.Ck,
                         e.vtx_ntrk, e.vtx_zerr, e.vtx_chi2, e.vtx_ndf,
-                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, e.tag_ndf, e.tag_isL,
+                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, (int)e.tag_ndf, e.tag_isL,
                         dtres_param);
 
                 int_life_pdf = Belle::norm_EfRkRdetRnp_fullrec(
                         range_dT.vmin, range_dT.vmax, isCharged, abs_tau, e.Ak, e.Ck,
                         e.vtx_ntrk, e.vtx_zerr, e.vtx_chi2, e.vtx_ndf,
-                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, e.tag_ndf, e.tag_isL,
+                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, (int)e.tag_ndf, e.tag_isL,
                         dtres_param);
 
                 //Acp component
                 cos_pdf = 0.5 / abs_tau * Belle::MfRkRdetRnp_fullrec(
                         e.deltaT, isCharged, abs_tau, Event::deltaM, e.Ak, e.Ck,
                         e.vtx_ntrk, e.vtx_zerr, e.vtx_chi2, e.vtx_ndf,
-                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, e.tag_ndf, e.tag_isL,
+                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, (int)e.tag_ndf, e.tag_isL,
                         dtres_param);
 
                 //Scp component
                 sin_pdf = 0.5 / abs_tau * Belle::AfRkRdetRnp_fullrec(
                         e.deltaT, isCharged, abs_tau, Event::deltaM, e.Ak, e.Ck,
                         e.vtx_ntrk, e.vtx_zerr, e.vtx_chi2, e.vtx_ndf,
-                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, e.tag_ndf, e.tag_isL,
+                        e.tag_ntrk, e.tag_zerr, e.tag_chi2, (int)e.tag_ndf, e.tag_isL,
                         dtres_param);
 
                 if(cacheId>=0) e.dTcache[cacheId].set(abs_tau, life_pdf, int_life_pdf, sin_pdf, cos_pdf);

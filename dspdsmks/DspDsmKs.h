@@ -196,14 +196,14 @@ struct DspDsmKsPDF {
                     e.deltaT = values[0];
                     for(int i=-1; i<=2; i+=2){
                         if(flag & PLT_DT_Q){
-                            e.tag_q = values[1];
+                            e.tag_q = (int) values[1];
                             e.eta = i;
                         }else if(flag & PLT_DT_E){
                             e.tag_q = i;
-                            e.eta = values[1];
+                            e.eta = (int) values[1];
                         }else if(flag & PLT_DT_QE){
                             e.tag_q = i;
-                            e.eta = i*values[1];
+                            e.eta = (int) i*values[1];
                         }
                         pdf += get_deltaT(e, par);
                     }
@@ -368,7 +368,7 @@ struct DspDsmKsPDF {
         unsigned int end=entries;
         unsigned int stride=size;
         if(!readStriped){
-            const unsigned int interval = std::ceil(1.0 * entries / size);
+            const unsigned int interval = (unsigned int) std::ceil(1.0 * entries / size);
             start = process*interval;
             end = std::min(entries,start+interval);
             stride = 1;
