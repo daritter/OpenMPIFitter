@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 import sys
 import os
+import utils
 import matplotlib
-matplotlib.use("Agg")
-matplotlib.rc("path", simplify=False)
-matplotlib.rc("font", family="serif")
-matplotlib.rc("text", usetex=True)
-matplotlib.rc("text.latex", unicode="true",
-              preamble=r"\usepackage{sistyle},\SIthousandsep{},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
 from matplotlib import pyplot as pl
 
 #command handling here
@@ -16,7 +11,6 @@ sys.argv = sys.argv[:1]
 
 import pyroot as pr
 import r2mpl
-import utils
 
 rootfile = root.TFile(filename + ".root")
 
@@ -86,7 +80,7 @@ def plot_mBCdE(data, label=None, title=None, **argk):
 def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
     """Plot data, fit and normalized residuals"""
     fig, data_axes, sigma_axes = utils.get_plotaxes_stacked()
-    colors = {"signal":"r", "misrecon":"c", "mixed":"g", "charged":"b"}
+    colors = {"signal":"r", "misrecon":"c", "mixed":"g", "charged":"b", "dummy":"r"}
     last = None
     for i,(l,f) in enumerate(fits):
         if last is not None:
@@ -148,7 +142,7 @@ def make_mBCdE_plots(name, title):
     mbcde_data = rootfile.Get(name + "_data")
     mbcde_fit  = rootfile.Get(name + "_fit")
     fits = []
-    for component in ["charged","mixed","misrecon","signal"]:
+    for component in ["charged","mixed","misrecon","signal","dummy"]:
         fit = rootfile.Get(name + "_fit_" + component)
         if(fit):
             fits.append((component,fit))
@@ -194,7 +188,7 @@ def make_dT_plots(name, title, label):
 
     fits_p = []
     fits_m = []
-    for component in ["charged","mixed","misrecon","signal"]:
+    for component in ["charged","mixed","misrecon","signal","dummy"]:
         fit_p = rootfile.Get(name + "_fit_p_" + component)
         if(fit_p):
             rescale(dt_data_p, fit_p)
