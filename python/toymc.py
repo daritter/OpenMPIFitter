@@ -110,7 +110,7 @@ def run_jobs():
 
 if __name__ == "__main__":
     nexp = 500
-    name = "gsim"
+    toyname = "gsim"
 
     params = dspdsmks.Parameters()
     params.load("ddk-out.par")
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     params("yield_mixed_svd1").value /= 10
     params("yield_mixed_svd2").value /= 10
 
-    paramfile = "toymc/%s-params.par" % name
+    paramfile = "toymc/%s-params.par" % toyname
     params.save(paramfile)
     components = {
         "signal": "~/belle/DspDsmKs/skim/ddk-signal-correct.root",
@@ -135,14 +135,14 @@ if __name__ == "__main__":
     }
     genflags = ["--fudge=2"]
     fitflags = ["--fix=.*","--release=yield_signal_.*|signal_dt_J.*"]
-    if name.find("gsim")>=0:
+    if toyname.find("gsim")>=0:
         #if we generate from pdf take real data as base template
         genflags.append("--gsim")
         for k in components:
             components[k] = "~/belle/DspDsmKs/skim/ddk-on_resonance.root"
 
     for i in range(nexp):
-        add_job("toymc/%s-%03d" % (name,i), paramfile, genflags, fitflags, components)
+        add_job("toymc/%s-%03d" % (toyname,i), paramfile, genflags, fitflags, components)
 
     br_result = root.TH1D("brresult","",100,0,2*utils.br)
     br_pull   = root.TH1D("brpull","",50,-5,5)
@@ -186,4 +186,4 @@ if __name__ == "__main__":
         draw_toyMC(hist, r"%s, input=%.3g" % (name, utils.cpv[i,0]))
         draw_toyMC(pull, r"Pull for %s" % (name))
 
-    r2mpl.save_all("toymc-%s" % name, png=False)
+    r2mpl.save_all("toymc-%s" % toyname, png=False)
