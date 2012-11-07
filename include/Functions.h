@@ -9,12 +9,18 @@ class Gauss {
     public:
         static const double sqrt_2pi_2 = 1.2533141373155002512078826424055226265034;
 
-        Gauss(double lower=0, double upper=0):
+        Gauss(double lower=std::numeric_limits<double>::quiet_NaN(), double upper=0):
             lower(lower),upper(upper),mean(std::numeric_limits<double>::quiet_NaN()),sigma(-1),sigma2(-1),norm(0) {}
+
+        void set_limits(double lower, double upper){
+            if(lower == this->lower && upper == this->upper) return;
+            this->lower = lower;
+            this->upper = upper;
+            mean = std::numeric_limits<double>::quiet_NaN();
+        }
 
         /** Setup the parameters */
         void set(double mean, double sigma, double sigma2 = -1){
-            //std::cout << "mean: " << mean << ", sigma: " << sigma << std::endl;
             //We only have to recalculate if the parameters changed since the last call
             if(mean == this->mean && sigma == this->sigma && sigma2 == this->sigma2) return;
 
@@ -43,7 +49,7 @@ class Gauss {
 
         /** Calculate the fcn for a given value */
         double operator()(double x) const {
-            //std::cout << "gauss: " << sigma << ", " << norm << std::endl;
+            if(x<lower || x>upper) return 0.0;
             if(sigma==0.0 || sigma2==0.0) return (x==mean)?std::numeric_limits<double>::max():0;
             if(!finite(sigma) || norm==0) return 0.0;
             const double s = (sigma2!=-1 && x>mean)?sigma2:sigma;
@@ -52,11 +58,6 @@ class Gauss {
         }
 
         double getNorm() const { return norm; }
-
-        void setLimits(double lower, double upper){
-            this->lower = lower;
-            this->upper = upper;
-        }
 
     protected:
         double lower;
@@ -71,6 +72,13 @@ class Argus {
     public:
         Argus(double lower, double upper):
             lower(lower),upper(upper),a(std::numeric_limits<double>::quiet_NaN()), benergy(0), norm(0) {}
+
+        void set_limits(double lower, double upper){
+            if(lower == this->lower && upper == this->upper) return;
+            this->lower = lower;
+            this->upper = upper;
+            a = std::numeric_limits<double>::quiet_NaN();
+        }
 
         void set(double benergy, double a){
             if(a == this->a && benergy == this->benergy) return;
@@ -92,6 +100,7 @@ class Argus {
 
         /** Calculate the fcn for a given value */
         double operator()(double x) const {
+            if(x<lower || x>upper) return 0.0;
             if ( x > benergy ) return 0.0;
             const double dz2 = 1.0 - ( x/benergy ) * ( x/benergy );
             return (x * sqrt(dz2) * exp(a*dz2))/norm;
@@ -112,6 +121,12 @@ template<int N> class Chebychev {
         Chebychev(double lower, double upper): norm(0) {
             if(N<0) throw std::logic_error("Chebychev with N<0 makes no sense");
             if(N>4) throw std::logic_error("Chebychev with N>4 not supported");
+            u[0] = std::numeric_limits<double>::quiet_NaN();
+            set_limits(lower,upper);
+        }
+
+        void set_limits(double lower, double upper){
+            if(lower == l[0] && upper == u[0]) return;
             for(int i=0; i<N; ++i) c[i] = std::numeric_limits<double>::quiet_NaN();
             l[0] = lower;
             u[0] = upper;
@@ -144,6 +159,8 @@ template<int N> class Chebychev {
 
         /** Calculate the fcn for a given value */
         double operator()(double x) const {
+            if(x<l[0] || x>u[0]) return 0;
+
             long double xp[N];
             xp[0]=x;
             for(int i=1; i<N; ++i) xp[i]=xp[i-1]*x;
@@ -188,6 +205,11 @@ template<class FCN1, class FCN2> class Add1DFcn {
             return ratio*fcn1(x) + (1.0-ratio)*fcn2(x);
         }
 
+        void set_limits(double lower, double upper){
+            fcn1.set_limits(lower, upper);
+            fcn2.set_limits(lower, upper);
+        }
+
         FCN1 fcn1;
         FCN2 fcn2;
     protected:
@@ -212,6 +234,11 @@ template<class FCN1, class FCN2> class Add2DFcn {
             return ratio*fcn1(x,y) + (1.0-ratio)*fcn2(x,y);
         }
 
+        void set_limits(double lowerX, double upperX, double lowerY, double upperY){
+            fcn1.set_limits(lowerX, upperX, lowerY, upperY);
+            fcn2.set_limits(lowerX, upperX, lowerY, upperY);
+        }
+
         FCN1 fcn1;
         FCN2 fcn2;
     protected:
@@ -225,6 +252,11 @@ template<class FCNX, class FCNY> class CompoundFcn2D {
         /** Calculate the fcn for a given value */
         double operator()(double x, double y) const {
             return fcnx(x) * fcny(y);
+        }
+
+        void set_limits(double lowerX, double upperX, double lowerY, double upperY){
+            fcnx.set_limits(lowerX, upperX);
+            fcny.set_limits(lowerY, upperY);
         }
 
         FCNX fcnx;
@@ -251,11 +283,10 @@ template<int N> class MultiGauss {
     public:
         MultiGauss(double lower, double upper) {
             fcns = new Gauss[N];
-            for(int i=0; i<N; ++i){
-                fcns[i].setLimits(lower,upper);
-            }
+            set_limits(lower, upper);
             norms[0]=1;
         }
+
         ~MultiGauss(){
             delete[] fcns;
         }
@@ -267,8 +298,13 @@ template<int N> class MultiGauss {
                 if(i>0) norms[i] = par1[3*i-1];
                 mean += par1[3*i];
                 sigma *= par1[3*i+1];
-                //std::cout << "mean: " << mean << ", sigma: " << sigma << std::endl;
                 fcns[i].set(mean,sigma);
+            }
+        }
+
+        void set_limits(double lower, double upper){
+            for(int i=0; i<N; ++i){
+                fcns[i].set_limits(lower,upper);
             }
         }
 
