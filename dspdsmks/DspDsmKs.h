@@ -27,6 +27,7 @@
 #include "Misrecon.h"
 #include "Mixed.h"
 #include "Charged.h"
+#include "Dummy.h"
 #include "progress.h"
 
 /** DspDsmKs PDF function.
@@ -54,6 +55,7 @@ struct DspDsmKsPDF {
         CMP_mixed    = 1<<2,
         CMP_charged  = 1<<3,
         CMP_deltat   = 1<<4,
+        CMP_dummy    = 1<<5,
         CMP_all      = CMP_signal | CMP_misrecon | CMP_mixed | CMP_charged | CMP_deltat
     };
 
@@ -82,6 +84,7 @@ struct DspDsmKsPDF {
             else DspDsmKsPDF__checkComponent(mixed);
             else DspDsmKsPDF__checkComponent(charged);
             else DspDsmKsPDF__checkComponent(deltat);
+            else DspDsmKsPDF__checkComponent(dummy);
             else DspDsmKsPDF__checkComponent(all);
             else throw std::invalid_argument("Unknown component: '" + component + "'");
         }
@@ -120,6 +123,9 @@ struct DspDsmKsPDF {
         }
         if(cmp & CMP_charged){
             components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+        }
+        if(cmp & CMP_dummy){
+            components.push_back(new DummyPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
     }
 
@@ -163,6 +169,18 @@ struct DspDsmKsPDF {
             deltaT += component->get_deltaT(e,par, true);
         }
         return deltaT;
+    }
+
+    double get_cosTheta(const Event &e, const std::vector<double> &par, int svdVs) const {
+        long double yield(0);
+        long double sum(0);
+        BOOST_FOREACH(Component* component, components){
+            const double y = component->get_yield(par,(Component::EnabledSVD)svdVs);
+            const double c = component->get_cosTheta(e);
+            sum += y*c;
+            yield += y;
+        }
+        return sum/yield;
     }
 
     /** finalize the event after all processes are collected */
@@ -270,7 +288,6 @@ struct DspDsmKsPDF {
         }
         Event e;
         e.createBranches(output, bestBSelection);
-        e.isMC = 1;
         e.flag = 0;
         typedef boost::random::uniform_int_distribution<> uniform_int;
         typedef boost::random::uniform_real_distribution<> uniform_real;
@@ -278,65 +295,78 @@ struct DspDsmKsPDF {
         typedef boost::variate_generator<boost::random::mt19937&, uniform_real > real_variate;
         for(int svd=0; svd<2; ++svd){
             int_variate  random_event(random_generator, uniform_int(0, data[svd].size()-1));
+            int_variate  random_flavour(random_generator, uniform_int(0, 1));
             real_variate random_pdf(random_generator, uniform_real(0, maxval[svd]));
             real_variate random_mBC(random_generator, uniform_real(range_mBC.vmin, range_mBC.vmax));
             real_variate random_dE(random_generator, uniform_real(range_dE.vmin, range_dE.vmax));
             real_variate random_dT(random_generator, uniform_real(range_dT.vmin, range_dT.vmax));
+            real_variate random_cos(random_generator, uniform_real(-1,1));
+            real_variate random_01(random_generator, uniform_real(0,1));
 
             int nEvents = (int)round(get_yield(par, svd==0?Component::SVD1:Component::SVD2));
+            if(nEvents<=0) continue;
             boost::random::poisson_distribution<> poisson(nEvents);
             nEvents = poisson(random_generator);
             if(nEvents==0) continue;
 
             e.svdVs = svd;
+            e.isMC = data[svd][0].isMC;
             ProgressBar pbar(nEvents);
             std::cout << "Generating Events for SVD" << (svd+1) << ":" << pbar;
             double min_distance(std::numeric_limits<double>::infinity());
             for(int i=0; i<nEvents; ++i){
+                if(!gsim) do {
+                    //e.cosTheta = data[svd][random_event()].cosTheta;
+                    e.tag_zerr = data[svd][random_event()].tag_zerr;
+                    e.tag_chi2 = data[svd][random_event()].tag_chi2;
+                    e.tag_ndf  = data[svd][random_event()].tag_ndf;
+                    e.tag_isL  = data[svd][random_event()].tag_isL;
+                    e.tag_r    = data[svd][random_event()].tag_r;
+                    e.tag_ntrk = (e.tag_ndf+2)/2;
+                    e.vtx_zerr = data[svd][random_event()].vtx_zerr;
+                    e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
+                    e.vtx_ndf  = data[svd][random_event()].vtx_ndf;
+                    e.vtx_ntrk = (e.vtx_ndf+2)/2;
+                }while(!e.calculateValues(true));
+
                 while(true){
                     double calc_pdf(-1);
                     if(gsim){
                         e = data[svd][random_event()];
                         //If there is no deltaT, nothing else to do, just grab a random event
                         if(!(enabledComponents & CMP_deltat)) break;
-                        e.deltaT   = random_dT();
-                        e.eta      = data[svd][random_event()].eta;
-                        e.tag_q    = data[svd][random_event()].tag_q;
-                        if(!e.calculateValues(true)) continue;
-                        calc_pdf = get_deltaT(e,par);
                     }else{
-                        e.Mbc = random_mBC();
-                        e.dE = random_dE();
                         Event &e2 = data[svd][random_event()];
                         e.benergy = e2.benergy;
                         e.expNo = e2.expNo;
-                        if(e.Mbc>e.benergy) continue;
-                        if(enabledComponents & CMP_deltat){
-                            e.deltaT   = random_dT();
-                            e.cosTheta = data[svd][random_event()].cosTheta;
-                            e.eta      = data[svd][random_event()].eta;
-                            e.tag_ntrk = data[svd][random_event()].tag_ntrk;
-                            e.tag_zerr = data[svd][random_event()].tag_zerr;
-                            e.tag_chi2 = data[svd][random_event()].tag_chi2;
-                            e.tag_ndf  = data[svd][random_event()].tag_ndf;
-                            e.tag_isL  = data[svd][random_event()].tag_isL;
-                            e.tag_q    = data[svd][random_event()].tag_q;
-                            e.tag_r    = data[svd][random_event()].tag_r;
-                            e.vtx_ntrk = data[svd][random_event()].vtx_ntrk;
-                            e.vtx_zerr = data[svd][random_event()].vtx_zerr;
-                            e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
-                            e.vtx_ndf  = data[svd][random_event()].vtx_ndf;
-                            if(!e.calculateValues(true)) continue;
-                            e.reset();
-                        }
-                        calc_pdf = PDF(e,par);
+                        //Make sure Mbc is in a valid range
+                        do{
+                            e.Mbc = random_mBC();
+                            e.dE = random_dE();
+                        }while(e.Mbc>e.benergy);
                     }
+
+                    //No we get a cosTheta
+                    do {
+                        e.cosTheta = random_cos();
+                    }while(get_cosTheta(e,par,svd==0?Component::SVD1:Component::SVD2)<random_01());
+
+                    //And now we make deltaT
+                    if(enabledComponents & CMP_deltat){
+                        e.deltaT   = random_dT();
+                        e.tag_q    = (random_flavour()*2)-1;
+                        e.eta      = (random_flavour()*2)-1;
+                        if(!e.calculateValues(true)) continue;
+                        e.reset();
+                    }
+                    calc_pdf = gsim?get_deltaT(e,par):PDF(e,par);
+
                     if(calc_pdf>maxval[svd]){
                         throw std::runtime_error(
                                 (boost::format("PDF larger than maximimum value: %.10e > %.10e") % calc_pdf % maxval[svd]).str());
                     }
                     min_distance = std::min((maxval[svd]-calc_pdf)/maxval[svd], min_distance);
-                    if(calc_pdf>random_pdf()) break;
+                    if(random_pdf()<calc_pdf) break;
                 }
 
                 std::cout << ++pbar;

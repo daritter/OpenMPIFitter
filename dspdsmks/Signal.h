@@ -51,7 +51,7 @@ namespace PAR {
 class SignalPDF: public Component {
     public:
     SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, false, useDeltaT),
+        Component(range_dT, false, useDeltaT, false), range_mBC(range_mBC), range_dE(range_dE),
         signalPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         signalPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
@@ -64,6 +64,7 @@ class SignalPDF: public Component {
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){
             //Set Parameters for signal component
+            signalPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             signalPDF_svd1.set(par[PAR::signal_svd1_ratio]);
             signalPDF_svd1.fcn1.fcnx.set(
                     par[PAR::signal_svd1_Mbc_mean_m0] + e.dE*par[PAR::signal_svd1_Mbc_mean_m1],
@@ -76,6 +77,7 @@ class SignalPDF: public Component {
             return get_deltaT(e,par)*par[PAR::yield_signal_svd1] * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
+            signalPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             signalPDF_svd2.set(par[PAR::signal_svd2_ratio]);
             signalPDF_svd2.fcn1.fcnx.set(
                     par[PAR::signal_svd2_Mbc_mean_m0] + e.dE*par[PAR::signal_svd2_Mbc_mean_m1],
@@ -100,21 +102,10 @@ class SignalPDF: public Component {
         return yield;
     }
 
-    virtual Event get_maxEvent(const std::vector<double> &par, int svd){
-        Event e = Component::get_maxEvent(par, svd);
-        if(svd == SVD1){
-            e.svdVs = 0;
-            e.dE  = par[PAR::signal_svd1_dE_mean];
-            e.Mbc = par[PAR::signal_svd1_Mbc_mean_m0] + e.dE*par[PAR::signal_svd1_Mbc_mean_m1];
-        }else if(svd == SVD2){
-            e.svdVs = 1;
-            e.dE  = par[PAR::signal_svd2_dE_mean];
-            e.Mbc = par[PAR::signal_svd2_Mbc_mean_m0] + e.dE*par[PAR::signal_svd2_Mbc_mean_m1];
-        }
-        return e;
-    }
-
     private:
+
+    Range range_mBC;
+    Range range_dE;
 
     /** PDF function components */
     Add2DFcn<

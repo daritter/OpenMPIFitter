@@ -95,9 +95,9 @@ int main(int argc, char* argv[]){
         }
     }
 
-    std::string names[] = {"signal","misrecon","mixed","charged"};
-    int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_misrecon,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
-    for(int i=0; i<4; ++i){
+    std::string names[] = {"signal","misrecon","mixed","charged","dummy"};
+    int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_misrecon,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged,DspDsmKsPDF::CMP_dummy};
+    for(int i=0; i<5; ++i){
         if(!(activeComponents & components[i])){
             if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
             std::string name = names[i];

@@ -13,7 +13,7 @@ class Component {
         BOTH = SVD1 | SVD2
     };
 
-    Component(Range range_dT, bool isCharged, bool useDeltaT):useDeltaT(useDeltaT), deltaT(range_dT, isCharged?1:0)
+    Component(Range range_dT, bool isCharged, bool useDeltaT, bool flatCosTheta=true):useDeltaT(useDeltaT), flatCosTheta(flatCosTheta), deltaT(range_dT, isCharged?1:0)
     {}
 
     virtual ~Component(){}
@@ -21,19 +21,18 @@ class Component {
     virtual double operator()(const Event& e, const std::vector<double> &par) = 0;
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH) = 0;
 
-    virtual Event get_maxEvent(const std::vector<double> &par, int svd){
-        Event e;
-        return e;
-    }
-
     double get_deltaT(const Event& e, const std::vector<double> &par, bool anyway=false){
         if(!useDeltaT && !anyway) return 1.0;
         return deltaT(e, par);
     }
 
+    double get_cosTheta(const Event &e){
+        return flatCosTheta?1.0:(1.0-e.cosTheta*e.cosTheta);
+    }
 
     protected:
     bool useDeltaT;
+    bool flatCosTheta;
     DeltaTPDF deltaT;
 };
 

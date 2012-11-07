@@ -35,7 +35,7 @@ namespace PAR {
 class MixedPDF: public Component {
     public:
     MixedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, false, useDeltaT),
+        Component(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
@@ -49,6 +49,7 @@ class MixedPDF: public Component {
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs==0){
             //Set Parameters for mixed component
+            mixedPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             mixedPDF_svd1.set(par[PAR::mixed_svd1_ratio]);
             mixedPDF_svd1.fcn1.fcnx.set(par[PAR::mixed_svd1_Mbc_mean], par[PAR::mixed_svd1_Mbc_sigma]);
             mixedPDF_svd1.fcn1.fcny.set(par[PAR::mixed_svd1_dE_mean], par[PAR::mixed_svd1_dE_sigma]);
@@ -58,6 +59,7 @@ class MixedPDF: public Component {
             return get_deltaT(e,par)*par[PAR::yield_mixed_svd1] * mixedPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for mixed component
+            mixedPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
             mixedPDF_svd2.fcn1.fcnx.set(par[PAR::mixed_svd2_Mbc_mean], par[PAR::mixed_svd2_Mbc_sigma]);
             mixedPDF_svd2.fcn1.fcny.set(par[PAR::mixed_svd2_dE_mean], par[PAR::mixed_svd2_dE_sigma]);
@@ -80,6 +82,9 @@ class MixedPDF: public Component {
     }
 
     private:
+
+    Range range_mBC;
+    Range range_dE;
 
     /** PDF function components */
     Add2DFcn<
