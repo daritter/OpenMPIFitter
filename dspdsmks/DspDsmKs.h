@@ -203,7 +203,7 @@ struct DspDsmKsPDF {
                             e.eta = (int) values[1];
                         }else if(flag & PLT_DT_QE){
                             e.tag_q = i;
-                            e.eta = (int) i*values[1];
+                            e.eta = (int) (i*values[1]);
                         }
                         pdf += get_deltaT(e, par);
                     }

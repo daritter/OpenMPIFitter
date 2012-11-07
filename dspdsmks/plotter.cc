@@ -19,7 +19,7 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
     Event e;
     e.svdVs = svdVs-1;
     double integral(0);
-    size_t nEvents = h_bEnergy->GetEffectiveEntries();
+    double nEvents = h_bEnergy->GetEffectiveEntries();
     ProgressBar pbar(h_pdf->GetNbinsX()*h_pdf->GetNbinsY()*h_bEnergy->GetNbinsX());
     std::cout << "Plotting mBCdE for '" << name << "': ";
     for(int ix=0; ix<h_pdf->GetNbinsX(); ++ix){
