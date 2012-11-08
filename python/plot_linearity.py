@@ -77,9 +77,8 @@ for lp, lp_name in zip(lin_params,cpv_names):
     a1.set_ylim(-1.5,1.5)
     a2.set_ylim(-1.0,1.0)
     a3.set_ylim( 0.0,2.0)
-    prop = matplotlib.font_manager.FontProperties(size=8)
-    a1.legend(prop=prop,loc="upper left", numpoints=2)
-    a2.legend(prop=prop,loc="upper left", numpoints=2)
-    a3.legend(prop=prop,loc="upper left", numpoints=2)
+    a1.legend(loc="upper left")
+    a2.legend(loc="upper left")
+    a3.legend(loc="upper left")
 
 r2mpl.save_all(infile,png=False)

@@ -131,8 +131,7 @@ def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, label):
 
     r2mpl.plotSmooth(asym_fit, axes=a2, zorder=1, color="r", samples=2000)
     r2mpl.plot(asym_data, axes=a2, errors=True, color="k", zorder=2, linewidth=0.5, capsize=1.0)
-    prop = matplotlib.font_manager.FontProperties(size=10)
-    a1.legend(prop=prop,loc="upper left", numpoints=2)
+    a1.legend(loc="upper left", numpoints=2)
     a2.set_ylim(-1.0,1.0)
     a1.set_ylabel(r"Entries / \num{%.3g} %s" % (data_p.GetBinWidth(1), "ps"))
     a2.set_xlabel(r"$\Delta t$ / ps")

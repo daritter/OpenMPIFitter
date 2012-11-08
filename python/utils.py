@@ -6,6 +6,7 @@ matplotlib.use("Agg")
 matplotlib.rc("path", simplify=False)
 matplotlib.rc("font", family="serif")
 matplotlib.rc("text", usetex=True)
+matplotlib.rc("legend", fancybox=True, fontsize="small")
 matplotlib.rc("text.latex", unicode="true", preamble=r"\usepackage{sistyle},\SIthousandsep{},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
 from matplotlib import pyplot as pl
 

@@ -10,12 +10,14 @@ import multiprocessing
 import Queue as queue
 import utils
 import r2mpl
+import matplotlib
 
 lock = threading.Lock()
 
 def draw_toyMC(hist,title,xlabel="",ylabel="",exponent=None):
     fit = root.TF1("gauss","gaus")
     bbox_props = dict(boxstyle="round", fc="w", ec="k")
+    font_props = matplotlib.font_manager.FontProperties(size="small")
     textbox = r"\begin{align*}\mu&=%s\\\sigma&=%s\end{align*}"
     fig, a = utils.get_plotaxes()
     a.set_title(title)
@@ -28,7 +30,7 @@ def draw_toyMC(hist,title,xlabel="",ylabel="",exponent=None):
         utils.format_error(fit.GetParameter(1), fit.GetParError(1), exponent=exponent),
         utils.format_error(fit.GetParameter(2), fit.GetParError(2), exponent=exponent)),
         xy=(1,1), xycoords="axes fraction", xytext=(-8,-8),
-        textcoords="offset points", color="k", ha="right", va="top", bbox=bbox_props)
+        textcoords="offset points", color="k", ha="right", va="top", bbox=bbox_props, font_properties=font_props)
     return a, (fit.GetParameter(1), fit.GetParError(1)), (fit.GetParameter(2), fit.GetParError(2))
 
 
