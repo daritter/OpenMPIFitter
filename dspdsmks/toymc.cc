@@ -17,7 +17,8 @@ namespace po = boost::program_options;
 
 struct ToyMCRoutine {
     /** Set some default options */
-    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.35), scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false)
+    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.35),
+        scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false)
     {}
 
     std::string parameterIn;
@@ -30,11 +31,15 @@ struct ToyMCRoutine {
     int scansteps_dT;
     unsigned int seed;
     bool gsim;
+    std::vector<std::string> templates;
 
     /** Do the plotting */
     template<class FCN> int operator()(FCN &parallel_pdf){
         const Range range_mBC = parallel_pdf.localFCN().getRange_mBC();
         const Range range_dE = parallel_pdf.localFCN().getRange_dE();
+
+        //If we have templates but no gsim parameter we generate from pdf, thus removing the templates
+        if(!gsim) templates.clear();
 
         Parameters params;
         if(!params.load(parameterIn, overrideParameters)){
@@ -59,7 +64,7 @@ struct ToyMCRoutine {
         values[8] = scan_dT.vmax;
         values[9] = step_dT;
         double maxVal[2];
-        int flag = gsim?DspDsmKsPDF::PLT_MAXDT:DspDsmKsPDF::PLT_MAX;
+        int flag = templates.empty()?DspDsmKsPDF::PLT_MAX:DspDsmKsPDF::PLT_MAXDT;
         maxVal[0] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD1 | flag, values, par, OP_MAX);
         maxVal[1] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD2 | flag, values, par, OP_MAX);
 
@@ -70,7 +75,7 @@ struct ToyMCRoutine {
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");
-        local_pdf.generateToyMC(tree,par,maxVal,seed,gsim);
+        local_pdf.generateToyMC(tree,par,maxVal,templates,seed);
         tree->Write();
         f->Write();
         f->Close();
@@ -143,8 +148,10 @@ int main(int argc, char* argv[]){
          "Fudgefactor we'd be applying to the maximal pdf value to be on the safe side")
         ("seed", po::value<unsigned int>(&toymc.seed)->default_value(toymc.seed),
          "Seed to use for the number generator, 0=initialize from /dev/urandom")
+        ("template", po::value<std::vector<std::string> >(&toymc.templates)->composing(),
+         "Data template to draw dE/Mbc from")
         ("gsim", po::bool_switch(&toymc.gsim),
-         "Wether to generate from PDF or from gsim")
+         "Wether to generate from PDF or from gsim. If no templates are given we always generate from pdf")
         ;
 
     po::variables_map vm;

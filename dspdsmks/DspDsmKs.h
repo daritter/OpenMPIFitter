@@ -280,12 +280,20 @@ struct DspDsmKsPDF {
         return 0;
     }
 
-    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], int seed=0, bool gsim=false){
+    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], std::vector<std::string> &templates, int seed=0){
         boost::random::mt19937 random_generator(seed);
         if(seed == 0){
             boost::random::random_device rseed;
             random_generator.seed(rseed);
         }
+
+        bool gsim = false;
+        std::vector<Event> gsim_data[2];
+        if(!templates.empty()){
+            load(gsim_data, templates);
+            gsim = true;
+        }
+
         Event e;
         e.createBranches(output, bestBSelection);
         e.flag = 0;
@@ -294,7 +302,12 @@ struct DspDsmKsPDF {
         typedef boost::variate_generator<boost::random::mt19937&, uniform_int> int_variate;
         typedef boost::variate_generator<boost::random::mt19937&, uniform_real > real_variate;
         for(int svd=0; svd<2; ++svd){
+            if(gsim && gsim_data[svd].empty()){
+                std::cerr << "No template data for SVD" << (svd+1) << std::endl;
+                std::exit(5);
+            }
             int_variate  random_event(random_generator, uniform_int(0, data[svd].size()-1));
+            int_variate  random_gsim(random_generator, uniform_int(0, std::max(0,(int)(gsim_data[svd].size())-1)));
             int_variate  random_flavour(random_generator, uniform_int(0, 1));
             real_variate random_pdf(random_generator, uniform_real(0, maxval[svd]));
             real_variate random_mBC(random_generator, uniform_real(range_mBC.vmin, range_mBC.vmax));
@@ -315,7 +328,8 @@ struct DspDsmKsPDF {
             std::cout << "Generating Events for SVD" << (svd+1) << ":" << pbar;
             double min_distance(std::numeric_limits<double>::infinity());
             for(int i=0; i<nEvents; ++i){
-                if(!gsim) do {
+                //Take vertex stuff from data
+                do {
                     //e.cosTheta = data[svd][random_event()].cosTheta;
                     e.tag_zerr = data[svd][random_event()].tag_zerr;
                     e.tag_chi2 = data[svd][random_event()].tag_chi2;
@@ -329,13 +343,18 @@ struct DspDsmKsPDF {
                     e.vtx_ntrk = (e.vtx_ndf+2)/2;
                 }while(!e.calculateValues(true));
 
+                //Take Mbc/dE stuff from template if available
+                if(gsim){
+                    Event &e2 = gsim_data[svd][random_gsim()];
+                    e.benergy = e2.benergy;
+                    e.expNo = e2.expNo;
+                    e.Mbc = e2.Mbc;
+                    e.dE = e2.dE;
+                }
+
                 while(true){
                     double calc_pdf(-1);
-                    if(gsim){
-                        e = data[svd][random_event()];
-                        //If there is no deltaT, nothing else to do, just grab a random event
-                        if(!(enabledComponents & CMP_deltat)) break;
-                    }else{
+                    if(!gsim){
                         Event &e2 = data[svd][random_event()];
                         e.benergy = e2.benergy;
                         e.expNo = e2.expNo;
@@ -347,9 +366,8 @@ struct DspDsmKsPDF {
                     }
 
                     //No we get a cosTheta
-                    do {
-                        e.cosTheta = random_cos();
-                    }while(get_cosTheta(e,par,svd==0?Component::SVD1:Component::SVD2)<random_01());
+                    do { e.cosTheta = random_cos(); }
+                    while(get_cosTheta(e,par,svd==0?Component::SVD1:Component::SVD2)<random_01());
 
                     //And now we make deltaT
                     if(enabledComponents & CMP_deltat){
@@ -359,6 +377,9 @@ struct DspDsmKsPDF {
                         if(!e.calculateValues(true)) continue;
                         e.reset();
                     }
+                    //If gsim and there is no deltaT, nothing else to do, just grab a random event
+                    if(gsim && !(enabledComponents & CMP_deltat)) break;
+                    //otherwise get pdf/dt value and check against random value
                     calc_pdf = gsim?get_deltaT(e,par):PDF(e,par);
 
                     if(calc_pdf>maxval[svd]){
@@ -366,6 +387,7 @@ struct DspDsmKsPDF {
                                 (boost::format("PDF larger than maximimum value: %.10e > %.10e") % calc_pdf % maxval[svd]).str());
                     }
                     min_distance = std::min((maxval[svd]-calc_pdf)/maxval[svd], min_distance);
+
                     if(random_pdf()<calc_pdf) break;
                 }
 
@@ -387,28 +409,24 @@ struct DspDsmKsPDF {
      * @param size the number of processes in total
      */
     void load(int process, int size) {
-        TChain* chain = new TChain("B0");
+        load(data, filenames, process, size);
+        std::sort(data[0].begin(),data[0].end());
+        std::sort(data[1].begin(),data[1].end());
+        std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
+            << ") events and is ready for pillaging" << std::endl;
+    }
 
+    void load(std::vector<Event> *data, const std::vector<std::string>& filenames, int process=0, int size=1){
+        TChain* chain = new TChain("B0");
         BOOST_FOREACH(const std::string& filename, filenames){
             chain->AddFile(filename.c_str(),-1);
         }
-        bool readStriped = true;
-        const unsigned int entries = chain->GetEntries();
-        unsigned int start=process;
-        unsigned int end=entries;
-        unsigned int stride=size;
-        if(!readStriped){
-            const unsigned int interval = (unsigned int) std::ceil(1.0 * entries / size);
-            start = process*interval;
-            end = std::min(entries,start+interval);
-            stride = 1;
-        }
-
         data[0].clear();
         data[1].clear();
         Event event;
-        event.setBranches(chain,bestBSelection);
-        for(unsigned int i=start; i<end; i+=stride){
+        event.setBranches(chain, bestBSelection);
+        const unsigned int entries = chain->GetEntries();
+        for(unsigned int i=process; i<entries; i+=size){
             if(!chain->GetEntry(i)) {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
                 std::exit(5);
@@ -417,17 +435,10 @@ struct DspDsmKsPDF {
             if(!range_mBC(event.Mbc) || !range_dE(event.dE) || !range_dT(event.deltaT)) continue;
             data[event.svdVs].push_back(event);
         }
-
-        std::sort(data[0].begin(),data[0].end());
-        std::sort(data[1].begin(),data[1].end());
-
-        std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
-            << ") events and is ready for pillaging" << std::endl;
         delete chain;
     }
 
     const std::vector<Event>& getData(int svd) const { return data[svd]; }
-
 
     const Range getRange_mBC() const { return range_mBC; }
     const Range getRange_dE() const { return range_dE; }
