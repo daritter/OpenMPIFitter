@@ -61,16 +61,29 @@ for lp, lp_name in zip(lin_params,cpv_names):
             lin_pull_sigma.SetBinError(x,fit.GetParError(2))
 
         fit = root.TF1("line","pol1")
-        r2mpl.plot(lin_result, axes=a1, errors=True, color=colors[cpv])#, label=cpv_name)
         lin_result.Fit(fit,"Q")
+        r2mpl.plot(lin_result, axes=a1, errors=True, color=colors[cpv])#, label=cpv_name)
         r2mpl.plot(fit, axes=a1, color=colors[cpv], label=cpv_name)
 
-        r2mpl.plot(lin_pull_mean, axes=a2, errors=True, color=colors[cpv])#, label=cpv_name)
+        if cpv.find(lp)>=0:
+            fig,a = utils.get_plotaxes()
+            a.set_title("%s, linearity" % cpv_name)
+            a.set_xlabel("input %s" % lp_name)
+            a.set_ylabel("%s fit result" % cpv_name)
+            r2mpl.plot(lin_result, axes=a, errors=True, color=colors[cpv])#, label=cpv_name)
+            r2mpl.plot(fit, axes=a, color=colors[cpv], label="result")
+
+            lin_res = lin_result.Clone("tmp")
+            for i in range(1,lin_res.GetNbinsX()+1):
+                lin_res.SetBinContent(i,lin_res.GetBinContent(i)-lin_res.GetBinCenter(i))
+            r2mpl.plot(lin_res, axes=a, errors=True, color="k")
+
         lin_pull_mean.Fit(fit,"Q")
+        r2mpl.plot(lin_pull_mean, axes=a2, errors=True, color=colors[cpv])#, label=cpv_name)
         r2mpl.plot(fit, axes=a2, color=colors[cpv], label=cpv_name)
 
-        r2mpl.plot(lin_pull_sigma, axes=a3, errors=True, color=colors[cpv])#, label=cpv_name)
         lin_pull_sigma.Fit(fit,"Q")
+        r2mpl.plot(lin_pull_sigma, axes=a3, errors=True, color=colors[cpv])#, label=cpv_name)
         r2mpl.plot(fit, axes=a3, color=colors[cpv], label=cpv_name)
 
 
