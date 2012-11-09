@@ -67,4 +67,11 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("save", &ParameterHelper::save)
         .def("print", &Parameters::print)
     ;
+
+    class_<Range>("Range", init<double, double>())
+        .def("__call__", &Range::operator())
+        .def_readwrite("vmin",&Range::vmin)
+        .def_readwrite("vmax",&Range::vmax)
+        .def("__repr__", &RangeHelper::tostring)
+    ;
 }
