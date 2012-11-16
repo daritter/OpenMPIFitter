@@ -357,6 +357,8 @@ struct DspDsmKsPDF {
                         e.deltaT = e2.deltaT;
                         e.calculateValues(true);
                         //Everything set, go to next event
+                        std::cout << ++pbar;
+                        output->Fill();
                         continue;
                     }
                 }
