@@ -19,7 +19,7 @@
  */
 struct FitRoutine {
     /** Set some default options */
-    FitRoutine(): parameterIn("params-in.txt"), parameterOut("params-out.txt"), fixParameters(""), fitStrategy(2), useMinos(false) {}
+    FitRoutine(): parameterIn("params-in.txt"), parameterOut("params-out.txt"), fixParameters(""), fitStrategy(2), useMinos(false),maxTries(10) {}
 
     /** Do the fitting */
     template<class FCN> int operator()(FCN &fcn){
@@ -39,8 +39,14 @@ struct FitRoutine {
             ROOT::Minuit2::MnUserParameters mnParams = params.getMnParams();
             ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
             ROOT::Minuit2::FunctionMinimum min = migrad(50000);
-            std::cout.flags(originalFormat);
+            for(int i=1; i<maxTries; ++i){
+                if(!min.IsAboveMaxEdm()) break;
+                std::cout << "Avast, here goes the fittar for attempt " << (i+1) << std::endl;
+                ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
+                min = migrad(50000);
+            }
 
+            std::cout.flags(originalFormat);
             std::cout << min << std::endl;
             std::cout << "Function Minimum: " << std::setprecision(10)
                       << min.Fval() << std::endl;
@@ -87,6 +93,7 @@ struct FitRoutine {
     int fitStrategy;
     /** Wether to call minos after the Fit. Not implemented yet */
     bool useMinos;
+    int maxTries;
 };
 
 #endif // MPIFitter_FITROUTINE_H

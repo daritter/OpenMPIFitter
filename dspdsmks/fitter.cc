@@ -69,6 +69,8 @@ int main(int argc, char* argv[]){
          "BestB Selection method to use")
         ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
          "Comma separated list of components to use for the fit")
+        ("tries", po::value<int>(&fitter.maxTries)->default_value(fitter.maxTries),
+         "Maximum tries to run the fit when Edm>max")
         ;
 
     po::variables_map vm;
