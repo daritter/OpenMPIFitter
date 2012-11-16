@@ -280,7 +280,7 @@ struct DspDsmKsPDF {
         return 0;
     }
 
-    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], std::vector<std::string> &templates, int seed=0){
+    void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], std::vector<std::string> &templates, int seed=0, bool fullgsim=false){
         boost::random::mt19937 random_generator(seed);
         if(seed == 0){
             boost::random::random_device rseed;
@@ -350,6 +350,15 @@ struct DspDsmKsPDF {
                     e.expNo = e2.expNo;
                     e.Mbc = e2.Mbc;
                     e.dE = e2.dE;
+                    //When not generating signal take the dt parameters from data too.
+                    if(fullgsim && !(enabledComponents & CMP_signal)){
+                        e.eta = e2.eta;
+                        e.tag_q = e2.tag_q;
+                        e.deltaT = e2.deltaT;
+                        e.calculateValues(true);
+                        //Everything set, go to next event
+                        continue;
+                    }
                 }
 
                 while(true){

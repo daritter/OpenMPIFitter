@@ -31,6 +31,7 @@ struct ToyMCRoutine {
     int scansteps_dT;
     unsigned int seed;
     bool gsim;
+    bool fullgsim;
     std::vector<std::string> templates;
 
     /** Do the plotting */
@@ -75,7 +76,7 @@ struct ToyMCRoutine {
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");
-        local_pdf.generateToyMC(tree,par,maxVal,templates,seed);
+        local_pdf.generateToyMC(tree,par,maxVal,templates,seed,fullgsim);
         tree->Write();
         f->Write();
         f->Close();
@@ -152,6 +153,8 @@ int main(int argc, char* argv[]){
          "Data template to draw dE/Mbc from")
         ("gsim", po::bool_switch(&toymc.gsim),
          "Wether to generate from PDF or from gsim. If no templates are given we always generate from pdf")
+        ("fullgsim", po::bool_switch(&toymc.fullgsim),
+         "Wether to also take dT values from gsim (not applicable for signal)")
         ;
 
     po::variables_map vm;
