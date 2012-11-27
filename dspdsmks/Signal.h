@@ -48,16 +48,16 @@ namespace PAR {
 };
 
 
-class SignalPDF: public Component {
+class SignalPDF: public DeltaTComponent<> {
     public:
     SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, false, useDeltaT, false), range_mBC(range_mBC), range_dE(range_dE),
+        DeltaTComponent<>(range_dT, false, useDeltaT, false), range_mBC(range_mBC), range_dE(range_dE),
         signalPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         signalPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setParameters(
                 PAR::signal_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
-                PAR::signal_dt_fractionscale, useDeltaT?Event::dt_signal:-1);
+                PAR::signal_dt_fractionscale, -1, useDeltaT?Event::dt_signal:-1);
     }
     virtual ~SignalPDF(){}
 

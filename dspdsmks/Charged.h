@@ -26,23 +26,43 @@ namespace PAR {
     PARAM(charged_svd2_dE_cheb1);
 
     PARAM(charged_dt_blifetime);
-    PARAM(charged_dt_Jc);
-    PARAM(charged_dt_Js1);
-    PARAM(charged_dt_Js2);
+    PARAM(charged_dt_sgl_mean1);
+    PARAM(charged_dt_sgl_mean2);
+    PARAM(charged_dt_sgl_mean3);
+    PARAM(charged_dt_sgl_sigma1);
+    PARAM(charged_dt_sgl_sigma2);
+    PARAM(charged_dt_sgl_sigma3);
+    PARAM(charged_dt_sgl_weight2);
+    PARAM(charged_dt_sgl_weight3);
+    PARAM(charged_dt_mul_mean1);
+    PARAM(charged_dt_mul_mean2);
+    PARAM(charged_dt_mul_mean3);
+    PARAM(charged_dt_mul_sigma1);
+    PARAM(charged_dt_mul_sigma2);
+    PARAM(charged_dt_mul_sigma3);
+    PARAM(charged_dt_mul_weight2);
+    PARAM(charged_dt_mul_weight3);
     PARAM(charged_dt_fractionscale);
+
 };
 
 
-class ChargedPDF: public Component {
+class ChargedPDF: public DeltaTComponent<GenericTPDF> {
     public:
     ChargedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, true, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
+        DeltaTComponent<GenericTPDF>(range_dT, true, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         chargedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         chargedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setParameters(
-                PAR::charged_dt_blifetime, PAR::charged_dt_Jc, PAR::charged_dt_Js1, PAR::charged_dt_Js2,
-                PAR::charged_dt_fractionscale, useDeltaT?Event::dt_charged:-1);
+        deltaT.setCommonParameters(PAR::charged_dt_blifetime, PAR::charged_dt_fractionscale);
+        deltaT.setParameters(false,
+                PAR::charged_dt_sgl_mean1, PAR::charged_dt_sgl_mean2, PAR::charged_dt_sgl_mean3,
+                PAR::charged_dt_sgl_sigma1, PAR::charged_dt_sgl_sigma2, PAR::charged_dt_sgl_sigma3,
+                PAR::charged_dt_sgl_weight2, PAR::charged_dt_sgl_weight3);
+        deltaT.setParameters(true,
+                PAR::charged_dt_mul_mean1, PAR::charged_dt_mul_mean2, PAR::charged_dt_mul_mean3,
+                PAR::charged_dt_mul_sigma1, PAR::charged_dt_mul_sigma2, PAR::charged_dt_mul_sigma3,
+                PAR::charged_dt_mul_weight2, PAR::charged_dt_mul_weight3);
     }
 
     virtual ~ChargedPDF(){}

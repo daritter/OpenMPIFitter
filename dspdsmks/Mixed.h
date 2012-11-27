@@ -4,6 +4,7 @@
 #include <Functions.h>
 #include "Event.h"
 #include "Component.h"
+#include "GenericT.h"
 
 namespace PAR {
     PARAM(yield_mixed_svd1);
@@ -25,28 +26,47 @@ namespace PAR {
     PARAM(mixed_svd2_dE_cheb1);
 
     PARAM(mixed_dt_blifetime);
-    PARAM(mixed_dt_Jc);
-    PARAM(mixed_dt_Js1);
-    PARAM(mixed_dt_Js2);
+    PARAM(mixed_dt_sgl_mean1);
+    PARAM(mixed_dt_sgl_mean2);
+    PARAM(mixed_dt_sgl_mean3);
+    PARAM(mixed_dt_sgl_sigma1);
+    PARAM(mixed_dt_sgl_sigma2);
+    PARAM(mixed_dt_sgl_sigma3);
+    PARAM(mixed_dt_sgl_weight2);
+    PARAM(mixed_dt_sgl_weight3);
+    PARAM(mixed_dt_mul_mean1);
+    PARAM(mixed_dt_mul_mean2);
+    PARAM(mixed_dt_mul_mean3);
+    PARAM(mixed_dt_mul_sigma1);
+    PARAM(mixed_dt_mul_sigma2);
+    PARAM(mixed_dt_mul_sigma3);
+    PARAM(mixed_dt_mul_weight2);
+    PARAM(mixed_dt_mul_weight3);
     PARAM(mixed_dt_fractionscale);
 };
 
 
-class MixedPDF: public Component {
+class MixedPDF: public DeltaTComponent<GenericTPDF> {
     public:
     MixedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
+        DeltaTComponent<GenericTPDF>(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setParameters(
-                PAR::mixed_dt_blifetime, PAR::mixed_dt_Jc, PAR::mixed_dt_Js1, PAR::mixed_dt_Js2,
-                PAR::mixed_dt_fractionscale, useDeltaT?Event::dt_mixed:-1);
+        deltaT.setCommonParameters(PAR::mixed_dt_blifetime, PAR::mixed_dt_fractionscale);
+        deltaT.setParameters(false,
+                PAR::mixed_dt_sgl_mean1, PAR::mixed_dt_sgl_mean2, PAR::mixed_dt_sgl_mean3,
+                PAR::mixed_dt_sgl_sigma1, PAR::mixed_dt_sgl_sigma2, PAR::mixed_dt_sgl_sigma3,
+                PAR::mixed_dt_sgl_weight2, PAR::mixed_dt_sgl_weight3);
+        deltaT.setParameters(true,
+                PAR::mixed_dt_mul_mean1, PAR::mixed_dt_mul_mean2, PAR::mixed_dt_mul_mean3,
+                PAR::mixed_dt_mul_sigma1, PAR::mixed_dt_mul_sigma2, PAR::mixed_dt_mul_sigma3,
+                PAR::mixed_dt_mul_weight2, PAR::mixed_dt_mul_weight3);
     }
 
     virtual ~MixedPDF(){}
 
-    virtual double operator()(const Event& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par){
         if(e.svdVs==0){
             //Set Parameters for mixed component
             mixedPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);

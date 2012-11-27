@@ -1,7 +1,8 @@
-class DummyPDF: public Component {
+
+class DummyPDF: public DeltaTComponent<> {
     public:
     DummyPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, false, false), range_mBC(range_mBC),
+        DeltaTComponent<>(range_dT, false, false), range_mBC(range_mBC),
         dummyPDF(range_mBC.vmin, range_mBC.vmax)
     {}
     virtual ~DummyPDF(){}

@@ -8,15 +8,17 @@ class DeltaTPDF {
     public:
         static const double nominal_tau = 1.53;
 
-        DeltaTPDF(Range range_dT, int isCharged=0):range_dT(range_dT), isCharged(isCharged), outlierPDF(range_dT.vmin, range_dT.vmax)
-    {}
+        DeltaTPDF(Range range_dT, int isCharged=0):
+            range_dT(range_dT), isCharged(isCharged), outlierPDF(range_dT.vmin, range_dT.vmax)
+        {}
 
-        void setParameters(int tau, int Jc, int Js1, int Js2, int fractionScale, int cacheId=-1){
+        void setParameters(int tau, int Jc, int Js1, int Js2,  int fractionScale, int outlierMean, int cacheId){
             this->tau = tau;
             this->Jc = Jc;
             this->Js1 = Js1;
             this->Js2 = Js2;
             this->fractionScale = fractionScale;
+            this->outlierMean = outlierMean;
             this->cacheId=cacheId;
         }
 
@@ -59,7 +61,11 @@ class DeltaTPDF {
                     + e.tag_q*(1.0-2.0*e.wrongTag_w)*(e.eta*par[Jc]*cos_pdf
                         - (par[Js1] + e.eta*par[Js2])*sin_pdf))/int_life_pdf;
 
-            outlierPDF.set(0.0,dtres_param->sig_ol);
+            double omean = 0.0;
+            if(outlierMean>=0){
+                omean = par[outlierMean];
+            }
+            outlierPDF.set(omean, dtres_param->sig_ol);
             double fraction = (e.tag_ntrk>1 && e.vtx_ntrk>1)?dtres_param->fol_mul:dtres_param->fol_sgl;
             if(fractionScale>=0) fraction*=par[fractionScale];
 
@@ -73,6 +79,7 @@ class DeltaTPDF {
         int Js1;
         int Js2;
         int fractionScale;
+        int outlierMean;
         int cacheId;
         int isCharged;
 

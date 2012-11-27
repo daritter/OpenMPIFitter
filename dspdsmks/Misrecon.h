@@ -35,16 +35,16 @@ namespace PAR {
 };
 
 
-class MisreconPDF: public Component {
+class MisreconPDF: public DeltaTComponent<> {
     public:
     MisreconPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        Component(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
+        DeltaTComponent<>(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         misreconPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         misreconPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setParameters(
                 PAR::misrecon_dt_blifetime, PAR::misrecon_dt_Jc, PAR::misrecon_dt_Js1, PAR::misrecon_dt_Js2,
-                PAR::misrecon_dt_fractionscale, useDeltaT?Event::dt_misrecon:-1);
+                PAR::misrecon_dt_fractionscale, -1, useDeltaT?Event::dt_misrecon:-1);
     }
 
     virtual ~MisreconPDF(){}
