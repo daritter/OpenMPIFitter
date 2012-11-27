@@ -44,6 +44,7 @@ struct FitRoutine {
                 std::cout << "Avast, here goes the fittar for attempt " << (i+1) << std::endl;
                 ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
                 min = migrad(50000);
+                mnParams = min.UserParameters();
             }
 
             std::cout.flags(originalFormat);
