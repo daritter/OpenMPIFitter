@@ -24,14 +24,7 @@ class DummyPDF: public DeltaTComponent<> {
     }
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
-        double yield(0);
-        if(svd & SVD1){
-            yield += par[PAR::ratio_misrecon_svd1]*par[PAR::yield_signal_svd1];
-        }
-        if(svd & SVD2){
-            yield += par[PAR::ratio_misrecon_svd2]*par[PAR::yield_signal_svd2];
-        }
-        return yield;
+        return SignalPDF::get_signal_yield(par, svd, par[PAR::ratio_misrecon_svd1], par[PAR::ratio_misrecon_svd2]);
     }
 
     private:
