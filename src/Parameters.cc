@@ -30,7 +30,7 @@ bool Parameters::load(const std::string &filename, const std::string &overrides,
         return false;
     }
     try{
-        load(input);
+        load_stream(input);
         input.close();
         if(!overrides.empty()) overrideParameters(overrides);
         if(!fixes.empty()) fixParameters(fixes);
@@ -42,7 +42,17 @@ bool Parameters::load(const std::string &filename, const std::string &overrides,
     return true;
 }
 
-void Parameters::load(istream &in){
+void Parameters::save(const std::string& filename) const {
+    ofstream output(filename.c_str());
+    if(!output) {
+        std::cerr << "Could not open parameter file '" << filename << "'" << std::endl;
+        return;
+    }
+    save_stream(output);
+}
+
+
+void Parameters::load_stream(istream &in){
     int lineNr=0;
     //Read in the whole file and store enough information that we can reproduce it completely (modulo white space change)
     while(!in.eof()){
@@ -88,7 +98,7 @@ void Parameters::load(istream &in){
     }
 }
 
-void Parameters::save(ostream &out, bool istty) const {
+void Parameters::save_stream(ostream &out, bool istty) const {
     //If istty is set we want nice color output of the non fixed parameters only
     if(istty){
         out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %6s %6s %9s %9s\n")

@@ -16,13 +16,14 @@ class Parameters {
 
         Parameters();
 
-        bool load(const std::string &filename, const std::string &overrides, const std::string &fixes="", const std::string &releases="");
+        bool load(const std::string &filename, const std::string &overrides="", const std::string &fixes="", const std::string &releases="");
         //Load the parameters from a stream, usually used with the >> operator
-        void load(std::istream &in);
+        void load_stream(std::istream &in);
+        void save(const std::string &filename) const;
         //Save the parameters to a stream, is istty is true, use color and show only non-fixed parameters
-        void save(std::ostream &out, bool istty=false) const;
+        void save_stream(std::ostream &out, bool istty=false) const;
         //Short hand for printing with color
-        void print() const { save(std::cout, true); }
+        void print() const { save_stream(std::cout, true); }
         //Dynamically fix the parameters which match the given regular expression
         void fixParameters(const std::string& fixParameters = "");
         //Dynamically release the parameters which match the given regular expression
@@ -52,7 +53,7 @@ class Parameters {
         std::vector<line_info> m_originalLines;
 };
 
-inline std::istream& operator>>(std::istream &in,  Parameters &p){ p.load(in);  return in; }
-inline std::ostream& operator<<(std::ostream &out, const Parameters &p){ p.save(out); return out;}
+inline std::istream& operator>>(std::istream &in,  Parameters &p){ p.load_stream(in);  return in; }
+inline std::ostream& operator<<(std::ostream &out, const Parameters &p){ p.save_stream(out); return out;}
 
 #endif //MPIFitter_Parameter_H

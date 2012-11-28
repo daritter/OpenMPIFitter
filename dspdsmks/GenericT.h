@@ -6,8 +6,6 @@
 
 class GenericTPDF {
     public:
-        static const double nominal_tau = 1.53;
-
         GenericTPDF(Range range_dT, int isCharged=0):
             range_dT(range_dT), outlierPDF(range_dT.vmin, range_dT.vmax)
         {}
@@ -31,7 +29,7 @@ class GenericTPDF {
 
         double operator()(const Event& e, const std::vector<double> &par) {
             const Belle::dtres_param_t* const dtres_param = Belle::get_dtres_param( e.expNo, e.isMC );
-            const double abs_tau = nominal_tau + par[tau];
+            const double abs_tau = par[tau];
             const double sigma = sqrt(e.tag_zerr*e.tag_zerr+e.vtx_zerr*e.vtx_zerr);
             const int i = (e.tag_ntrk>1 && e.vtx_ntrk>1)?1:0;
             const double res_mean1 = par[mean1[i]];
@@ -65,7 +63,6 @@ class GenericTPDF {
             double fraction = (e.tag_ntrk>1 && e.vtx_ntrk>1)?dtres_param->fol_mul:dtres_param->fol_sgl;
             if(fractionScale>=0) fraction*=par[fractionScale];
 
-            //return life_pdf/int_life_pdf/4.0;
             return (fraction*outlierPDF(e.deltaT) + (1.0-fraction)*(life_pdf/int_life_pdf))/4.0;
         }
 

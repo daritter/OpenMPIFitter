@@ -6,8 +6,6 @@
 
 class DeltaTPDF {
     public:
-        static const double nominal_tau = 1.53;
-
         DeltaTPDF(Range range_dT, int isCharged=0):
             range_dT(range_dT), isCharged(isCharged), outlierPDF(range_dT.vmin, range_dT.vmax)
         {}
@@ -25,7 +23,7 @@ class DeltaTPDF {
         double operator()(const Event& e, const std::vector<double> &par) {
             double life_pdf(0), int_life_pdf(0), sin_pdf(0), cos_pdf(0);
             const Belle::dtres_param_t* const dtres_param = Belle::get_dtres_param( e.expNo, e.isMC );
-            const double abs_tau = nominal_tau + par[tau];
+            const double abs_tau = par[tau];
             if(cacheId<0 || !e.dTcache[cacheId].get(abs_tau,life_pdf, int_life_pdf, sin_pdf, cos_pdf)){
                 //Calculate Lifetime components
                 life_pdf = Belle::EfRkRdetRnp_fullrec(

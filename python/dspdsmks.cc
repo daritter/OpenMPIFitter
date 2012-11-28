@@ -6,24 +6,6 @@
 #include <fstream>
 
 struct ParameterHelper {
-    static void load(Parameters &self, const std::string& filename) {
-        ifstream input(filename.c_str());
-        if(!input) std::cerr << "Could not open parameter file '" << filename << "'" << std::endl;
-        input >> self;
-    }
-
-    static void save(Parameters &self, const std::string& filename) {
-        ofstream output(filename.c_str());
-        if(!output) std::cerr << "Could not open parameter file '" << filename << "'" << std::endl;
-        output << self;
-    }
-
-    static boost::shared_ptr<Parameters> construct_and_load(const std::string &filename) {
-        boost::shared_ptr<Parameters> obj(new Parameters());
-        load(*obj, filename);
-        return obj;
-    }
-
     static const std::string tostring(Parameter &self){
         return (boost::format("<%1% at %2% value=%3% error=%4%>") % self.name() % &self % self.value() % self.error()).str();
     }
@@ -34,6 +16,8 @@ struct RangeHelper {
         return (boost::format("<Range vmin=%2% vmax=%3%>") % self.vmin % self.vmax).str();
     }
 };
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadParamsFromFile, Parameters::load, 1, 4);
 
 BOOST_PYTHON_MODULE(dspdsmks)
 {
@@ -58,13 +42,12 @@ BOOST_PYTHON_MODULE(dspdsmks)
     Parameter& (Parameters::*get_id)(int) = &Parameters::operator[];
     Parameter& (Parameters::*get_name)(const std::string&) = &Parameters::operator[];
     class_<Parameters>("Parameters")
-        .def("__init__", make_constructor(&ParameterHelper::construct_and_load))
         .def("__len__", &Parameters::size)
         .def("__getitem__", get_id, return_value_policy<reference_existing_object>())
         .def("__call__", get_name, return_value_policy<reference_existing_object>())
         .def("__iter__", iterator<Parameters>())
-        .def("load", &ParameterHelper::load)
-        .def("save", &ParameterHelper::save)
+        .def("load", &Parameters::load, LoadParamsFromFile())
+        .def("save", &Parameters::save)
         .def("print", &Parameters::print)
     ;
 

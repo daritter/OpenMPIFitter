@@ -2,12 +2,21 @@
 import math
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 matplotlib.rc("path", simplify=False)
 matplotlib.rc("font", family="serif")
 matplotlib.rc("text", usetex=True)
 matplotlib.rc("legend", fancybox=True, fontsize="small")
-matplotlib.rc("text.latex", unicode="true", preamble=r"\usepackage{sistyle},\SIthousandsep{},\usepackage{hepnames},\DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace}")
+matplotlib.rc("text.latex", unicode="true", preamble=r"""
+              \usepackage{sistyle},
+              \SIthousandsep{},
+              \usepackage{hepnames},
+              \DeclareRobustCommand{\PDstpm}{\HepParticle{D}{}{\ast\pm}\xspace},
+              \DeclareRobustCommand{\PDstp}{\HepParticle{D}{}{\ast+}\xspace},
+              \DeclareRobustCommand{\PDstm}{\HepParticle{D}{}{\ast-}\xspace},
+              \def\ddk{\ensuremath{\PBz \rightarrow \PDstp\PDstm\PKzS}\xspace}""")
+
 from matplotlib import pyplot as pl
 
 efficiency_mc = np.array([

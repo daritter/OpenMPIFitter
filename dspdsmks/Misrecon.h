@@ -28,9 +28,6 @@ namespace PAR {
     PARAM(misrecon_svd2_dE_bkg_sigma);
 
     PARAM(misrecon_dt_blifetime);
-    PARAM(misrecon_dt_Jc);
-    PARAM(misrecon_dt_Js1);
-    PARAM(misrecon_dt_Js2);
     PARAM(misrecon_dt_fractionscale);
 };
 
@@ -43,7 +40,7 @@ class MisreconPDF: public DeltaTComponent<> {
         misreconPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setParameters(
-                PAR::misrecon_dt_blifetime, PAR::misrecon_dt_Jc, PAR::misrecon_dt_Js1, PAR::misrecon_dt_Js2,
+                PAR::misrecon_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
                 PAR::misrecon_dt_fractionscale, -1, useDeltaT?Event::dt_misrecon:-1);
     }
 

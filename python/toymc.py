@@ -62,7 +62,7 @@ def fit_experiment(basename, initial, files, flags, components, log):
     raise Exception("Experiment %s failed to converge" % basename)
 
 
-def make_experiment(thread_id):
+def make_experiment(thread_id, force_refit):
     while True:
         try:
             basename, params, genflags, fitflags, data, components = jobs.get(True,10)
@@ -76,8 +76,7 @@ def make_experiment(thread_id):
             parfile  = basename + ".par"
             log = open(logfile,"w")
             refit, rootfiles = generate_experiment(basename, params, data, components, genflags, log)
-            #if refit and os.path.exists(parfile): os.remove(parfile)
-            if os.path.exists(parfile): os.remove(parfile)
+            if (refit or force_refit) and os.path.exists(parfile): os.remove(parfile)
             outfile = fit_experiment(basename, params, rootfiles, fitflags, ",".join(components.keys()+["deltat"]), log)
             with lock: results.append(outfile)
         except Exception, e:
@@ -92,13 +91,13 @@ results = []
 def add_job(basename, params, genflags, fitflags, data, components):
     jobs.put((basename, params, genflags, fitflags, data, components))
 
-def run_jobs():
+def run_jobs(refit=False):
     global results
     #Run all jobs
     threads = []
     results = []
     for i in range(multiprocessing.cpu_count()-1):
-        thread = threading.Thread(target=make_experiment, args=(i,))
+        thread = threading.Thread(target=make_experiment, args=(i,refit))
         thread.daemon=True
         thread.start()
         threads.append(thread)
