@@ -92,7 +92,7 @@ struct DspDsmKsPDF {
         return result;
     }
 
-    DspDsmKsPDF(int maxPrintOrder = 0):
+    DspDsmKsPDF(int maxPrintOrder = 3):
         maxPrintOrder(maxPrintOrder), nCalls(0), bestBSelection("bestLHsig"),
         range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt)
     {}
@@ -287,7 +287,7 @@ struct DspDsmKsPDF {
         bool gsim = false;
         std::vector<Event> gsim_data[2];
         if(!templates.empty()){
-            load(gsim_data, templates);
+            load(gsim_data, templates, 0, 1, false);
             gsim = true;
         }
 
@@ -416,15 +416,15 @@ struct DspDsmKsPDF {
      * @param process the id of this process, starting from 0
      * @param size the number of processes in total
      */
-    void load(int process, int size) {
-        load(data, filenames, process, size);
+    void load(int process, int size, bool qualityCuts=true) {
+        load(data, filenames, process, size, qualityCuts);
         std::sort(data[0].begin(),data[0].end());
         std::sort(data[1].begin(),data[1].end());
         std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
             << ") events and is ready for pillaging" << std::endl;
     }
 
-    void load(std::vector<Event> *data, const std::vector<std::string>& filenames, int process=0, int size=1, bool qualityCuts=true){
+    void load(std::vector<Event> *data, const std::vector<std::string>& filenames, int process, int size, bool qualityCuts){
         TChain* chain = new TChain("B0");
         BOOST_FOREACH(const std::string& filename, filenames){
             chain->AddFile(filename.c_str(),-1);

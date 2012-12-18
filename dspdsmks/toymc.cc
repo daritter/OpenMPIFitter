@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-#include <MPIFitter.h>
+#include <boost/mpi.hpp>
 #include <Parameters.h>
 #include "DspDsmKs.h"
 #include "progress.h"
@@ -35,9 +35,11 @@ struct ToyMCRoutine {
     std::vector<std::string> templates;
 
     /** Do the plotting */
-    template<class FCN> int operator()(FCN &parallel_pdf){
-        const Range range_mBC = parallel_pdf.localFCN().getRange_mBC();
-        const Range range_dE = parallel_pdf.localFCN().getRange_dE();
+    template<class FCN> int operator()(FCN &local_pdf){
+        //Load data, this time without quality cuts
+        local_pdf.load(0,1,false);
+        const Range range_mBC = local_pdf.getRange_mBC();
+        const Range range_dE = local_pdf.getRange_dE();
 
         //If we have templates but no gsim parameter we generate from pdf, thus removing the templates
         if(!gsim) templates.clear();
@@ -66,13 +68,8 @@ struct ToyMCRoutine {
         values[9] = step_dT;
         double maxVal[2];
         int flag = templates.empty()?DspDsmKsPDF::PLT_MAX:DspDsmKsPDF::PLT_MAXDT;
-        maxVal[0] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD1 | flag, values, par, OP_MAX);
-        maxVal[1] = fudge*parallel_pdf.plot(DspDsmKsPDF::PLT_SVD2 | flag, values, par, OP_MAX);
-
-        //Parallel is done now, rest is only possible in single core. Close all other processes and reload all data
-        parallel_pdf.close();
-        DspDsmKsPDF &local_pdf = parallel_pdf.localFCN();
-        if(parallel_pdf.size()>1) local_pdf.load(0,1);
+        maxVal[0] = fudge*local_pdf.plot(DspDsmKsPDF::PLT_SVD1 | flag, values, par);
+        maxVal[1] = fudge*local_pdf.plot(DspDsmKsPDF::PLT_SVD2 | flag, values, par);
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");
@@ -94,6 +91,12 @@ struct ToyMCRoutine {
  * FitRoutine is called with a modified PDF which handles the multiprocessing
  */
 int main(int argc, char* argv[]){
+    boost::mpi::environment env;
+    boost::mpi::communicator world;
+    if(world.size()>1) {
+        std::cout << "Avast, running toymc generrration with MPI is bloody useless, exiting all except the primary process" << std::endl;
+        if(world.rank()>0) return 0;
+    }
 
     DspDsmKsPDF pdf;
     ToyMCRoutine toymc;
@@ -177,6 +180,5 @@ int main(int argc, char* argv[]){
     }
     pdf.setComponents(activeComponents);
 
-    MPIFitter core;
-    return core.run(toymc, pdf);
+    return toymc(pdf);
 }

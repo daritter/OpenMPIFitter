@@ -102,7 +102,7 @@ struct Event {
         return benergy<b.benergy;
     }
 
-    bool calculateValues(bool toyMC=false, bool qualityCuts=true){
+    bool calculateValues(bool qualityCuts=false, bool toyMC=true){
         if(toyMC){
             m2DspKs = 0;
             m2DsmKs = eta;
