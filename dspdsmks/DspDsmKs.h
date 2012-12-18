@@ -92,13 +92,10 @@ struct DspDsmKsPDF {
         return result;
     }
 
-    DspDsmKsPDF(Range range_mBC, Range range_dE, Range range_dT,
-            const std::vector<std::string> filenames, const std::string &bestB, EnabledComponents components=CMP_all, int maxPrintOrder = 0):
-        maxPrintOrder(maxPrintOrder), nCalls(0), filenames(filenames), bestBSelection(bestB),
-        range_mBC(range_mBC), range_dE(range_dE), range_dT(range_dT)
-    {
-        setComponents(components);
-    }
+    DspDsmKsPDF(int maxPrintOrder = 0):
+        maxPrintOrder(maxPrintOrder), nCalls(0), bestBSelection("bestLHsig"),
+        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt)
+    {}
 
     ~DspDsmKsPDF(){
         BOOST_FOREACH(Component* component, components){
@@ -325,7 +322,7 @@ struct DspDsmKsPDF {
             e.svdVs = svd;
             e.isMC = data[svd][0].isMC;
             ProgressBar pbar(nEvents);
-            std::cout << "Generating Events for SVD" << (svd+1) << ":" << pbar;
+            std::cout << "Generating " << nEvents << " Events for SVD" << (svd+1) << ":" << pbar;
             double min_distance(std::numeric_limits<double>::infinity());
             for(int i=0; i<nEvents; ++i){
                 //Take vertex stuff from data
@@ -341,7 +338,7 @@ struct DspDsmKsPDF {
                     e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
                     e.vtx_ndf  = data[svd][random_event()].vtx_ndf;
                     e.vtx_ntrk = (e.vtx_ndf+2)/2;
-                }while(!e.calculateValues(true));
+                }while(!e.calculateValues(true, true));
 
                 //Take Mbc/dE stuff from template if available
                 if(gsim){
@@ -351,11 +348,11 @@ struct DspDsmKsPDF {
                     e.Mbc = e2.Mbc;
                     e.dE = e2.dE;
                     //When not generating signal take the dt parameters from data too.
-                    if(fullgsim && !(enabledComponents & CMP_signal)){
+                    if(fullgsim && !(enabledComponents & (CMP_signal | CMP_misrecon))){
                         e.eta = e2.eta;
                         e.tag_q = e2.tag_q;
                         e.deltaT = e2.deltaT;
-                        e.calculateValues(true);
+                        e.calculateValues(true, true);
                         //Everything set, go to next event
                         std::cout << ++pbar;
                         output->Fill();
@@ -385,7 +382,7 @@ struct DspDsmKsPDF {
                         e.deltaT   = random_dT();
                         e.tag_q    = (random_flavour()*2)-1;
                         e.eta      = (random_flavour()*2)-1;
-                        if(!e.calculateValues(true)) continue;
+                        if(!e.calculateValues(true, true)) continue;
                         e.reset();
                     }
                     //If gsim and there is no deltaT, nothing else to do, just grab a random event
@@ -427,7 +424,7 @@ struct DspDsmKsPDF {
             << ") events and is ready for pillaging" << std::endl;
     }
 
-    void load(std::vector<Event> *data, const std::vector<std::string>& filenames, int process=0, int size=1){
+    void load(std::vector<Event> *data, const std::vector<std::string>& filenames, int process=0, int size=1, bool qualityCuts=true){
         TChain* chain = new TChain("B0");
         BOOST_FOREACH(const std::string& filename, filenames){
             chain->AddFile(filename.c_str(),-1);
@@ -442,7 +439,7 @@ struct DspDsmKsPDF {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
                 std::exit(5);
             }
-            if(!event.calculateValues()) continue;
+            if(!event.calculateValues(qualityCuts)) continue;
             if(!range_mBC(event.Mbc) || !range_dE(event.dE) || !range_dT(event.deltaT)) continue;
             data[event.svdVs].push_back(event);
         }
@@ -454,6 +451,13 @@ struct DspDsmKsPDF {
     const Range getRange_mBC() const { return range_mBC; }
     const Range getRange_dE() const { return range_dE; }
     const Range getRange_dT() const { return range_dT; }
+
+    Range& getRange_mBC() { return range_mBC; }
+    Range& getRange_dE() { return range_dE; }
+    Range& getRange_dT() { return range_dT; }
+
+    std::string& getBestB() { return bestBSelection; }
+    std::vector<std::string>& getFiles(){ return filenames; }
 
     protected:
 

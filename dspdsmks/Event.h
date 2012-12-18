@@ -4,6 +4,7 @@
 #include <string>
 #include <limits>
 #include <TTree.h>
+#include "Range.h"
 
 #include <wtag.h>
 #include "tatami/tatami.h"
@@ -101,7 +102,7 @@ struct Event {
         return benergy<b.benergy;
     }
 
-    bool calculateValues(bool toyMC=false){
+    bool calculateValues(bool toyMC=false, bool qualityCuts=true){
         if(toyMC){
             m2DspKs = 0;
             m2DsmKs = eta;
@@ -115,13 +116,16 @@ struct Event {
 
         //Check quality flag
         if(flag!=0 || tag_q==0) return false;
-        //Random cuts imposed by ipcv for whatever reason
-        if(vtx_ntrk > 1  && vtx_chi2/vtx_ndf > quality_cut) return false;
-        if(tag_ntrk > 1  && tag_chi2/tag_ndf > quality_cut) return false;
-        if(vtx_ntrk == 1 && vtx_zerr > sigmaz_sngl_cut) return false;
-        if(vtx_ntrk > 1  && vtx_zerr > sigmaz_mult_cut) return false;
-        if(tag_ntrk == 1 && tag_zerr > sigmaz_sngl_cut) return false;
-        if(tag_ntrk > 1  && tag_zerr > sigmaz_mult_cut) return false;
+
+        if(qualityCuts){
+            //Random cuts imposed by ipcv for whatever reason
+            if(vtx_ntrk > 1  && vtx_chi2/vtx_ndf > quality_cut) return false;
+            if(tag_ntrk > 1  && tag_chi2/tag_ndf > quality_cut) return false;
+            if(vtx_ntrk == 1 && vtx_zerr > sigmaz_sngl_cut) return false;
+            if(vtx_ntrk > 1  && vtx_zerr > sigmaz_mult_cut) return false;
+            if(tag_ntrk == 1 && tag_zerr > sigmaz_sngl_cut) return false;
+            if(tag_ntrk > 1  && tag_zerr > sigmaz_mult_cut) return false;
+        }
 
         Ak = 0.0;
         Ck = 0.0;

@@ -40,11 +40,11 @@ struct FitRoutine {
             ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
             ROOT::Minuit2::FunctionMinimum min = migrad(50000);
             for(int i=1; i<maxTries; ++i){
-                if(!min.IsAboveMaxEdm()) break;
+                if(!min.IsAboveMaxEdm() || !min.State().IsValid()) break;
+                mnParams = min.UserParameters();
                 std::cout << "Avast, here goes the fittar for attempt " << (i+1) << std::endl;
                 ROOT::Minuit2::MnMigrad migrad(fcn, mnParams, fitStrategy);
                 min = migrad(50000);
-                mnParams = min.UserParameters();
             }
 
             std::cout.flags(originalFormat);

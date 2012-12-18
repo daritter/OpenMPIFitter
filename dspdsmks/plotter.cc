@@ -19,7 +19,7 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
     Event e;
     e.svdVs = svdVs-1;
     double integral(0);
-    double nEvents = h_bEnergy->GetEffectiveEntries();
+    //h_bEnergy->GetEffectiveEntries();
     ProgressBar pbar(h_pdf->GetNbinsX()*h_pdf->GetNbinsY()*h_bEnergy->GetNbinsX());
     std::cout << "Plotting mBCdE for '" << name << "': ";
     for(int ix=0; ix<h_pdf->GetNbinsX(); ++ix){
@@ -27,14 +27,19 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
         for(int iy=0; iy<h_pdf->GetNbinsY(); ++iy){
             e.dE  = h_pdf->GetYaxis()->GetBinCenter(iy+1);
             double pdf_value(0);
+            double nEvents(0);
             for(int iz=0; iz<h_bEnergy->GetNbinsX(); ++iz){
                 std::cout << ++pbar;
                 double n = h_bEnergy->GetBinContent(iz+1);
-                if(n<=0) continue;
                 e.benergy  = h_bEnergy->GetXaxis()->GetBinCenter(iz+1);
+                //Beam energy does not exist, no need to evaluate PDF
+                if(n<=0) continue; // || e.benergy<e.Mbc) continue;
+                nEvents += n;
                 pdf_value += n*pdf.PDF(e,par);
             }
-            if(pdf_value>0 && pdf_value==pdf_value) {
+            assert(pdf_value==pdf_value);
+            //Only Fill the histogram with positive and non-nan values
+            if(pdf_value>0) {
                 integral += pdf_value/nEvents
                     * h_pdf->GetXaxis()->GetBinWidth(ix+1)
                     * h_pdf->GetYaxis()->GetBinWidth(iy+1);
@@ -150,8 +155,8 @@ struct PlotRoutine {
 
         TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 2000, 0,0);
         TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 2000, 0,0);
-        h_bEnergy_svd1->SetBuffer(30000);
-        h_bEnergy_svd2->SetBuffer(60000);
+        h_bEnergy_svd1->SetBuffer(100000);
+        h_bEnergy_svd2->SetBuffer(200000);
 
         BOOST_FOREACH(const Event& e, local_pdf.getData(0)){
             h_bEnergy_svd1->Fill(e.benergy);
@@ -216,14 +221,8 @@ struct PlotRoutine {
  */
 int main(int argc, char* argv[]){
 
-    //FitRoutine fitter;
+    DspDsmKsPDF pdf;
     PlotRoutine plotter;
-    std::vector<std::string> files;
-    Range range_mBC(5.24,5.3);
-    Range range_dE(-0.15,0.1);
-    Range range_dT(-70,70);
-    std::string bestB("bestLHsig");
-    //DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
     std::string componentList;
 
     /** Read program options using boost::program_options. Could be anything else */
@@ -232,52 +231,52 @@ int main(int argc, char* argv[]){
         ("help,h", "produce this finely crafted help message")
         ("config,c", po::value<std::string>()->default_value("config.ini"),
          "Config file with standard parrrrameters")
-        ("input", po::value<std::vector<std::string> >(&files)->composing(),
+        ("input", po::value<std::vector<std::string> >(&pdf.getFiles())->composing(),
          "Root files containing the data")
+        ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
+         "Comma separated list of components to use for the fit")
+        ("min-Mbc", po::value<float>(&pdf.getRange_mBC().vmin)->default_value(pdf.getRange_mBC().vmin),
+         "The minimal Mbc value for the fit")
+        ("max-Mbc", po::value<float>(&pdf.getRange_mBC().vmax)->default_value(pdf.getRange_mBC().vmax),
+         "The maximal Mbc value for the fit")
+        ("min-dE", po::value<float>(&pdf.getRange_dE().vmin)->default_value(pdf.getRange_dE().vmin),
+         "The minimal dE value for the fit")
+        ("max-dE", po::value<float>(&pdf.getRange_dE().vmax)->default_value(pdf.getRange_dE().vmax),
+         "The maximal dE value for the fit")
+        ("min-dT", po::value<float>(&pdf.getRange_dT().vmin)->default_value(pdf.getRange_dT().vmin),
+         "The minimal dT value for the fit")
+        ("max-dT", po::value<float>(&pdf.getRange_dT().vmax)->default_value(pdf.getRange_dT().vmax),
+         "The maximal dT value for the fit")
+        ("bestB", po::value<std::string>(&pdf.getBestB())->default_value(pdf.getBestB()),
+         "BestB Selection method to use")
+        ("override", po::value<std::string>(&plotter.overrideParameters)->default_value(plotter.overrideParameters),
+         "Aye, give the order to be overrrridn the parrrameters which are given in a comma separated list of name:value pairs")
         ("plot-output,o", po::value<std::string>(&plotter.rootFile)->default_value(plotter.rootFile),
          "Basename to save the plots")
         ("parameter-out,i", po::value<std::string>(&plotter.parameterIn)->default_value(plotter.parameterIn),
          "Thy file to pillage thy parrrametes from")
-        ("minMbc", po::value<float>(&range_mBC.vmin)->default_value(range_mBC.vmin),
-         "The minimal Mbc value for the fit")
-        ("maxMbc", po::value<float>(&range_mBC.vmax)->default_value(range_mBC.vmax),
-         "The maximal Mbc value for the fit")
-        ("mindE", po::value<float>(&range_dE.vmin)->default_value(range_dE.vmin),
-         "The minimal dE value for the fit")
-        ("maxdE", po::value<float>(&range_dE.vmax)->default_value(range_dE.vmax),
-         "The maximal dE value for the fit")
-        ("mindT", po::value<float>(&range_dT.vmin)->default_value(range_dT.vmin),
-         "The minimal dT value for the fit")
-        ("maxdT", po::value<float>(&range_dT.vmax)->default_value(range_dT.vmax),
-         "The maximal dT value for the fit")
         ("plot-mindT", po::value<float>(&plotter.plotrange_dT.vmin)->default_value(plotter.plotrange_dT.vmin),
          "The minimal dT value for the plot")
         ("plot-maxdT", po::value<float>(&plotter.plotrange_dT.vmax)->default_value(plotter.plotrange_dT.vmax),
          "The maximal dT value for the plot")
-        ("bestB", po::value<std::string>(&bestB)->default_value(bestB),
-         "BestB Selection method to use")
-        ("bins_Mbc", po::value<int>(&plotter.bins_mBC)->default_value(plotter.bins_mBC),
+        ("bins-Mbc", po::value<int>(&plotter.bins_mBC)->default_value(plotter.bins_mBC),
          "Number of Bins per axis for the data")
-        ("sampling_Mbc", po::value<int>(&plotter.sampling_mBC)->default_value(plotter.sampling_mBC),
+        ("sampling-Mbc", po::value<int>(&plotter.sampling_mBC)->default_value(plotter.sampling_mBC),
          "sampling for the fit")
-        ("bins_dE", po::value<int>(&plotter.bins_dE)->default_value(plotter.bins_dE),
+        ("bins-dE", po::value<int>(&plotter.bins_dE)->default_value(plotter.bins_dE),
          "Number of Bins per axis for the data")
-        ("sampling_dE", po::value<int>(&plotter.sampling_dE)->default_value(plotter.sampling_dE),
+        ("sampling-dE", po::value<int>(&plotter.sampling_dE)->default_value(plotter.sampling_dE),
          "sampling for the fit")
-        ("bins_dT", po::value<int>(&plotter.bins_dT)->default_value(plotter.bins_dT),
+        ("bins-dT", po::value<int>(&plotter.bins_dT)->default_value(plotter.bins_dT),
          "Number of Bins per axis for the data")
-        ("sampling_dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
+        ("sampling-dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
          "sampling for the fit")
-        ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
-         "Components to use for the fit")
-        ("override", po::value<std::string>(&plotter.overrideParameters)->default_value(plotter.overrideParameters),
-         "Aye, give the order to be releasin the parrrameters which match against this rrrregular expression")
         ;
 
     po::variables_map vm;
     po::positional_options_description pod;
     pod.add("input", -1);
-    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).allow_unregistered().run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
     std::ifstream config(vm["config"].as<std::string>().c_str());
     if(config.is_open()){
         po::store(po::parse_config_file(config, desc, true), vm);
@@ -297,8 +296,8 @@ int main(int argc, char* argv[]){
             return 2;
         }
     }
+    pdf.setComponents(plotter.activeComponents);
 
-    DspDsmKsPDF pdf(range_mBC, range_dE, range_dT, files, bestB, (DspDsmKsPDF::EnabledComponents)(plotter.activeComponents ^ DspDsmKsPDF::CMP_deltat), 0);
     MPIFitter core;
     return core.run(plotter, pdf);
 }
