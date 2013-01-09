@@ -11,6 +11,7 @@ namespace PAR {
     PARAM(misrecon_svd1_ratio);
     PARAM(misrecon_svd1_Mbc_mean);
     PARAM(misrecon_svd1_Mbc_sigma);
+    PARAM(misrecon_svd1_Mbc_sigma2);
     PARAM(misrecon_svd1_Mbc_argusC);
     PARAM(misrecon_svd1_dE_mean);
     PARAM(misrecon_svd1_dE_sigma);
@@ -21,6 +22,7 @@ namespace PAR {
     PARAM(misrecon_svd2_ratio);
     PARAM(misrecon_svd2_Mbc_mean);
     PARAM(misrecon_svd2_Mbc_sigma);
+    PARAM(misrecon_svd2_Mbc_sigma2);
     PARAM(misrecon_svd2_Mbc_argusC);
     PARAM(misrecon_svd2_dE_mean);
     PARAM(misrecon_svd2_dE_sigma);
@@ -51,7 +53,7 @@ class MisreconPDF: public DeltaTComponent<> {
             //Set Parameters for misrecon component
             misreconPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             misreconPDF_svd1.set(par[PAR::misrecon_svd1_ratio]);
-            misreconPDF_svd1.fcn1.fcnx.set(&par[PAR::misrecon_svd1_Mbc_mean]);
+            misreconPDF_svd1.fcn1.fcnx.set(par[PAR::misrecon_svd1_Mbc_mean],par[PAR::misrecon_svd1_Mbc_sigma],par[PAR::misrecon_svd1_Mbc_sigma2]);
             misreconPDF_svd1.fcn1.fcny.set(&par[PAR::misrecon_svd1_dE_mean]);
             misreconPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd1_Mbc_argusC]);
             misreconPDF_svd1.fcn2.fcny.set(par[PAR::misrecon_svd1_dE_bkg_mean], par[PAR::misrecon_svd1_dE_bkg_sigma]);
@@ -61,7 +63,7 @@ class MisreconPDF: public DeltaTComponent<> {
             //Set Parameters for misrecon component
             misreconPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             misreconPDF_svd2.set(par[PAR::misrecon_svd2_ratio]);
-            misreconPDF_svd2.fcn1.fcnx.set(&par[PAR::misrecon_svd2_Mbc_mean]);
+            misreconPDF_svd2.fcn1.fcnx.set(par[PAR::misrecon_svd2_Mbc_mean],par[PAR::misrecon_svd2_Mbc_sigma],par[PAR::misrecon_svd2_Mbc_sigma2]);
             misreconPDF_svd2.fcn1.fcny.set(&par[PAR::misrecon_svd2_dE_mean]);
             misreconPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd2_Mbc_argusC]);
             misreconPDF_svd2.fcn2.fcny.set(par[PAR::misrecon_svd2_dE_bkg_mean], par[PAR::misrecon_svd2_dE_bkg_sigma]);
@@ -80,12 +82,12 @@ class MisreconPDF: public DeltaTComponent<> {
 
     /** PDF function components */
     Add2DFcn<
-        CompoundFcn2D<MultiGauss<1>, MultiGauss<1> >,
+        CompoundFcn2D<Gauss, MultiGauss<1> >,
         CompoundFcn2D<Argus, Gauss>
     > misreconPDF_svd1;
 
     Add2DFcn<
-        CompoundFcn2D<MultiGauss<1>, MultiGauss<1> >,
+        CompoundFcn2D<Gauss, MultiGauss<1> >,
         CompoundFcn2D<Argus, Gauss>
     > misreconPDF_svd2;
 };

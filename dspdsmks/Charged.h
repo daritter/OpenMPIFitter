@@ -29,21 +29,28 @@ namespace PAR {
     PARAM(charged_dt_sgl_mean1);
     PARAM(charged_dt_sgl_mean2);
     PARAM(charged_dt_sgl_mean3);
+    PARAM(charged_dt_sgl_mean4);
     PARAM(charged_dt_sgl_sigma1);
     PARAM(charged_dt_sgl_sigma2);
     PARAM(charged_dt_sgl_sigma3);
+    PARAM(charged_dt_sgl_sigma4);
     PARAM(charged_dt_sgl_weight2);
     PARAM(charged_dt_sgl_weight3);
+    PARAM(charged_dt_sgl_weight4);
     PARAM(charged_dt_mul_mean1);
     PARAM(charged_dt_mul_mean2);
     PARAM(charged_dt_mul_mean3);
+    PARAM(charged_dt_mul_mean4);
     PARAM(charged_dt_mul_sigma1);
     PARAM(charged_dt_mul_sigma2);
     PARAM(charged_dt_mul_sigma3);
+    PARAM(charged_dt_mul_sigma4);
     PARAM(charged_dt_mul_weight2);
     PARAM(charged_dt_mul_weight3);
+    PARAM(charged_dt_mul_weight4);
     PARAM(charged_dt_fractionscale);
-
+    PARAM(charged_dt_outliermean);
+    PARAM(charged_dt_outlierscale);
 };
 
 
@@ -54,15 +61,16 @@ class ChargedPDF: public DeltaTComponent<GenericTPDF> {
         chargedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         chargedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setCommonParameters(PAR::charged_dt_blifetime, PAR::charged_dt_fractionscale);
+        deltaT.setCommonParameters(PAR::charged_dt_blifetime, PAR::charged_dt_fractionscale,
+                PAR::charged_dt_outliermean, PAR::charged_dt_outlierscale);
         deltaT.setParameters(false,
-                PAR::charged_dt_sgl_mean1, PAR::charged_dt_sgl_mean2, PAR::charged_dt_sgl_mean3,
-                PAR::charged_dt_sgl_sigma1, PAR::charged_dt_sgl_sigma2, PAR::charged_dt_sgl_sigma3,
-                PAR::charged_dt_sgl_weight2, PAR::charged_dt_sgl_weight3);
+                PAR::charged_dt_sgl_mean1, PAR::charged_dt_sgl_mean2, PAR::charged_dt_sgl_mean3, PAR::charged_dt_sgl_mean4,
+                PAR::charged_dt_sgl_sigma1, PAR::charged_dt_sgl_sigma2, PAR::charged_dt_sgl_sigma3,  PAR::charged_dt_sgl_sigma4,
+                PAR::charged_dt_sgl_weight2, PAR::charged_dt_sgl_weight3, PAR::charged_dt_sgl_weight4);
         deltaT.setParameters(true,
-                PAR::charged_dt_mul_mean1, PAR::charged_dt_mul_mean2, PAR::charged_dt_mul_mean3,
-                PAR::charged_dt_mul_sigma1, PAR::charged_dt_mul_sigma2, PAR::charged_dt_mul_sigma3,
-                PAR::charged_dt_mul_weight2, PAR::charged_dt_mul_weight3);
+                PAR::charged_dt_mul_mean1, PAR::charged_dt_mul_mean2, PAR::charged_dt_mul_mean3, PAR::charged_dt_mul_mean4,
+                PAR::charged_dt_mul_sigma1, PAR::charged_dt_mul_sigma2, PAR::charged_dt_mul_sigma3, PAR::charged_dt_mul_sigma4,
+                PAR::charged_dt_mul_weight2, PAR::charged_dt_mul_weight3, PAR::charged_dt_mul_weight4);
     }
 
     virtual ~ChargedPDF(){}

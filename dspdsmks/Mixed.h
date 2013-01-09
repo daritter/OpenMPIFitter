@@ -29,20 +29,28 @@ namespace PAR {
     PARAM(mixed_dt_sgl_mean1);
     PARAM(mixed_dt_sgl_mean2);
     PARAM(mixed_dt_sgl_mean3);
+    PARAM(mixed_dt_sgl_mean4);
     PARAM(mixed_dt_sgl_sigma1);
     PARAM(mixed_dt_sgl_sigma2);
     PARAM(mixed_dt_sgl_sigma3);
+    PARAM(mixed_dt_sgl_sigma4);
     PARAM(mixed_dt_sgl_weight2);
     PARAM(mixed_dt_sgl_weight3);
+    PARAM(mixed_dt_sgl_weight4);
     PARAM(mixed_dt_mul_mean1);
     PARAM(mixed_dt_mul_mean2);
     PARAM(mixed_dt_mul_mean3);
+    PARAM(mixed_dt_mul_mean4);
     PARAM(mixed_dt_mul_sigma1);
     PARAM(mixed_dt_mul_sigma2);
     PARAM(mixed_dt_mul_sigma3);
+    PARAM(mixed_dt_mul_sigma4);
     PARAM(mixed_dt_mul_weight2);
     PARAM(mixed_dt_mul_weight3);
+    PARAM(mixed_dt_mul_weight4);
     PARAM(mixed_dt_fractionscale);
+    PARAM(mixed_dt_outliermean);
+    PARAM(mixed_dt_outlierscale);
 };
 
 
@@ -53,15 +61,16 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
         mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setCommonParameters(PAR::mixed_dt_blifetime, PAR::mixed_dt_fractionscale);
+        deltaT.setCommonParameters(PAR::mixed_dt_blifetime, PAR::mixed_dt_fractionscale,
+                PAR::mixed_dt_outliermean, PAR::mixed_dt_outlierscale);
         deltaT.setParameters(false,
-                PAR::mixed_dt_sgl_mean1, PAR::mixed_dt_sgl_mean2, PAR::mixed_dt_sgl_mean3,
-                PAR::mixed_dt_sgl_sigma1, PAR::mixed_dt_sgl_sigma2, PAR::mixed_dt_sgl_sigma3,
-                PAR::mixed_dt_sgl_weight2, PAR::mixed_dt_sgl_weight3);
+                PAR::mixed_dt_sgl_mean1, PAR::mixed_dt_sgl_mean2, PAR::mixed_dt_sgl_mean3, PAR::mixed_dt_sgl_mean4,
+                PAR::mixed_dt_sgl_sigma1, PAR::mixed_dt_sgl_sigma2, PAR::mixed_dt_sgl_sigma3,  PAR::mixed_dt_sgl_sigma4,
+                PAR::mixed_dt_sgl_weight2, PAR::mixed_dt_sgl_weight3, PAR::mixed_dt_sgl_weight4);
         deltaT.setParameters(true,
-                PAR::mixed_dt_mul_mean1, PAR::mixed_dt_mul_mean2, PAR::mixed_dt_mul_mean3,
-                PAR::mixed_dt_mul_sigma1, PAR::mixed_dt_mul_sigma2, PAR::mixed_dt_mul_sigma3,
-                PAR::mixed_dt_mul_weight2, PAR::mixed_dt_mul_weight3);
+                PAR::mixed_dt_mul_mean1, PAR::mixed_dt_mul_mean2, PAR::mixed_dt_mul_mean3, PAR::mixed_dt_mul_mean4,
+                PAR::mixed_dt_mul_sigma1, PAR::mixed_dt_mul_sigma2, PAR::mixed_dt_mul_sigma3, PAR::mixed_dt_mul_sigma4,
+                PAR::mixed_dt_mul_weight2, PAR::mixed_dt_mul_weight3, PAR::mixed_dt_mul_weight4);
     }
 
     virtual ~MixedPDF(){}
