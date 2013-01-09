@@ -270,12 +270,14 @@ class DoubleGauss: public Add1DFcn<Gauss, Gauss> {
 
         void set(double ratio, double mean, double meanshift, double sigma, double sigmascale, double sigma2=-1, double sigma2scale=-1){
             Add1DFcn<Gauss, Gauss>::set(ratio);
-            fcn1.set(mean, sigma, sigma2);
+            double s2 = sigma2;
+            if(sigma2!=-1) s2 = sigma*sigma2;
+            fcn1.set(mean, sigma, s2);
             if(sigma2 != -1){
                 if(sigma2scale == -1) sigma2scale = sigmascale;
-                sigma2 *= sigma2scale;
+                s2 *= sigma2scale;
             }
-            fcn2.set(mean+meanshift, sigma*sigmascale, sigma2);
+            fcn2.set(mean+meanshift, sigma*sigmascale, s2);
         }
 };
 

@@ -13,11 +13,23 @@ struct ParameterHelper {
 
 struct RangeHelper {
     static const std::string tostring(Range &self){
-        return (boost::format("<Range vmin=%2% vmax=%3%>") % self.vmin % self.vmax).str();
+        return (boost::format("<Range vmin=%1% vmax=%2%>") % self.vmin % self.vmax).str();
+    }
+};
+
+struct PDFHelper {
+    static void set_files(DspDsmKsPDF &self, boost::python::list& ns){
+        std::vector<std::string> &filenames = self.getFiles();
+        filenames.clear();
+        for (int i = 0; i < len(ns); ++i) {
+            filenames.push_back(boost::python::extract<std::string>(ns[i]));
+        }
     }
 };
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadParamsFromFile, Parameters::load, 1, 4);
+
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadEvents, DspDsmKsPDF::load, 0, 3);
 
 BOOST_PYTHON_MODULE(dspdsmks)
 {
@@ -37,7 +49,7 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .add_property("has_min", &Parameter::hasMin)
         .add_property("has_max", &Parameter::hasMax)
         .def("__repr__", &ParameterHelper::tostring)
-    ;
+        ;
 
     Parameter& (Parameters::*get_id)(int) = &Parameters::operator[];
     Parameter& (Parameters::*get_name)(const std::string&) = &Parameters::operator[];
@@ -49,12 +61,24 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("load", &Parameters::load, LoadParamsFromFile())
         .def("save", &Parameters::save)
         .def("print", &Parameters::print)
-    ;
+        ;
 
     class_<Range>("Range", init<double, double>())
         .def("__call__", &Range::operator())
         .def_readwrite("vmin",&Range::vmin)
         .def_readwrite("vmax",&Range::vmax)
         .def("__repr__", &RangeHelper::tostring)
-    ;
+        ;
+
+    Range& (DspDsmKsPDF::*range_mBC)() = &DspDsmKsPDF::getRange_mBC;
+    Range& (DspDsmKsPDF::*range_dE)() = &DspDsmKsPDF::getRange_dE;
+    Range& (DspDsmKsPDF::*range_dT)() = &DspDsmKsPDF::getRange_dT;
+    class_<DspDsmKsPDF>("DspDsmKsPDF")
+        .def("size", &DspDsmKsPDF::size)
+        .def("load", &DspDsmKsPDF::load, LoadEvents())
+        .def("set_filenames", &PDFHelper::set_files)
+        .def("range_mBC", range_mBC, return_value_policy<reference_existing_object>())
+        .def("range_dE", range_dE, return_value_policy<reference_existing_object>())
+        .def("range_dT", range_dT, return_value_policy<reference_existing_object>())
+        ;
 }

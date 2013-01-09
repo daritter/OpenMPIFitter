@@ -259,7 +259,7 @@ struct DspDsmKsPDF {
                 std::string name = "dt_max_svd";
                 name += svd?"2":"1";
                 for(double dt=dt_start; dt <= dt_end; dt+=dt_step){
-                    for(unsigned int i=0; i<std::min((size_t)10u,data[svd].size()); i++){
+                    for(unsigned int i=0; i<std::min((size_t)100u,data[svd].size()); i++){
                         e = data[svd][i];
                         e.deltaT = dt;
                         for(e.tag_q=-1; e.tag_q<=2; e.tag_q+=2){
@@ -277,6 +277,32 @@ struct DspDsmKsPDF {
         return 0;
     }
 
+    void selectToyMC(TTree* output, const std::vector<double> &par, int seed=0){
+        boost::random::mt19937 random_generator(seed);
+        if(seed == 0){
+            boost::random::random_device rseed;
+            random_generator.seed(rseed);
+        }
+        Event e;
+        e.createBranches(output, bestBSelection);
+        typedef boost::random::uniform_int_distribution<> uniform_int;
+        typedef boost::variate_generator<boost::random::mt19937&, uniform_int> int_variate;
+
+        for(int svd=0; svd<2; ++svd){
+            int_variate  random_event(random_generator, uniform_int(0, data[svd].size()-1));
+            double yield = get_yield(par, svd==0?Component::SVD1:Component::SVD2);
+            if(yield<=0) continue;
+            boost::random::poisson_distribution<> poisson(yield);
+            int nEvents = poisson(random_generator);
+            if(nEvents<=0) continue;
+            std::cout << "Selecting " << nEvents << " Events for SVD" << (svd+1) << std::endl;
+            for(int i=0; i<nEvents; ++i){
+                e = data[svd][random_event()];
+                output->Fill();
+            }
+        }
+    }
+
     void generateToyMC(TTree* output, const std::vector<double> &par, double maxval[2], std::vector<std::string> &templates, int seed=0, bool fullgsim=false){
         boost::random::mt19937 random_generator(seed);
         if(seed == 0){
@@ -287,7 +313,7 @@ struct DspDsmKsPDF {
         bool gsim = false;
         std::vector<Event> gsim_data[2];
         if(!templates.empty()){
-            load(gsim_data, templates, 0, 1, false);
+            loadEvents(gsim_data, templates, 0, 1, false);
             gsim = true;
         }
 
@@ -416,17 +442,34 @@ struct DspDsmKsPDF {
      * @param process the id of this process, starting from 0
      * @param size the number of processes in total
      */
-    void load(int process, int size, bool qualityCuts=true) {
-        load(data, filenames, process, size, qualityCuts);
+    void load(int process=0, int size=1, bool qualityCuts=true) {
+        loadEvents(data, filenames, process, size, qualityCuts);
         std::sort(data[0].begin(),data[0].end());
         std::sort(data[1].begin(),data[1].end());
         std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
             << ") events and is ready for pillaging" << std::endl;
     }
 
-    void load(std::vector<Event> *data, const std::vector<std::string>& filenames, int process, int size, bool qualityCuts){
+    const std::vector<Event>& getData(int svd) const { return data[svd]; }
+    size_t size(int svd) const { return data[svd].size(); }
+
+    const Range getRange_mBC() const { return range_mBC; }
+    const Range getRange_dE() const { return range_dE; }
+    const Range getRange_dT() const { return range_dT; }
+
+    Range& getRange_mBC() { return range_mBC; }
+    Range& getRange_dE() { return range_dE; }
+    Range& getRange_dT() { return range_dT; }
+
+    std::string& getBestB() { return bestBSelection; }
+    std::vector<std::string>& getFiles(){ return filenames; }
+
+    protected:
+
+    void loadEvents(std::vector<Event> *data, const std::vector<std::string>& filenames, int process, int size, bool qualityCuts){
         TChain* chain = new TChain("B0");
         BOOST_FOREACH(const std::string& filename, filenames){
+            std::cout << "Using " << filename << " to read events" << std::endl;
             chain->AddFile(filename.c_str(),-1);
         }
         data[0].clear();
@@ -446,20 +489,6 @@ struct DspDsmKsPDF {
         delete chain;
     }
 
-    const std::vector<Event>& getData(int svd) const { return data[svd]; }
-
-    const Range getRange_mBC() const { return range_mBC; }
-    const Range getRange_dE() const { return range_dE; }
-    const Range getRange_dT() const { return range_dT; }
-
-    Range& getRange_mBC() { return range_mBC; }
-    Range& getRange_dE() { return range_dE; }
-    Range& getRange_dT() { return range_dT; }
-
-    std::string& getBestB() { return bestBSelection; }
-    std::vector<std::string>& getFiles(){ return filenames; }
-
-    protected:
 
     /** Max order to print out log2L */
     int maxPrintOrder;

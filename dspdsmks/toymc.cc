@@ -18,7 +18,8 @@ namespace po = boost::program_options;
 struct ToyMCRoutine {
     /** Set some default options */
     ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.35),
-        scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false)
+        scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false), fullgsim(false),
+        select(false)
     {}
 
     std::string parameterIn;
@@ -32,17 +33,18 @@ struct ToyMCRoutine {
     unsigned int seed;
     bool gsim;
     bool fullgsim;
+    bool select;
     std::vector<std::string> templates;
 
     /** Do the plotting */
     template<class FCN> int operator()(FCN &local_pdf){
-        //Load data, this time without quality cuts
-        local_pdf.load(0,1,false);
-        const Range range_mBC = local_pdf.getRange_mBC();
-        const Range range_dE = local_pdf.getRange_dE();
+        if(select){
+            local_pdf.getFiles() = templates;
+            templates.clear();
+        }
 
-        //If we have templates but no gsim parameter we generate from pdf, thus removing the templates
-        if(!gsim) templates.clear();
+        //Load data, this time without quality cuts unless we just select events
+        local_pdf.load(0,1,select);
 
         Parameters params;
         if(!params.load(parameterIn, overrideParameters)){
@@ -50,7 +52,23 @@ struct ToyMCRoutine {
         }
         std::vector<double> par = params.getValues();
 
+        if(select){
+            std::cout << "Selecting events from template files without modification" << std::endl;
+            TFile* f = new TFile(output.c_str(),"RECREATE");
+            TTree* tree = new TTree("B0","B0 Toy MC");
+            local_pdf.selectToyMC(tree,par,seed);
+            tree->Write();
+            f->Write();
+            f->Close();
+            return 0;
+        }
+
+        //If we have templates but no gsim parameter we generate from pdf, thus removing the templates
+        if(!gsim) templates.clear();
+
         //Now we need to get the maximal value of the pdf
+        const Range range_mBC = local_pdf.getRange_mBC();
+        const Range range_dE = local_pdf.getRange_dE();
         double step_mBC = (range_mBC.vmax-range_mBC.vmin)/scansteps_mBC;
         double step_dE = (range_dE.vmax-range_dE.vmin)/scansteps_dE;
         double step_dT = (scan_dT.vmax-scan_dT.vmin)/scansteps_dT;
@@ -70,6 +88,8 @@ struct ToyMCRoutine {
         int flag = templates.empty()?DspDsmKsPDF::PLT_MAX:DspDsmKsPDF::PLT_MAXDT;
         maxVal[0] = fudge*local_pdf.plot(DspDsmKsPDF::PLT_SVD1 | flag, values, par);
         maxVal[1] = fudge*local_pdf.plot(DspDsmKsPDF::PLT_SVD2 | flag, values, par);
+        std::cout << "Using a fugde of " << fudge << ", max PDF value estimated to be "
+            << maxVal[0] << ", " << maxVal[1] << std::endl;
 
         TFile* f = new TFile(output.c_str(),"RECREATE");
         TTree* tree = new TTree("B0","B0 Toy MC");
@@ -153,6 +173,8 @@ int main(int argc, char* argv[]){
          "Wether to generate from PDF or from gsim. If no templates are given we always generate from pdf")
         ("fullgsim", po::bool_switch(&toymc.fullgsim),
          "Wether to also take dT values from gsim (not applicable for signal)")
+        ("select", po::bool_switch(&toymc.select),
+         "Wether or not to just take events from the source file, no modification what so ever")
         ;
 
     po::variables_map vm;
