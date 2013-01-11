@@ -5,10 +5,10 @@ import r2mpl
 import numpy as np
 import matplotlib
 
-infile = "toymc-lintest"
+infile = "toymc-lintest-pdg"
 
 lin_params = ["Jc", "Js1", "Js2"]
-cpv_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "signal_dt_blifetime"]
+cpv_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2"]#, "signal_dt_blifetime"]
 cpv_names  = [r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$",r"$\tau$"]
 
 rfile = root.TFile(infile+".root")

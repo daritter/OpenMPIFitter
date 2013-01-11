@@ -25,18 +25,32 @@ class GenericTPDF {
             this->weight4[i] = weight4;
         }
 
-        void setCommonParameters(int tau, int fractionScale=-1, int outlierMean=-1, int outlierScale=-1){
+        void setCommonParameters(int tau, int fractionScale, int outlierMean, int outlierScale, int outlierScale2, int outlierRatio){
             this->tau = tau;
             this->fractionScale = fractionScale;
             this->outlierMean = outlierMean;
             this->outlierScale = outlierScale;
+            this->outlierScale2 = outlierScale2;
+            this->outlierRatio = outlierRatio;
         }
+
+        double conv_gauss(double weight, double dt, double tau, double mean, double sigma) const {
+            if(weight==0.0) return 0;
+            return weight * Belle::Ef_conv_gauss(dt, tau, mean, sigma);
+        }
+
+        double norm_conv_gauss(double weight, double tau, double mean, double sigma) const {
+            if(weight==0.0) return 0;
+            return weight * Belle::norm_Ef_conv_gauss(range_dT.vmin, range_dT.vmax, tau, mean, sigma);
+        }
+
 
         double operator()(const Event& e, const std::vector<double> &par) {
             const Belle::dtres_param_t* const dtres_param = Belle::get_dtres_param( e.expNo, e.isMC );
             const double abs_tau = par[tau];
             const double sigma = sqrt(e.tag_zerr*e.tag_zerr+e.vtx_zerr*e.vtx_zerr);
             const int i = (e.tag_ntrk>1 && e.vtx_ntrk>1)?1:0;
+
             const double res_mean1 = par[mean1[i]];
             const double res_mean2 = res_mean1+par[mean2[i]];
             const double res_mean3 = res_mean2+par[mean3[i]];
@@ -54,26 +68,19 @@ class GenericTPDF {
 
             //Calculate Lifetime components
             const double life_pdf = res_sumw * (
-                            Belle::Ef_conv_gauss(e.deltaT, abs_tau, res_mean1, res_sigma1) +
-                res_weight2*Belle::Ef_conv_gauss(e.deltaT, abs_tau, res_mean2, res_sigma2) +
-                res_weight3*Belle::Ef_conv_gauss(e.deltaT, abs_tau, res_mean3, res_sigma3) +
-                res_weight4*Belle::Ef_conv_gauss(e.deltaT, abs_tau, res_mean4, res_sigma4));
+                    conv_gauss(        1.0, e.deltaT, abs_tau, res_mean1, res_sigma1) +
+                    conv_gauss(res_weight2, e.deltaT, abs_tau, res_mean2, res_sigma2) +
+                    conv_gauss(res_weight3, e.deltaT, abs_tau, res_mean3, res_sigma3) +
+                    conv_gauss(res_weight4, e.deltaT, abs_tau, res_mean4, res_sigma4));
 
             const double int_life_pdf = res_sumw * (
-                            Belle::norm_Ef_conv_gauss(range_dT.vmin, range_dT.vmax, abs_tau, res_mean1, res_sigma1) +
-                res_weight2*Belle::norm_Ef_conv_gauss(range_dT.vmin, range_dT.vmax, abs_tau, res_mean2, res_sigma2) +
-                res_weight3*Belle::norm_Ef_conv_gauss(range_dT.vmin, range_dT.vmax, abs_tau, res_mean3, res_sigma3) +
-                res_weight4*Belle::norm_Ef_conv_gauss(range_dT.vmin, range_dT.vmax, abs_tau, res_mean4, res_sigma4));
+                    norm_conv_gauss(        1.0, abs_tau, res_mean1, res_sigma1) +
+                    norm_conv_gauss(res_weight2, abs_tau, res_mean2, res_sigma2) +
+                    norm_conv_gauss(res_weight3, abs_tau, res_mean3, res_sigma3) +
+                    norm_conv_gauss(res_weight4, abs_tau, res_mean4, res_sigma4));
 
-            double omean = 0.0;
-            double osig = dtres_param->sig_ol;
-            if(outlierMean>=0){
-                omean = par[outlierMean];
-            }
-            if(outlierScale>=0){
-                osig *= par[outlierScale];
-            }
-            outlierPDF.set(omean, dtres_param->sig_ol);
+            const double osig = dtres_param->sig_ol*par[outlierScale];
+            outlierPDF.set( par[outlierRatio], par[outlierMean], 0.0, osig, par[outlierScale2]);
             double fraction = (e.tag_ntrk>1 && e.vtx_ntrk>1)?dtres_param->fol_mul:dtres_param->fol_sgl;
             if(fractionScale>=0) fraction*=par[fractionScale];
 
@@ -97,8 +104,10 @@ class GenericTPDF {
         int fractionScale;
         int outlierMean;
         int outlierScale;
+        int outlierScale2;
+        int outlierRatio;
 
-        Gauss outlierPDF;
+        DoubleGauss outlierPDF;
 };
 
 #endif

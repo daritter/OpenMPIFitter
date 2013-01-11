@@ -8,8 +8,8 @@ import subprocess
 
 nexp = 500
 infile = "ddk-out.par"
-outfile = "toymc-lintest"
-paramfile = "toymc/lintest/params.par"
+outfile = "toymc-lintest-pdg"
+outdir  = "toymc/lintest-pdg"
 templates = {
     "signal": "~/belle/DspDsmKs/skim/ddk-signal-correct.root",
     "misrecon": "~/belle/DspDsmKs/skim/ddk-signal-misrecon.root",
@@ -18,7 +18,7 @@ templates = {
 }
 data = "~/belle/DspDsmKs/skim/ddk-on_resonance.root"
 genflags = ["--fudge=2", "--gsim"]
-fitflags = ["--fix=.*","--release=yield_signal_.*|signal_dt_J.*|signal_dt_blifetime"]
+fitflags = ["--fix=.*","--release=yield_signal_.*|signal_dt_J.*"]#|signal_dt_blifetime"]
 
 cpv_pars = ["Jc","Js1","Js2"]
 
@@ -26,7 +26,7 @@ rfile = root.TFile(outfile + ".root","RECREATE")
 histograms = {}
 
 def get_dir(par,val):
-    directory = "toymc/lintest/_%s/_%+.1f_" % (par,val)
+    directory = "%s/_%s/_%+.1f_" % (outdir,par,val)
     paramfile = os.path.join(directory,"params.par")
     return directory, paramfile
 
@@ -35,6 +35,7 @@ def get_par(filename):
     return par, float(val)
 
 cpv_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "signal_dt_blifetime"]
+cpv_input  = [utils.cpv[0,0], utils.cpv[1,0], utils.cpv[2,0], 0]
 cpv_names = [r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$",r"$\tau$"]
 params = dspdsmks.Parameters()
 for par in cpv_pars:
@@ -54,6 +55,8 @@ for par in cpv_pars:
     params("yield_signal_svd2").value = utils.nevents[1]
     params("yield_mixed_svd1").value /= 10
     params("yield_mixed_svd2").value /= 10
+    for name,value in zip(cpv_params, cpv_input):
+        params(name).value = value
 
     for val in np.linspace(-1,1,21):
         directory, paramfile = get_dir(par,val)
@@ -74,9 +77,9 @@ for pfile in results:
     params.load(pfile)
     par, val = get_par(pfile)
     pindex = cpv_params.index("signal_dt_"+par)
-    cpv_input = [0]*4
-    cpv_input[pindex] = val
-    for i,(param,initial) in enumerate(zip(cpv_params,cpv_input)):
+    p_input = cpv_input[:]
+    p_input[pindex] = val
+    for i,(param,initial) in enumerate(zip(cpv_params,p_input)):
         p = params(param)
         histograms[par][i].Fill(val, p.value)
         histograms[par+"_pull"][i].Fill(val, (p.value-initial)/p.error)

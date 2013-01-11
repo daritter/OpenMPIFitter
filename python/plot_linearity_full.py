@@ -31,9 +31,11 @@ for par, title in zip(linearity_full.lintest_params, linearity_full.lintest_pnam
         a2.set_ylabel("mean of pull")
         a3.set_ylabel("sigma of pull")
         for a in a1,a2,a3:
-            a.set_title("%s, linearity" % title)
+            a.set_title(title)
             a.set_xlabel("input " + title)
 
+        result.Rebin2D(2,1)
+        pull.Rebin2D(2,1)
 
         fit = root.TF1("gauss","gaus")
         lin_result = root.TH1D(
@@ -50,10 +52,10 @@ for par, title in zip(linearity_full.lintest_params, linearity_full.lintest_pnam
             one_result = result.ProjectionY(result.GetName()+"_%d" % x,x,x)
             one_pull = pull.ProjectionY(pull.GetName()+"_%d" % x,x,x)
 
-            one_result.Fit(fit,"Q")
+            one_result.Fit(fit,"LQ")
             lin_result.SetBinContent(x,fit.GetParameter(1))
             lin_result.SetBinError(x,fit.GetParError(1))
-            one_pull.Fit(fit,"Q")
+            one_pull.Fit(fit,"LQ")
             lin_pull_mean.SetBinContent(x,fit.GetParameter(1))
             lin_pull_mean.SetBinError(x,fit.GetParError(1))
             lin_pull_sigma.SetBinContent(x,fit.GetParameter(2))

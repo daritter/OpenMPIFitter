@@ -51,6 +51,8 @@ namespace PAR {
     PARAM(mixed_dt_fractionscale);
     PARAM(mixed_dt_outliermean);
     PARAM(mixed_dt_outlierscale);
+    PARAM(mixed_dt_outlierscale2);
+    PARAM(mixed_dt_outlierratio);
 };
 
 
@@ -62,7 +64,7 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setCommonParameters(PAR::mixed_dt_blifetime, PAR::mixed_dt_fractionscale,
-                PAR::mixed_dt_outliermean, PAR::mixed_dt_outlierscale);
+                PAR::mixed_dt_outliermean, PAR::mixed_dt_outlierscale, PAR::mixed_dt_outlierscale2, PAR::mixed_dt_outlierratio);
         deltaT.setParameters(false,
                 PAR::mixed_dt_sgl_mean1, PAR::mixed_dt_sgl_mean2, PAR::mixed_dt_sgl_mean3, PAR::mixed_dt_sgl_mean4,
                 PAR::mixed_dt_sgl_sigma1, PAR::mixed_dt_sgl_sigma2, PAR::mixed_dt_sgl_sigma3,  PAR::mixed_dt_sgl_sigma4,

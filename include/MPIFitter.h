@@ -268,7 +268,7 @@ template<class FCN> class MPIClient {
  */
 class MPIFitter {
     public:
-        template<class FitRoutine, class FCN> int run(FitRoutine& fitter, FCN& fcn, int niceness=20){
+        template<class FitRoutine, class FCN> int run(FitRoutine& fitter, FCN& fcn, int niceness=10){
             boost::mpi::environment env;
             boost::mpi::communicator world;
 
@@ -278,7 +278,7 @@ class MPIFitter {
             if( world.rank() > 0 ) {
                 //Play nice ...
                 int nicelevel = nice(niceness);
-                if(nicelevel<19){
+                if(nicelevel<std::min(19,niceness)){
                     std::cerr << "Problem nicing process " << world.rank() << std::endl;
                 }
                 //And start the client

@@ -51,6 +51,8 @@ namespace PAR {
     PARAM(charged_dt_fractionscale);
     PARAM(charged_dt_outliermean);
     PARAM(charged_dt_outlierscale);
+    PARAM(charged_dt_outlierscale2);
+    PARAM(charged_dt_outlierratio);
 };
 
 
@@ -62,7 +64,7 @@ class ChargedPDF: public DeltaTComponent<GenericTPDF> {
         chargedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setCommonParameters(PAR::charged_dt_blifetime, PAR::charged_dt_fractionscale,
-                PAR::charged_dt_outliermean, PAR::charged_dt_outlierscale);
+                PAR::charged_dt_outliermean, PAR::charged_dt_outlierscale, PAR::charged_dt_outlierscale2, PAR::charged_dt_outlierratio);
         deltaT.setParameters(false,
                 PAR::charged_dt_sgl_mean1, PAR::charged_dt_sgl_mean2, PAR::charged_dt_sgl_mean3, PAR::charged_dt_sgl_mean4,
                 PAR::charged_dt_sgl_sigma1, PAR::charged_dt_sgl_sigma2, PAR::charged_dt_sgl_sigma3,  PAR::charged_dt_sgl_sigma4,

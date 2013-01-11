@@ -291,6 +291,7 @@ struct DspDsmKsPDF {
         for(int svd=0; svd<2; ++svd){
             int_variate  random_event(random_generator, uniform_int(0, data[svd].size()-1));
             double yield = get_yield(par, svd==0?Component::SVD1:Component::SVD2);
+            std::cout << "yield for SVD " << svd << ": " << yield << std::endl;
             if(yield<=0) continue;
             boost::random::poisson_distribution<> poisson(yield);
             int nEvents = poisson(random_generator);

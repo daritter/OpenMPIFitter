@@ -19,15 +19,15 @@ matplotlib.rc("text.latex", unicode="true", preamble=r"""
 
 from matplotlib import pyplot as pl
 
-efficiency_mc = np.array([
-   [8.15824e-05, 6.22585e-07],
-   [3.19346e-04, 1.23177e-06],
+ngenerated = np.array([
+    15000000,
+    14999988,
 ])
 
-#efficiency_mc = np.array([
-    #[5.63679e-05, 5.17507e-07],
-    #[2.17889e-04, 1.01746e-06],
-#])
+efficiency_mc = np.array([
+   [5.5005300e-05, 3.2332015e-07],
+   [2.0908606e-04, 6.3036663e-07],
+])
 
 nbb = np.array([
     [151.961, 1.241],
@@ -76,7 +76,11 @@ def get_plotaxes_stacked():
     return f,a1,a2
 
 def format_error(value,error, precision=3, exporder=3, exponent=None):
-    if exponent is None: exponent = int(math.floor(math.log10(abs(value))))
+    if exponent is None:
+        if value==0:
+            exponent = 0
+        else:
+            exponent = int(math.floor(math.log10(abs(value))))
     show_exp = False
     if abs(exponent)>=exporder:
         show_exp = True

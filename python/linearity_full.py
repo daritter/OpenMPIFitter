@@ -11,7 +11,7 @@ import random
 lintest_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "yield_signal_br", "signal_dt_blifetime"]
 lintest_pnames = [ r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$", r"$\Gamma(\ddk)$", r"$\tau$"]
 lintest_irange = [(-1.0, 1.0)]*3 + [(utils.br-1.5e-3, utils.br+1.5e-3), None]
-lintest_orange = [(-1.5, 1.5)]*3 + [(utils.br-2.0e-3, utils.br+2.0e-3), (-1.0, 1.0)]
+lintest_orange = [(-1.5, 1.5)]*3 + [(utils.br-2.0e-3, utils.br+2.0e-3), (1.0, 2.0)]
 
 def get_dir(i):
     subdir = i / 500
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     nexp = int(sys.argv[2])
     offset = int(sys.argv[3])
 
-    infile = "ddk-initial.par"
+    infile = "ddk-out.par"
     outfile = "toymc/lintest-full-%s-%05d" % (mctype,offset)
     outdir  = "toymc/lintest-full-%s" % mctype
     templates = {
@@ -39,9 +39,13 @@ if __name__ == "__main__":
     data = "~/belle/DspDsmKs/skim/ddk-on_resonance.root"
     genflags = ["--fudge=2"]
     if mctype.find("pdf")<0:
-        genflags += ["--gsim", "--fullgsim"]
+        genflags += ["--gsim"]
+    if mctype.find("full")>=0:
+        genflags += ["--fullgsim"]
 
-    fitflags = ["--fix=.*", "--release=yield_signal_.*|signal_dt_J.*|signal_dt_blifetime"]
+    fitflags = ["--fix=.*", "--release=yield_signal_.*|signal_dt_J.*"]#|signal_dt_blifetime"]
+    if "mixed" in templates or "charged" in templates:
+        fitflags[1]+="|yield_mixed_.*"
 
     rfile = root.TFile(outfile + ".root", "RECREATE")
     histograms = {}
