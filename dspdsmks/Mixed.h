@@ -8,6 +8,13 @@
 
 namespace PAR {
     PARAM(yield_mixed_svd1);
+    PARAM(mixed_svd1_rbin1);
+    PARAM(mixed_svd1_rbin2);
+    PARAM(mixed_svd1_rbin3);
+    PARAM(mixed_svd1_rbin4);
+    PARAM(mixed_svd1_rbin5);
+    PARAM(mixed_svd1_rbin6);
+
     PARAM(mixed_svd1_ratio);
     PARAM(mixed_svd1_Mbc_mean);
     PARAM(mixed_svd1_Mbc_sigma);
@@ -17,6 +24,13 @@ namespace PAR {
     PARAM(mixed_svd1_dE_cheb1);
 
     PARAM(yield_mixed_svd2);
+    PARAM(mixed_svd2_rbin1);
+    PARAM(mixed_svd2_rbin2);
+    PARAM(mixed_svd2_rbin3);
+    PARAM(mixed_svd2_rbin4);
+    PARAM(mixed_svd2_rbin5);
+    PARAM(mixed_svd2_rbin6);
+
     PARAM(mixed_svd2_ratio);
     PARAM(mixed_svd2_Mbc_mean);
     PARAM(mixed_svd2_Mbc_sigma);
@@ -77,8 +91,8 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
 
     virtual ~MixedPDF(){}
 
-    virtual double operator()(const Event& e, const std::vector<double> &par){
-        if(e.svdVs==0){
+    virtual double operator()(const Event& e, const std::vector<double> &par) {
+        if(e.svdVs == 0){
             //Set Parameters for mixed component
             mixedPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             mixedPDF_svd1.set(par[PAR::mixed_svd1_ratio]);
@@ -87,8 +101,8 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
             mixedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
             mixedPDF_svd1.fcn2.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
 
-            return get_deltaT(e,par)*par[PAR::yield_mixed_svd1] * mixedPDF_svd1(e.Mbc, e.dE);
-        }else{
+            return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * mixedPDF_svd1(e.Mbc, e.dE);
+        } else {
             //Set Parameters for mixed component
             mixedPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
@@ -97,17 +111,17 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
             mixedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
             mixedPDF_svd2.fcn2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
 
-            return get_deltaT(e,par)*par[PAR::yield_mixed_svd2] * mixedPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * mixedPDF_svd2(e.Mbc, e.dE);
         }
     }
 
-    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
+    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_mixed_svd1];
+            yield += par[PAR::yield_mixed_svd1] * get_rbinFraction(rbin, PAR::mixed_svd1_rbin1, par);
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_mixed_svd2];
+            yield += par[PAR::yield_mixed_svd2] * get_rbinFraction(rbin, PAR::mixed_svd2_rbin1, par);
         }
         return yield;
     }

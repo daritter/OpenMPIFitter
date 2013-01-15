@@ -81,7 +81,7 @@ template<class FCN> void plotDT(FCN &pdf, const std::vector<double>& par, TH1D* 
 struct PlotRoutine {
     /** Set some default options */
     PlotRoutine(): parameterIn("params-in.txt"), rootFile("plots"), plotrange_dT(-20,20),
-    bins_mBC(60), bins_dE(50), bins_dT(40), sampling_mBC(5), sampling_dE(5), sampling_dT(5), activeComponents(DspDsmKsPDF::CMP_all)
+    bins_mBC(60), bins_dE(50), bins_dT(40), sampling_mBC(5), sampling_dE(5), sampling_dT(5), activeComponents(DspDsmKsPDF::CMP_all), no_pdf(false)
     {}
 
     std::string parameterIn;
@@ -95,6 +95,7 @@ struct PlotRoutine {
     int sampling_dE;
     int sampling_dT;
     DspDsmKsPDF::EnabledComponents activeComponents;
+    bool no_pdf;
 
     /** Do the plotting */
     template<class FCN> int operator()(FCN &parallel_pdf){
@@ -114,10 +115,10 @@ struct PlotRoutine {
         TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
                 "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
 
-        std::string names[] = {"signal","misrecon","mixed","charged","dummy"};
-        int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_mixed, DspDsmKsPDF::CMP_charged, DspDsmKsPDF::CMP_dummy};
+        std::string names[] = {"signal","misrecon","mixed","charged"};
+        int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_mixed, DspDsmKsPDF::CMP_charged};
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
-            for(int i=0; i<5; ++i){
+            for(int i=0; i<4; ++i){
                 int cmp = components[i];
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
@@ -154,6 +155,8 @@ struct PlotRoutine {
         TH1D *h_dT_data_svd1_qm = new TH1D("dT_svd1_q_data_m", "#Deltat data q=-1, SVD1", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
         TH1D *h_dT_data_svd2_qp = new TH1D("dT_svd2_q_data_p", "#Deltat data q=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
         TH1D *h_dT_data_svd2_qm = new TH1D("dT_svd2_q_data_m", "#Deltat data q=+1, SVD2", bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
+        TH1D* h_rbin_data_svd1 = new TH1D("rbin_svd1","rbin fractions, SVD1", 9, -1, 8);
+        TH1D* h_rbin_data_svd2 = new TH1D("rbin_svd2","rbin fractions, SVD2", 9, -1, 8);
 
         TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 2000, 0,0);
         TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 2000, 0,0);
@@ -166,6 +169,7 @@ struct PlotRoutine {
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
+            h_rbin_data_svd1->Fill(e.rbin);
             ((e.tag_q*e.eta>0)?h_dT_data_svd1_qep:h_dT_data_svd1_qem)->Fill(e.deltaT);
             ((e.tag_q>0)?h_dT_data_svd1_qp:h_dT_data_svd1_qm)->Fill(e.deltaT);
         }
@@ -173,13 +177,16 @@ struct PlotRoutine {
             h_bEnergy_svd2->Fill(e.benergy);
             h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
+            h_rbin_data_svd2->Fill(e.rbin);
             ((e.tag_q*e.eta>0)?h_dT_data_svd2_qep:h_dT_data_svd2_qem)->Fill(e.deltaT);
             ((e.tag_q>0)?h_dT_data_svd2_qp:h_dT_data_svd2_qm)->Fill(e.deltaT);
         }
         h_bEnergy_svd1->BufferEmpty();
         h_bEnergy_svd2->BufferEmpty();
+        h_rbin_data_svd1->Scale(1./h_rbin_data_svd1->GetEffectiveEntries());
+        h_rbin_data_svd2->Scale(1./h_rbin_data_svd2->GetEffectiveEntries());
 
-        for(int i=0; i<5; ++i){
+        for(int i=0; i<4; ++i){
             int cmp = components[i];
             std::string name = names[i];
             if(!(cmp & activeComponents)) continue;
@@ -208,6 +215,7 @@ struct PlotRoutine {
         r_rootFile->Write();
         r_rootFile->Close();
 
+        if(no_pdf) return 0;
         return std::system(("./python/make_plots.py " + rootFile).c_str());
         //return 0;
     }
@@ -277,6 +285,8 @@ int main(int argc, char* argv[]){
          "Number of Bins per axis for the data")
         ("sampling-dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
          "sampling for the fit")
+        ("no-pdf", po::bool_switch(&plotter.no_pdf),
+         "do not create pdfs, just fill the root file")
         ;
 
     po::variables_map vm;

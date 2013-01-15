@@ -8,6 +8,13 @@
 
 namespace PAR {
     PARAM(ratio_misrecon_svd1);
+    PARAM(misrecon_svd1_rbin1);
+    PARAM(misrecon_svd1_rbin2);
+    PARAM(misrecon_svd1_rbin3);
+    PARAM(misrecon_svd1_rbin4);
+    PARAM(misrecon_svd1_rbin5);
+    PARAM(misrecon_svd1_rbin6);
+
     PARAM(misrecon_svd1_ratio);
     PARAM(misrecon_svd1_Mbc_mean);
     PARAM(misrecon_svd1_Mbc_sigma);
@@ -19,6 +26,13 @@ namespace PAR {
     PARAM(misrecon_svd1_dE_bkg_sigma);
 
     PARAM(ratio_misrecon_svd2);
+    PARAM(misrecon_svd2_rbin1);
+    PARAM(misrecon_svd2_rbin2);
+    PARAM(misrecon_svd2_rbin3);
+    PARAM(misrecon_svd2_rbin4);
+    PARAM(misrecon_svd2_rbin5);
+    PARAM(misrecon_svd2_rbin6);
+
     PARAM(misrecon_svd2_ratio);
     PARAM(misrecon_svd2_Mbc_mean);
     PARAM(misrecon_svd2_Mbc_sigma);
@@ -58,7 +72,7 @@ class MisreconPDF: public DeltaTComponent<> {
             misreconPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd1_Mbc_argusC]);
             misreconPDF_svd1.fcn2.fcny.set(par[PAR::misrecon_svd1_dE_bkg_mean], par[PAR::misrecon_svd1_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)*get_yield(par, Component::SVD1)*misreconPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * misreconPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for misrecon component
             misreconPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
@@ -67,12 +81,20 @@ class MisreconPDF: public DeltaTComponent<> {
             misreconPDF_svd2.fcn1.fcny.set(&par[PAR::misrecon_svd2_dE_mean]);
             misreconPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::misrecon_svd2_Mbc_argusC]);
             misreconPDF_svd2.fcn2.fcny.set(par[PAR::misrecon_svd2_dE_bkg_mean], par[PAR::misrecon_svd2_dE_bkg_sigma]);
-            return get_deltaT(e,par)*get_yield(par, Component::SVD2)*misreconPDF_svd2(e.Mbc, e.dE);
+
+            return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * misreconPDF_svd2(e.Mbc, e.dE);
         }
     }
 
-    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
-        return SignalPDF::get_signal_yield(par, svd, par[PAR::ratio_misrecon_svd1], par[PAR::ratio_misrecon_svd2]);
+    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
+        double yield(0);
+        if(svd & SVD1){
+            yield += SignalPDF::get_signal_yield(par, SVD1) * par[PAR::ratio_misrecon_svd1] * get_rbinFraction(rbin, PAR::misrecon_svd1_rbin1, par);
+        }
+        if(svd & SVD2){
+            yield += SignalPDF::get_signal_yield(par, SVD2) * par[PAR::ratio_misrecon_svd2] * get_rbinFraction(rbin, PAR::misrecon_svd2_rbin1, par);
+        }
+        return yield;
     }
 
     private:

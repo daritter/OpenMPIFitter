@@ -8,6 +8,13 @@
 namespace PAR {
     PARAM(yield_signal_br);
 
+    PARAM(signal_svd1_rbin1);
+    PARAM(signal_svd1_rbin2);
+    PARAM(signal_svd1_rbin3);
+    PARAM(signal_svd1_rbin4);
+    PARAM(signal_svd1_rbin5);
+    PARAM(signal_svd1_rbin6);
+
     PARAM(signal_svd1_eff);
     PARAM(signal_svd1_nbb);
     PARAM(signal_svd1_ratio);
@@ -45,6 +52,13 @@ namespace PAR {
     PARAM(signal_svd1_Mbc_g3_mean);
     PARAM(signal_svd1_Mbc_g3_sigma);
     PARAM(signal_svd1_Mbc_g3_sigma2);
+
+    PARAM(signal_svd2_rbin1);
+    PARAM(signal_svd2_rbin2);
+    PARAM(signal_svd2_rbin3);
+    PARAM(signal_svd2_rbin4);
+    PARAM(signal_svd2_rbin5);
+    PARAM(signal_svd2_rbin6);
 
     PARAM(signal_svd2_eff);
     PARAM(signal_svd2_nbb);
@@ -127,7 +141,7 @@ class SignalPDF: public DeltaTComponent<> {
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(par[PAR::signal_svd1_dE_bkg_mean], par[PAR::signal_svd1_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)* get_yield(par, SVD1) * signalPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par)* get_yield(par, SVD1, e.rbin) * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
             //signalPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
@@ -149,23 +163,23 @@ class SignalPDF: public DeltaTComponent<> {
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(par[PAR::signal_svd2_dE_bkg_mean], par[PAR::signal_svd2_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)* get_yield(par, SVD2) * signalPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par)* get_yield(par, SVD2, e.rbin) * signalPDF_svd2(e.Mbc, e.dE);
         }
     }
 
-    static double get_signal_yield(const std::vector<double> &par, EnabledSVD svd, double scale_svd1=1.0, double scale_svd2=1.0) {
+    static double get_signal_yield(const std::vector<double> &par, EnabledSVD svd, int rbin=-1) {
         double yield(0);
         if(svd & SVD1){
-            yield += scale_svd1*par[PAR::yield_signal_br] * par[PAR::signal_svd1_nbb] * par[PAR::signal_svd1_eff];
+            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd1_nbb] * par[PAR::signal_svd1_eff] * get_rbinFraction(rbin, PAR::signal_svd1_rbin1, par);
         }
         if(svd & SVD2){
-            yield += scale_svd2*par[PAR::yield_signal_br] * par[PAR::signal_svd2_nbb] * par[PAR::signal_svd2_eff];
+            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd2_nbb] * par[PAR::signal_svd2_eff] * get_rbinFraction(rbin, PAR::signal_svd2_rbin1, par);
         }
         return yield;
     }
 
-    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH){
-        return SignalPDF::get_signal_yield(par,svd);
+    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
+        return SignalPDF::get_signal_yield(par,svd,rbin);
     }
 
     private:

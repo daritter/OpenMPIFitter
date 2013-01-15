@@ -59,7 +59,7 @@ struct Event {
         flag(0), Mbc(0), dE(0), m2DspKs(0), m2DsmKs(0), cosTheta(0), deltaZ(0),
         vtx_ntrk(0), vtx_zerr(0), vtx_chi2(0), vtx_ndf(0),
         tag_ntrk(0), tag_zerr(0), tag_chi2(0), tag_ndf(0), tag_q(1), tag_r(0), tag_isL(0),
-        rbin(0), wrongTag_w(0), wrongTag_dw(0), Ak(0), Ck(0), deltaT(0), eta(0)
+        rbin(-1), wrongTag_w(0), wrongTag_dw(0), Ak(0), Ck(0), deltaT(0), eta(0)
     {}
 
     int expNo;
