@@ -7,6 +7,7 @@
 #include "progress.h"
 
 #include <TFile.h>
+#include <TH3D.h>
 #include <TH2D.h>
 #include <TH1D.h>
 
@@ -99,6 +100,7 @@ struct PlotRoutine {
     template<class FCN> int operator()(FCN &parallel_pdf){
         const Range range_mBC = parallel_pdf.localFCN().getRange_mBC();
         const Range range_dE = parallel_pdf.localFCN().getRange_dE();
+        const Range range_dT = parallel_pdf.localFCN().getRange_dT();
 
         Parameters params;
         if(!params.load(parameterIn, overrideParameters)){
@@ -158,15 +160,19 @@ struct PlotRoutine {
         h_bEnergy_svd1->SetBuffer(100000);
         h_bEnergy_svd2->SetBuffer(200000);
 
+        TH3D *h_allEvents = new TH3D("mbcdedt_data", "M_{BC}#DeltaE#Deltat data", 200, range_mBC.vmin, range_mBC.vmax, 200, range_dE.vmin, range_dE.vmax, 200, range_dT.vmin, range_dT.vmax);
+
         BOOST_FOREACH(const Event& e, local_pdf.getData(0)){
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
+            h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
             ((e.tag_q*e.eta>0)?h_dT_data_svd1_qep:h_dT_data_svd1_qem)->Fill(e.deltaT);
             ((e.tag_q>0)?h_dT_data_svd1_qp:h_dT_data_svd1_qm)->Fill(e.deltaT);
         }
         BOOST_FOREACH(const Event& e, local_pdf.getData(1)){
             h_bEnergy_svd2->Fill(e.benergy);
             h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
+            h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
             ((e.tag_q*e.eta>0)?h_dT_data_svd2_qep:h_dT_data_svd2_qem)->Fill(e.deltaT);
             ((e.tag_q>0)?h_dT_data_svd2_qp:h_dT_data_svd2_qm)->Fill(e.deltaT);
         }
