@@ -106,6 +106,7 @@ struct Event {
         if(toyMC){
             m2DspKs = 0;
             m2DsmKs = eta;
+            tag_r = Belle::set_r(rbin);
             deltaZ = deltaT / Belle::dt_resol_global::inv_bgc;
         }else{
             deltaT = deltaZ * Belle::dt_resol_global::inv_bgc;

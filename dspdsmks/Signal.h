@@ -14,6 +14,7 @@ namespace PAR {
     PARAM(signal_svd1_rbin4);
     PARAM(signal_svd1_rbin5);
     PARAM(signal_svd1_rbin6);
+    PARAM(signal_svd1_rbin7);
 
     PARAM(signal_svd1_eff);
     PARAM(signal_svd1_nbb);
@@ -59,6 +60,7 @@ namespace PAR {
     PARAM(signal_svd2_rbin4);
     PARAM(signal_svd2_rbin5);
     PARAM(signal_svd2_rbin6);
+    PARAM(signal_svd2_rbin7);
 
     PARAM(signal_svd2_eff);
     PARAM(signal_svd2_nbb);
@@ -141,7 +143,7 @@ class SignalPDF: public DeltaTComponent<> {
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(par[PAR::signal_svd1_dE_bkg_mean], par[PAR::signal_svd1_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)* get_yield(par, SVD1, e.rbin) * signalPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
             //signalPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
@@ -163,7 +165,7 @@ class SignalPDF: public DeltaTComponent<> {
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(par[PAR::signal_svd2_dE_bkg_mean], par[PAR::signal_svd2_dE_bkg_sigma]);
 
-            return get_deltaT(e,par)* get_yield(par, SVD2, e.rbin) * signalPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * signalPDF_svd2(e.Mbc, e.dE);
         }
     }
 
@@ -180,6 +182,10 @@ class SignalPDF: public DeltaTComponent<> {
 
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
         return SignalPDF::get_signal_yield(par,svd,rbin);
+    }
+
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0){
+        fill_rbinFractions(par, fractions, svd, PAR::signal_svd1_rbin1, PAR::signal_svd2_rbin1, scale);
     }
 
     private:

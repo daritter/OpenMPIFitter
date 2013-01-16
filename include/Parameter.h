@@ -27,6 +27,8 @@ class Parameter {
         const  std::string &name() const { return m_name; }
         //Set the value
         void   value(double value) { m_value = value;}
+        //Override the value, also setting it start value
+        void   override(double value) { m_value = value; m_oldvalue = value;}
         //Get the value
         double value() const { return m_value; }
         //Set the error

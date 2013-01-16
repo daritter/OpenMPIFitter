@@ -181,7 +181,7 @@ void Parameters::overrideParameters(const std::string &overrides){
         Parameter &p = (*this)[tok.substr(0,pos)];
         try{
             const double value = boost::lexical_cast<double>(tok.substr(pos+1));
-            p.value(value);
+            p.override(value);
         }catch(bad_lexical_cast &e){
             throw std::invalid_argument("Override '" + tok + "' not well formed, value cannot be parsed");
         }

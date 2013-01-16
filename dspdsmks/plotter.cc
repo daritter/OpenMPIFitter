@@ -183,6 +183,8 @@ struct PlotRoutine {
         }
         h_bEnergy_svd1->BufferEmpty();
         h_bEnergy_svd2->BufferEmpty();
+        h_rbin_data_svd1->Sumw2();
+        h_rbin_data_svd2->Sumw2();
         h_rbin_data_svd1->Scale(1./h_rbin_data_svd1->GetEffectiveEntries());
         h_rbin_data_svd2->Scale(1./h_rbin_data_svd2->GetEffectiveEntries());
 

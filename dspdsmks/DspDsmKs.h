@@ -16,6 +16,7 @@
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_real_distribution.hpp>
 #include <boost/random/poisson_distribution.hpp>
+#include <boost/random/discrete_distribution.hpp>
 #include <boost/random/variate_generator.hpp>
 #include <algorithm>
 
@@ -161,6 +162,21 @@ struct DspDsmKsPDF {
         }
         return deltaT;
     }
+
+    std::vector<double> get_rbinFractions(const std::vector<double> &par, int svd){
+        std::vector<double> result(7);
+        std::vector<double> fractions(7);
+        double yield(0);
+        BOOST_FOREACH(Component* component, components){
+            const double y = component->get_yield(par, (Component::EnabledSVD)svd);
+            component->get_rbinFractions(par, fractions, (Component::EnabledSVD)svd, y);
+            for(int i=0; i<7; ++i){ result[i] += fractions[i]; }
+            yield += y;
+        }
+        for(int i=0; i<7; ++i){ result[i] /= yield; }
+        return result;
+    }
+
 
     double get_cosTheta(const Event &e, const std::vector<double> &par, int svdVs) const {
         long double yield(0);
@@ -319,6 +335,7 @@ struct DspDsmKsPDF {
         typedef boost::random::uniform_real_distribution<> uniform_real;
         typedef boost::variate_generator<boost::random::mt19937&, uniform_int> int_variate;
         typedef boost::variate_generator<boost::random::mt19937&, uniform_real > real_variate;
+        typedef boost::variate_generator<boost::random::mt19937&, boost::random::discrete_distribution<> > rbin_variate;
         for(int svd=0; svd<2; ++svd){
             if(gsim && gsim_data[svd].empty()){
                 std::cerr << "No template data for SVD" << (svd+1) << std::endl;
@@ -340,6 +357,26 @@ struct DspDsmKsPDF {
             nEvents = poisson(random_generator);
             if(nEvents==0) continue;
 
+            std::vector<Event> rbinpool[7];
+            BOOST_FOREACH(const Event& e, data[svd]){
+                rbinpool[e.rbin].push_back(e);
+            }
+            int_variate random_rbinevent[7] = {
+                int_variate(random_generator, uniform_int(0, rbinpool[0].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbinpool[1].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbinpool[2].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbinpool[3].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbinpool[4].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbinpool[5].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbinpool[6].size()-1)),
+            };
+            std::vector<double> rbinFractions = get_rbinFractions(par, svd==0?Component::SVD1:Component::SVD2);
+            for(int i=0; i<7; ++i){
+                std::cout << "SVD" << (svd+1) << ", rbin " << i
+                    << ": fraction=" << rbinFractions[i] << ", events=" << rbinpool[i].size() << std::endl;
+            }
+            rbin_variate random_rbin(random_generator, boost::random::discrete_distribution<>(rbinFractions.begin(), rbinFractions.end()));
+
             e.svdVs = svd;
             e.isMC = data[svd][0].isMC;
             ProgressBar pbar(nEvents);
@@ -348,16 +385,19 @@ struct DspDsmKsPDF {
             for(int i=0; i<nEvents; ++i){
                 //Take vertex stuff from data
                 do {
+                    e.rbin = random_rbin();
+                    std::vector<Event> &pool = rbinpool[e.rbin];
+                    int_variate &pool_event = random_rbinevent[e.rbin];
                     //e.cosTheta = data[svd][random_event()].cosTheta;
-                    e.tag_zerr = data[svd][random_event()].tag_zerr;
-                    e.tag_chi2 = data[svd][random_event()].tag_chi2;
-                    e.tag_ndf  = data[svd][random_event()].tag_ndf;
-                    e.tag_isL  = data[svd][random_event()].tag_isL;
-                    e.tag_r    = data[svd][random_event()].tag_r;
+                    //e.tag_r    = pool[pool_event()].tag_r;
+                    e.tag_zerr = pool[pool_event()].tag_zerr;
+                    e.tag_chi2 = pool[pool_event()].tag_chi2;
+                    e.tag_ndf  = pool[pool_event()].tag_ndf;
+                    e.tag_isL  = pool[pool_event()].tag_isL;
+                    e.vtx_zerr = pool[pool_event()].vtx_zerr;
+                    e.vtx_chi2 = pool[pool_event()].vtx_chi2;
+                    e.vtx_ndf  = pool[pool_event()].vtx_ndf;
                     e.tag_ntrk = (e.tag_ndf+2)/2;
-                    e.vtx_zerr = data[svd][random_event()].vtx_zerr;
-                    e.vtx_chi2 = data[svd][random_event()].vtx_chi2;
-                    e.vtx_ndf  = data[svd][random_event()].vtx_ndf;
                     e.vtx_ntrk = (e.vtx_ndf+2)/2;
                 }while(!e.calculateValues(true, true));
 
@@ -403,7 +443,8 @@ struct DspDsmKsPDF {
                         e.deltaT   = random_dT();
                         e.tag_q    = (random_flavour()*2)-1;
                         e.eta      = (random_flavour()*2)-1;
-                        if(!e.calculateValues(true, true)) continue;
+                        //if(!e.calculateValues(true, true)) continue;
+                        assert(e.calculateValues(true, true));
                         e.reset();
                     }
                     //If gsim and there is no deltaT, nothing else to do, just grab a random event

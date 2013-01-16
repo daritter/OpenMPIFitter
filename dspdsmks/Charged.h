@@ -126,6 +126,11 @@ class ChargedPDF: public DeltaTComponent<GenericTPDF> {
         return yield;
     }
 
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0){
+        fill_rbinFractions(par, fractions, svd, PAR::charged_svd1_rbin1, PAR::charged_svd2_rbin1, scale);
+    }
+
+
     private:
 
     Range range_mBC;

@@ -20,6 +20,25 @@ class Component {
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const = 0;
     virtual double get_deltaT(const Event& e, const std::vector<double> &par, bool anyway=false) = 0;
     virtual double get_cosTheta(const Event &e) = 0;
+
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) = 0;
+
+    protected:
+
+    void fill_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, int svd1_rbin1, int svd2_rbin1, double scale){
+        if((svd & SVD1) && (svd & SVD2)){
+            std::cerr << "Cannot give rbin fractions for both svds";
+        }
+        const int rbin1 = (svd & SVD1)?svd1_rbin1:svd2_rbin1;
+        double sum(0);
+        for(int i=0; i<7; ++i) {
+            sum += par[rbin1+i];
+        }
+        for(int i=0; i<7; ++i) {
+            fractions[i] = par[rbin1+i]/sum*scale;
+        }
+    }
+
 };
 
 template<class T=DeltaTPDF> class DeltaTComponent: public Component {
@@ -29,8 +48,6 @@ template<class T=DeltaTPDF> class DeltaTComponent: public Component {
     {}
 
     virtual ~DeltaTComponent(){}
-    virtual double operator()(const Event& e, const std::vector<double> &par) = 0;
-    virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const = 0;
 
     virtual double get_deltaT(const Event& e, const std::vector<double> &par, bool anyway=false){
         if(!useDeltaT && !anyway) return 1.0;
@@ -44,18 +61,9 @@ template<class T=DeltaTPDF> class DeltaTComponent: public Component {
     static double get_rbinFraction(int rbin, int rbin1, const std::vector<double> &par) {
         if(rbin<0) return 1.0;
         if(rbin>6) return 0.0;
-        if(rbin==6){
-            double fraction(1.);
-            for(int i=0; i<6; ++i) fraction -= par[rbin1+i];
-            //if(fraction<0){
-            //    std::cerr << "rbin Fraction for bin 7 out of bounds: " << fraction << std::endl;
-            //    std::abort();
-            //}
-            //std::cout << rbin1 << ", " << "6: " << fraction << std::endl;
-            return fraction;
-        }
-        //std::cout << rbin1 << ", " << rbin << ": " << par[rbin1+rbin] << std::endl;
-        return par[rbin1+rbin];
+        double sum(0);
+        for(int i=0; i<7; ++i) sum += par[rbin1+i];
+        return par[rbin1+rbin]/sum;
     }
 
     protected:
