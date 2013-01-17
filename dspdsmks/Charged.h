@@ -14,6 +14,7 @@ namespace PAR {
     PARAM(charged_svd1_rbin4);
     PARAM(charged_svd1_rbin5);
     PARAM(charged_svd1_rbin6);
+    PARAM(charged_svd1_rbin7);
 
     PARAM(charged_svd1_ratio);
     PARAM(charged_svd1_Mbc_mean);
@@ -30,6 +31,7 @@ namespace PAR {
     PARAM(charged_svd2_rbin4);
     PARAM(charged_svd2_rbin5);
     PARAM(charged_svd2_rbin6);
+    PARAM(charged_svd2_rbin7);
 
     PARAM(charged_svd2_ratio);
     PARAM(charged_svd2_Mbc_mean);

@@ -14,6 +14,7 @@ namespace PAR {
     PARAM(misrecon_svd1_rbin4);
     PARAM(misrecon_svd1_rbin5);
     PARAM(misrecon_svd1_rbin6);
+    PARAM(misrecon_svd1_rbin7);
 
     PARAM(misrecon_svd1_ratio);
     PARAM(misrecon_svd1_Mbc_mean);
@@ -32,6 +33,7 @@ namespace PAR {
     PARAM(misrecon_svd2_rbin4);
     PARAM(misrecon_svd2_rbin5);
     PARAM(misrecon_svd2_rbin6);
+    PARAM(misrecon_svd2_rbin7);
 
     PARAM(misrecon_svd2_ratio);
     PARAM(misrecon_svd2_Mbc_mean);

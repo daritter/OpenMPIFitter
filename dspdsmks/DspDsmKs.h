@@ -370,6 +370,20 @@ struct DspDsmKsPDF {
                 int_variate(random_generator, uniform_int(0, rbinpool[5].size()-1)),
                 int_variate(random_generator, uniform_int(0, rbinpool[6].size()-1)),
             };
+            std::vector<Event> rbingsim[7];
+            BOOST_FOREACH(const Event& e, gsim_data[svd]){
+                rbingsim[e.rbin].push_back(e);
+            }
+            int_variate random_gsimevent[7] = {
+                int_variate(random_generator, uniform_int(0, rbingsim[0].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbingsim[1].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbingsim[2].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbingsim[3].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbingsim[4].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbingsim[5].size()-1)),
+                int_variate(random_generator, uniform_int(0, rbingsim[6].size()-1)),
+            };
+
             std::vector<double> rbinFractions = get_rbinFractions(par, svd==0?Component::SVD1:Component::SVD2);
             for(int i=0; i<7; ++i){
                 std::cout << "SVD" << (svd+1) << ", rbin " << i
@@ -403,7 +417,7 @@ struct DspDsmKsPDF {
 
                 //Take Mbc/dE stuff from template if available
                 if(gsim){
-                    Event &e2 = gsim_data[svd][random_gsim()];
+                    Event &e2 = rbingsim[e.rbin][random_gsimevent[e.rbin]()];//gsim_data[svd][random_gsim()];
                     e.benergy = e2.benergy;
                     e.expNo = e2.expNo;
                     e.Mbc = e2.Mbc;
@@ -413,7 +427,7 @@ struct DspDsmKsPDF {
                         e.eta = e2.eta;
                         e.tag_q = e2.tag_q;
                         e.deltaT = e2.deltaT;
-                        e.calculateValues(true, true);
+                        assert(e.calculateValues(true, true));
                         //Everything set, go to next event
                         std::cout << ++pbar;
                         output->Fill();
@@ -443,7 +457,6 @@ struct DspDsmKsPDF {
                         e.deltaT   = random_dT();
                         e.tag_q    = (random_flavour()*2)-1;
                         e.eta      = (random_flavour()*2)-1;
-                        //if(!e.calculateValues(true, true)) continue;
                         assert(e.calculateValues(true, true));
                         e.reset();
                     }

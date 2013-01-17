@@ -14,6 +14,7 @@ namespace PAR {
     PARAM(mixed_svd1_rbin4);
     PARAM(mixed_svd1_rbin5);
     PARAM(mixed_svd1_rbin6);
+    PARAM(mixed_svd1_rbin7);
 
     PARAM(mixed_svd1_ratio);
     PARAM(mixed_svd1_Mbc_mean);
@@ -30,6 +31,7 @@ namespace PAR {
     PARAM(mixed_svd2_rbin4);
     PARAM(mixed_svd2_rbin5);
     PARAM(mixed_svd2_rbin6);
+    PARAM(mixed_svd2_rbin7);
 
     PARAM(mixed_svd2_ratio);
     PARAM(mixed_svd2_Mbc_mean);
