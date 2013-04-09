@@ -202,6 +202,8 @@ template<class FCN1, class FCN2> class Add1DFcn {
 
         /** Calculate the fcn for a given value */
         double operator()(double x) const {
+            if(ratio==1) return fcn1(x);
+            if(ratio==0) return fcn2(x);
             return ratio*fcn1(x) + (1.0-ratio)*fcn2(x);
         }
 
@@ -215,7 +217,6 @@ template<class FCN1, class FCN2> class Add1DFcn {
     protected:
         double ratio;
 };
-
 
 template<class FCN1, class FCN2> class Add2DFcn {
     public:
@@ -231,6 +232,8 @@ template<class FCN1, class FCN2> class Add2DFcn {
 
         /** Calculate the fcn for a given value */
         double operator()(double x, double y) const {
+            if(ratio==1) return fcn1(x,y);
+            if(ratio==0) return fcn2(x,y);
             return ratio*fcn1(x,y) + (1.0-ratio)*fcn2(x,y);
         }
 
@@ -298,6 +301,7 @@ template<int N> class MultiGauss {
             double sigma(1.0);
             for(int i=0; i<N; ++i){
                 if(i>0) norms[i] = par1[3*i-1];
+                if(norms[i]==0) continue;
                 mean += par1[3*i];
                 sigma *= par1[3*i+1];
                 fcns[i].set(mean,sigma);
@@ -314,6 +318,7 @@ template<int N> class MultiGauss {
             fcns[0].set(mean,sigma);
             for(int i=1; i<N; ++i){
                 norms[i] = par1[3*i-3];
+                if(norms[i]==0) continue;
                 mean += par1[3*i-2];
                 sigma *= par1[3*i-1];
                 fcns[i].set(mean,sigma);
@@ -328,6 +333,7 @@ template<int N> class MultiGauss {
             fcns[1].set(mean,sigma);
             for(int i=2; i<N; ++i){
                 norms[i] = par1[3*i-6];
+                if(norms[i]==0) continue;
                 mean += par1[3*i-5];
                 sigma *= par1[3*i-4];
                 fcns[i].set(mean,sigma);
@@ -339,6 +345,7 @@ template<int N> class MultiGauss {
             double result(0);
             double norm(0);
             for(int i=0; i<N; ++i){
+                if(norms[i]==0) continue;
                 result += norms[i]*fcns[i](x);
                 norm += norms[i];
             }
