@@ -25,8 +25,12 @@ ngenerated = np.array([
 ])
 
 efficiency_mc = np.array([
-   [5.5005300e-05, 3.2332015e-07],
-   [2.0908606e-04, 6.3036663e-07],
+   [5.3093427e-05, 3.1765148e-07],
+   [1.9792079e-04, 6.1330483e-07],
+])
+efficiency_ctrl = np.array([
+   [9.7382357e-04, 5.0533889e-06],
+   [1.7508169e-03, 6.7758386e-06],
 ])
 
 nbb = np.array([
@@ -41,8 +45,10 @@ cpv = np.array([
 ])
 
 br = 4.1e-3
+br_ctrl = 2.47e-3
 
 nevents = nbb[:,0] * efficiency_mc[:,0] * br
+nevents_ctrl = nbb[:,0] * efficiency_ctrl[:,0] * br_ctrl
 
 def get_plotaxes():
     """Return axes"""
@@ -75,7 +81,7 @@ def get_plotaxes_stacked():
     a1.set_xticklabels([])
     return f,a1,a2
 
-def format_error(value,error, precision=3, exporder=3, exponent=None):
+def format_error(value, error=None, precision=3, exporder=3, exponent=None):
     if exponent is None:
         if value==0:
             exponent = 0
@@ -85,14 +91,23 @@ def format_error(value,error, precision=3, exporder=3, exponent=None):
     if abs(exponent)>=exporder:
         show_exp = True
         value /= math.pow(10,exponent)
-        error /= math.pow(10,exponent)
+        if error is not None:
+            error /= math.pow(10,exponent)
 
-    if(show_exp):
-        return r"({0:.{precision}f} \pm {1:.{precision}f}) \times 10^{{{exp}}}".format(
-            value, error, exp=exponent, precision=precision)
+    if error is not None:
+        if(show_exp):
+            return r"({0:.{precision}f} \pm {1:.{precision}f}) \times 10^{{{exp}}}".format(
+                value, error, exp=exponent, precision=precision)
+        else:
+            return r"{0:.{precision}f} \pm {1:.{precision}f}".format(
+                value, error, precision=precision)
     else:
-        return r"{0:.{precision}f} \pm {1:.{precision}f}".format(
-            value, error, precision=precision)
+        if(show_exp):
+            return r"{0:.{precision}f} \times 10^{{{exp}}}".format(
+                value, exp=exponent, precision=precision)
+        else:
+            return r"{0:.{precision}f}".format(
+                value, precision=precision)
 
 def latex_matrix(matrix):
     lines = []
@@ -100,3 +115,38 @@ def latex_matrix(matrix):
     for row in matrix:
         lines.append(" & ".join(str(e) for e in row))
     return  "\\begin{pmatrix}\n    " + "\\\\\n    ".join(lines) + "\n\\end{pmatrix}"
+
+def text_box(axes, pos, text):
+    bbox_props = dict(boxstyle="round", fc="w", ec="k")
+    font_props = matplotlib.font_manager.FontProperties(size="small")
+    if pos == "tr":
+        pos_kwargs = {
+            "xy":(1,1),
+            "xytext":(-8,-8),
+            "ha":"right",
+            "va":"top",
+        }
+    elif pos == "tl":
+        pos_kwargs = {
+            "xy":(0,1),
+            "xytext":(8,-8),
+            "ha":"left",
+            "va":"top",
+        }
+    elif pos == "br":
+        pos_kwargs = {
+            "xy":(1,0),
+            "xytext":(-8,8),
+            "ha":"right",
+            "va":"bottom",
+        }
+    elif pos == "bl":
+        pos_kwargs = {
+            "xy":(0,0),
+            "xytext":(8,8),
+            "ha":"left",
+            "va":"bottom",
+        }
+
+    axes.annotate(text, xycoords="axes fraction", textcoords="offset points",
+               color="k", bbox=bbox_props, font_properties=font_props, **pos_kwargs)
