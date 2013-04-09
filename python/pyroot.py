@@ -165,10 +165,16 @@ def histRatio(hist1,hist2):
     return result
 
 if __name__=="__main__":
+    argv=["--colors=LightBG","-noconfirm_exit",'-pprint']
     try:
         __IPYTHON__
     except NameError:
-        from IPython.Shell import IPShellEmbed
-        ipshell = IPShellEmbed(argv=["--colors=LightBG","-noconfirm_exit",'-pprint'],
-                               banner="pyroot (ROOT Version %s)" % root.gROOT.GetVersion())
+        try:
+            from IPython.frontend.terminal.embed import InteractiveShellEmbed
+            ipshell = InteractiveShellEmbed(banner1="pyroot (ROOT Version %s)" % root.gROOT.GetVersion())
+        except NameError:
+            from IPython.Shell import IPShellEmbed
+            ipshell = IPShellEmbed(argv=["--colors=LightBG","-noconfirm_exit",'-pprint'],
+                                   banner="pyroot (ROOT Version %s)" % root.gROOT.GetVersion())
+
         ipshell()
