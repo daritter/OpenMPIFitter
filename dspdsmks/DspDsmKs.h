@@ -22,6 +22,7 @@
 
 #include <TChain.h>
 #include <Functions.h>
+#include <TH1D.h>
 #include "Range.h"
 #include "Event.h"
 #include "Signal.h"
@@ -90,8 +91,8 @@ struct DspDsmKsPDF {
         return result;
     }
 
-    DspDsmKsPDF(int maxPrintOrder = 3):
-        maxPrintOrder(maxPrintOrder), nCalls(0), bestBSelection("bestLHsig"),
+    DspDsmKsPDF(int maxPrintOrder = 2):
+        maxPrintOrder(maxPrintOrder), nCalls(0), minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
         range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt)
     {}
 
@@ -147,10 +148,10 @@ struct DspDsmKsPDF {
     }
 
     /** Return the yield of the pdf given the set of parameters */
-    double get_yield(const std::vector<double> &par, int svdVs=Component::BOTH) const {
+    double get_yield(const std::vector<double> &par, int svdVs=Component::BOTH, int rbin=-1) const {
         double yield(0);
         BOOST_FOREACH(Component* component, components){
-            yield += component->get_yield(par,(Component::EnabledSVD)svdVs);
+            yield += component->get_yield(par,(Component::EnabledSVD)svdVs, rbin);
         }
         return yield;
     }
@@ -192,17 +193,74 @@ struct DspDsmKsPDF {
 
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, double value) const {
-        static boost::format output("call #%-5d: -2logL =%18.10g\n");
+        static boost::format output("call #%-5d: -2logL =%18.10g     (min =%18.10g, max =%18.10g)\n");
         const double logL = -2.0*(value-get_yield(par));
+        if(logL<minLogL) minLogL = logL;
+        if(logL>maxLogL) maxLogL = logL;
 
         //Determine wether to show value
         nCalls++;
         const int order = (nCalls == 0) ? 1 : std::max(std::min((int)std::log10(nCalls), maxPrintOrder), 0);
         const int interval = static_cast<int>(std::pow(10., order));
         if(nCalls % interval == 0){
-            std::cout << output % nCalls % logL;
+            std::cout << output % nCalls % logL % minLogL % maxLogL;
         }
         return logL;
+    }
+
+    std::vector<double> plotM(int flag, const std::vector<double> values, const std::vector<double> &par, int rank){
+        int svdVs=0;
+        std::vector<double> results;
+        if(flag & PLT_SVD1) svdVs |= Component::SVD1;
+        if(flag & PLT_SVD2) svdVs |= Component::SVD2;
+
+        if(flag & PLT_DT){
+            TH1D *h_dt[7][2][2];
+            for(int rbin=0; rbin<7; ++rbin){
+                for(int i=0; i<2; ++i){
+                    for(int j=0; j<2; ++j){
+                        const std::string name = (boost::format("dt_%d_%d_%d") % rbin % i % j).str();
+                        h_dt[rbin][i][j] = new TH1D(name.c_str(),"",(int)values[0],values[1],values[2]);
+                    }
+                }
+            }
+            for(int svd=0; svd<2; ++svd){
+                if((svd==0) && !(flag & PLT_SVD1)) continue;
+                if((svd==1) && !(flag & PLT_SVD2)) continue;
+                ProgressBar pbar(h_dt[0][0][0]->GetNbinsX()*data[svd].size());
+                if(rank==0 && data[svd].size()==0) std::cout << ++pbar;
+                BOOST_FOREACH(Event e, data[svd]){
+                    for(int ix=0; ix<h_dt[0][0][0]->GetNbinsX(); ++ix){
+                        if(rank==0) std::cout << ++pbar;
+                        e.deltaT = h_dt[0][0][0]->GetBinCenter(ix+1);
+                        e.reset();
+                        for(int q=0; q<2; ++q){
+                            e.tag_q = 2*q-1;
+                            for(int eta=0; eta<2; ++eta){
+                                e.eta = 2*eta-1;
+                                double pdf_value = get_deltaT(e, par);
+                                h_dt[e.rbin][0][q]->Fill(e.deltaT, pdf_value);
+                                h_dt[e.rbin][1][(q!=eta)?0:1]->Fill(e.deltaT, pdf_value);
+                            }
+                        }
+                    }
+                }
+            }
+            for(int rbin=0; rbin<7; ++rbin){
+                for(int i=0; i<2; ++i){
+                    double h_scale = h_dt[rbin][i][0]->GetXaxis()->GetBinWidth(1);
+                    for(int j=0; j<2; ++j){
+                        TH1D* h = h_dt[rbin][i][j];
+                        h->Scale(h_scale);
+                        const double* array = h->GetArray();
+                        //Stupid underflow bin is array[0], so we need to start at element 1
+                        results.insert(results.end(), array + 1, array + h->GetNbinsX() + 1);
+                        delete h;
+                    }
+                }
+            }
+        }
+        return results;
     }
 
     double plot(int flag, const std::vector<double> values, const std::vector<double> &par){
@@ -543,6 +601,8 @@ struct DspDsmKsPDF {
     int maxPrintOrder;
     /** Number of calls */
     mutable int nCalls;
+    mutable double minLogL;
+    mutable double maxLogL;
     /** vector containing the data values */
     std::vector<Event> data[2];
     /** filename from which the data should be read */

@@ -88,8 +88,8 @@ def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
         else:
             last = f.Clone("tmp")
 
-        r2mpl.plotSmooth(last, axes=data_axes, color=colors[l], samples=2000, label=l, zorder=i+1)
-        #r2mpl.plot(last, axes=data_axes, color=colors[l], label=l)
+        #r2mpl.plotSmooth(last, axes=data_axes, color=colors[l], samples=2000, label=l, zorder=i+1)
+        r2mpl.plot(last, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
 
     r2mpl.plot(data,errors=True,axes=data_axes, color="k", label="data", linewidth=0.5, capsize=1.0, zorder=10)
 
@@ -124,12 +124,15 @@ def plot_asymmetry(name, data_p, data_m, fits_p, fits_m, label):
     asym_data = data_p.GetAsymmetry(data_m)
     asym_fit  = fp.GetAsymmetry(fm)
 
-    r2mpl.plotSmooth(fp, axes=a1, color="r", zorder=1, samples=2000, label="$%s=+1$"%label)
-    r2mpl.plotSmooth(fm, axes=a1, color="b", zorder=1, samples=2000, label="$%s=-1$"%label)
+    #r2mpl.plotSmooth(fp, axes=a1, color="r", zorder=1, samples=2000, label="$%s=+1$"%label)
+    #r2mpl.plotSmooth(fm, axes=a1, color="b", zorder=1, samples=2000, label="$%s=-1$"%label)
+    r2mpl.plot(fp, axes=a1, color="r", zorder=1, label="$%s=+1$"%label, linewidth=0.2)
+    r2mpl.plot(fm, axes=a1, color="b", zorder=1, label="$%s=-1$"%label, linewidth=0.2)
     r2mpl.plot(data_p, axes=a1, errors=True, color="r", zorder=2, linewidth=0.5, capsize=1.0)#, marker="^")
     r2mpl.plot(data_m, axes=a1, errors=True, color="b", zorder=2, linewidth=0.5, capsize=1.0)#, marker="o")
 
-    r2mpl.plotSmooth(asym_fit, axes=a2, zorder=1, color="r", samples=2000)
+    #r2mpl.plotSmooth(asym_fit, axes=a2, zorder=1, color="r", samples=2000)
+    r2mpl.plot(asym_fit, axes=a2, zorder=1, color="r", linewidth=0.2)
     r2mpl.plot(asym_data, axes=a2, errors=True, color="k", zorder=2, linewidth=0.5, capsize=1.0)
     a1.legend(loc="upper left", numpoints=2)
     a2.set_ylim(-1.0,1.0)
@@ -160,8 +163,8 @@ def make_mBCdE_plots(name, title):
     vmax = max(mbcde_data.GetMaximum(),mbcde_fit2.GetMaximum())
 
     cmap = matplotlib.cm.get_cmap("binary")
-    plot_mBCdE(mbcde_data, vmin=0, vmax=vmax, title=title, cmap=cmap)
-    plot_mBCdE(mbcde_fit2, vmin=0, vmax=vmax, title=title, cmap=cmap)
+    plot_mBCdE(mbcde_data, vmin=1, vmax=vmax, title=title) #, norm=matplotlib.colors.LogNorm())#, cmap=cmap)
+    plot_mBCdE(mbcde_fit2, vmin=1, vmax=vmax, title=title) #, norm=matplotlib.colors.LogNorm())#, cmap=cmap)
     plot_mBCdE(mbcde_sigma, vmin=-5, vmax=5, label="normalized residuals", title=title)
 
     mbc_data = mbcde_data.ProjectionX()
@@ -203,20 +206,46 @@ def make_dT_plots(name, title, label):
         return
 
     plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps")
-    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps", log=True)
     plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps")
+    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps", log=True)
     plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps", log=True)
     plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, label)
 
-make_mBCdE_plots("mbcde_svd1", "SVD 1")
-make_mBCdE_plots("mbcde_svd2", "SVD 2")
-make_mBCdE_plots("mbcde", "Both")
-r2mpl.save_all(filename + "-mBCdE", png=False)
+try:
+    make_mBCdE_plots("mbcde_svd1", "SVD1")
+except ValueError:
+    pl.close("all")
 
-make_dT_plots("dT_svd1_q", "SVD1", "q")
-make_dT_plots("dT_svd2_q", "SVD2", "q")
-make_dT_plots("dT_svd1_qe", "SVD1", "q\cdot\eta")
-make_dT_plots("dT_svd2_qe", "SVD2", "q\cdot\eta")
-r2mpl.save_all(filename + "-dT", png=False)
+make_mBCdE_plots("mbcde_svd2", "SVD2")
+make_mBCdE_plots("mbcde", "SVD1 + SVD2")
+r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=False)
+
+#try:
+    #make_dT_plots("dT_svd1_q", "SVD1", "q")
+    #make_dT_plots("dT_svd1_qe", "SVD1", "q\cdot\eta")
+#except OverflowError:
+    #pl.close("all")
+
+#make_dT_plots("dT_svd2_q", "SVD2", "q")
+#make_dT_plots("dT_svd2_qe", "SVD2", "q\cdot\eta")
+
+make_dT_plots("dT_svd1_q_rbin%d" % 7, "SVD1", "q")
+make_dT_plots("dT_svd2_q_rbin%d" % 7, "SVD2", "q")
+for i in range(7):
+    make_dT_plots("dT_svd1_q_rbin%d" % i, "SVD1, rbin %d" % i, "q")
+for i in range(7):
+    make_dT_plots("dT_svd2_q_rbin%d" % i, "SVD2, rbin %d" % i, "q")
+
+r2mpl.save_all(filename + "-dT-q", png=False, single_pdf=False)
+
+make_dT_plots("dT_svd1_qe_rbin%d" % 7, "SVD1", "q")
+make_dT_plots("dT_svd2_qe_rbin%d" % 7, "SVD2", "q")
+for i in range(7):
+    make_dT_plots("dT_svd1_qe_rbin%d" % i, "SVD1, rbin %d" % i, "q")
+for i in range(7):
+    make_dT_plots("dT_svd2_qe_rbin%d" % i, "SVD2, rbin %d" % i, "q")
+
+r2mpl.save_all(filename + "-dT-qe", png=False, single_pdf=False)
+
 
 #pl.show()

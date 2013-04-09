@@ -5,6 +5,7 @@
 
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 #include <functional>
 #include <boost/mpi.hpp>
 #include <boost/foreach.hpp>
@@ -28,6 +29,7 @@ enum MPIFitterCommand {
     PARAMETERS =  1,
     OPERATOR   =  2,
     PLOTTER    =  4,
+    PLOTTERM   = 16,
     OPTIONS    =  8
 };
 
@@ -84,7 +86,6 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             //parameters will be transmitted and only the changed parameters
             //(mostly 1-2) will be transmitted
             changedParameters.clear();
-            lastParameters.reserve(params.size());
             for(size_t i=0; i<params.size(); ++i){
                 if(i>=lastParameters.size() || params[i]!=lastParameters[i]){
                     changedParameters.push_back(std::make_pair(i,params[i]));
@@ -168,12 +169,47 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             return result;
         }
 
+        std::vector<double> plotM(int flag, std::vector<double> values, const std::vector<double> &params, int op=OP_SUM) const {
+            sendParameters(params);
+            MPICommand cmd(PLOTTERM,values.size(),flag);
+            broadcast_cmd(world, cmd, 0);
+            broadcast_vec(world, values, 0);
+            std::vector<double> result = fcn.plotM(flag, values, params, world.rank());
+            //int nresults(0);
+            std::vector<std::vector<double> > results;
+            gather(world, result, results, 0);
+            result.clear();
+            result.resize(results[0].size());
+            BOOST_FOREACH(std::vector<double> &r, results){
+                std::transform(result.begin(), result.end(), r.begin(), result.begin(), std::plus<double>() );
+            }
+            /*    for(size_t i=0; i<result.size(); ++i){
+                    if(r[i]!=r[i]) continue;
+                    if(op & OP_SUM){
+                        result[i] += r[i];
+                    }else if(op & OP_MUL){
+                        result[i] *= r[i];
+                    }else if(op & OP_MAX){
+                        result[i] = std::max(result[i], r[i]);
+                    }else if(op & OP_MIN){
+                        result[i] = std::min(result[i], r[i]);
+                    }
+                }
+                ++nresults;
+            }
+            if(op & OP_AVG) {
+                for(size_t i=0; i<result.size(); ++i){
+                    result[i] /= nresults;
+                }
+            }*/
+            return result;
+        }
+
         void setOptions(int flag) {
             MPICommand cmd(OPTIONS,0,flag);
             broadcast_cmd(world, cmd, 0);
             fcn.setOptions(flag);
         }
-
 
         /** Return the error_def to Minuit2 */
         virtual double Up() const {
@@ -244,6 +280,13 @@ template<class FCN> class MPIClient {
                     std::vector<double> values(cmd.size,0);
                     broadcast_vec(world, values, 0);
                     double result = fcn.plot(cmd.flag, values, params);
+                    //std::cout << "Client Result: " << result << std::endl;
+                    gather(world, result, 0);
+                }
+                if(cmd.cmd & PLOTTERM){
+                    std::vector<double> values(cmd.size,0);
+                    broadcast_vec(world, values, 0);
+                    std::vector<double> result = fcn.plotM(cmd.flag, values, params, world.rank());
                     //std::cout << "Client Result: " << result << std::endl;
                     gather(world, result, 0);
                 }
