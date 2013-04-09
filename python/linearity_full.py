@@ -8,10 +8,18 @@ import utils
 import subprocess
 import random
 
-lintest_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "yield_signal_br", "signal_dt_blifetime"]
-lintest_pnames = [ r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$", r"$\Gamma(\ddk)$", r"$\tau$"]
-lintest_irange = [(-1.0, 1.0)]*3 + [(utils.br-1.5e-3, utils.br+1.5e-3), None]
-lintest_orange = [(-1.5, 1.5)]*3 + [(utils.br-2.0e-3, utils.br+2.0e-3), (1.0, 2.0)]
+lintest_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "yield_signal_br"]
+lintest_pnames = [ r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$", r"$\mathcal{B}(\ddk)$"]
+lintest_irange = [(-1.0, 1.0)]*3 + [(2e-3, 6e-3)]
+lintest_orange = [(-2.5, 2.5)]*3 + [(0, utils.br*2)]
+
+def get_random_cp():
+    while True:
+        Jc = random.uniform(-1,1)
+        Js1 = random.uniform(-1,1)
+        Js2 = random.uniform(-1,1)
+        if (Jc**2+Js1**2+Js2**2)**.5<=1:
+            return Jc, Js1, Js2
 
 def get_dir(i):
     subdir = i / 500
@@ -47,20 +55,20 @@ if __name__ == "__main__":
     if "mixed" in templates or "charged" in templates:
         fitflags[1]+="|yield_mixed_.*"
 
+    #fitflags = ["--fix=.*", "--release=yield_signal_.*|yield_mixed_.*"]
+
     rfile = root.TFile(outfile + ".root", "RECREATE")
     histograms = {}
 
-
-
     for par, irange, orange, title in zip(lintest_params, lintest_irange, lintest_orange, lintest_pnames):
         if irange is not None:
-            hist_range = (40, ) + irange + (50, ) + orange
+            hist_range = (40, ) + irange + (401, ) + orange
             histograms[par] = root.TH2D(par, title, *hist_range)
-            histograms[par+"_pull"] = root.TH2D(par+"_pull", title+" pull", 40, irange[0], irange[1], 50, -5, 5)
+            histograms[par+"_pull"] = root.TH2D(par+"_pull", title+" pull", 40, irange[0], irange[1], 101, -5, 5)
         else:
-            hist_range = (50, ) + orange
+            hist_range = (51, ) + orange
             histograms[par] = root.TH1D(par, title, *hist_range)
-            histograms[par+"_pull"] = root.TH1D(par+"_pull", title+" pull", 50, -5, 5)
+            histograms[par+"_pull"] = root.TH1D(par+"_pull", title+" pull", 100, -5, 5)
 
     params = dspdsmks.Parameters()
     params.load(infile)
@@ -72,19 +80,23 @@ if __name__ == "__main__":
     for i in range(nexp):
         exp_no = i+offset
         directory = get_dir(exp_no)
-        subprocess.call(["mkdir", "-p", directory])
         output = os.path.join(directory, "%05d" % (exp_no))
         paramfile = output + ".in"
         if not os.path.exists(paramfile):
-            for name, irange in zip(lintest_params, lintest_irange):
-                if irange is None: continue
-                params(name).value = random.uniform(*irange)
+            #for name, irange in zip(lintest_params, lintest_irange):
+            #    if irange is None: continue
+            #    params(name).value = random.uniform(*irange)
+            Jc,Js1,Js2 = get_random_cp()
+            br = random.uniform(*lintest_irange[-1])
+            for name, value in zip(lintest_params, [Jc,Js1,Js2,br]):
+                params(name).value = value
 
+            subprocess.call(["mkdir", "-p", directory])
             params.save(paramfile)
 
         toymc.add_job(output, paramfile, genflags, fitflags, data, templates)
 
-    results = toymc.run_jobs(True)
+    results = toymc.run_jobs(False, True)
 
     pinput = dspdsmks.Parameters()
 

@@ -10,6 +10,7 @@ import utils
 #ngenerated = float(sys.argv[1])
 filenames = sys.argv[1:]
 sys.argv = sys.argv[:1]
+print filenames
 
 import pyroot as pr
 import dspdsmks
@@ -26,6 +27,7 @@ eff_DsDp = br_DsDp * sum(br_Dp)
 eff_DsD0 = br_DsD0 * sum(br_D0)
 eff_DsDs = (eff_DsDp + eff_DsD0)**2;
 eff_DDKs = eff_DsDs * br_KsPP
+eff_DsD0Km = (eff_DsDp + eff_DsD0) * sum(br_D0)
 
 #signal_yield_par = ("yield_svd1_signal", "yield_svd2_signal")
 #params = dspdsmks.Parameters(sys.argv[1])
@@ -51,6 +53,8 @@ ngenerated = np.array([(h_ngenerated.GetBinContent(i+1), h_ngenerated.GetBinCont
 raw_eff = signal_yield / ngenerated
 rec_eff = raw_eff * eff_DDKs
 
+ctl_eff = raw_eff * eff_DsD0Km
+
 print """ngenerated = np.array([
     %d,
     %d,
@@ -61,22 +65,33 @@ efficiency_mc = np.array([
    [%.7e, %.7e],
 ])""" % (tuple(ngenerated[:,0]) + tuple(rec_eff.flat))
 
+print """efficiency_ctrl = np.array([
+   [%.7e, %.7e],
+   [%.7e, %.7e],
+])""" % tuple(ctl_eff.flat)
+
 #print """efficency_mc = [
     #np.array([%.5e, %.5e]),
     #np.array([%.5e, %.5e]),
 #]""" % tuple(rec_eff.flat)
 
+print """
+signal_svd1_eff                  %17.10e %17.10e      0      0     Y
+signal_svd2_eff                  %17.10e %17.10e      0      0     Y
+""" % tuple(rec_eff.flat)
+
 print r"""
 \def\FractionCorrectRec{\SI{%.1f}{\%%}}
 \def\FractionCorrectBestB{\SI{%.1f}{\%%}}
 \def\ReconstructedBR{\num{%.3e}}
+\def\ReconstructedBRCtrl{\num{%.3e}}
 \def\RawReconstructionEffSVDOne{%s}
 \def\RawReconstructionEffSVDTwo{%s}
 \def\ReconstructionEffSVDOne{%s}
 \def\ReconstructionEffSVDTwo{%s}""" % (
     100*ncorrect[1] / (ncorrect[0]+ncorrect[1]),
     100*bestB[1] / (bestB[0]+bestB[1]),
-    eff_DDKs,
+    eff_DDKs, eff_DsD0Km,
     utils.format_error(*raw_eff[0], exponent=-3),
     utils.format_error(*raw_eff[1], exponent=-3),
     utils.format_error(*rec_eff[0], exponent=-5),

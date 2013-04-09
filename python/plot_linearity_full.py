@@ -61,25 +61,30 @@ for par, title in zip(linearity_full.lintest_params, linearity_full.lintest_pnam
             lin_pull_sigma.SetBinContent(x,fit.GetParameter(2))
             lin_pull_sigma.SetBinError(x,fit.GetParError(2))
 
-        fit = root.TF1("line","pol1")
+        fit = root.TF1("line","pol1",-0.8,0.8)
         for a,h in (a1,lin_result),(a2,lin_pull_mean),(a3,lin_pull_sigma):
-            h.Fit(fit,"Q")
+            if par is not "yield_signal_br":
+                h.Fit(fit,"QR")
+            else:
+                h.Fit(fit,"Q")
             r2mpl.plot(h, axes=a, errors=True, color=colors[par])
             r2mpl.plot(fit, axes=a, color=colors[par])
-
-        ymin = result.GetYaxis().GetXmin()
-        ymax = result.GetYaxis().GetXmax()
-        a1.set_ylim(ymin,ymax)
-        a2.set_ylim(-1,1)
-        a3.set_ylim(0,2)
+            utils.text_box(a, "tl", r"\begin{align*}m&=%s\\t&=%s\end{align*}" % (utils.format_error(fit.GetParameter(1), fit.GetParError(1)), utils.format_error(fit.GetParameter(0), fit.GetParError(0))))
 
         lin_res = lin_result.Clone("tmp")
         for i in range(1,lin_res.GetNbinsX()+1):
             lin_res.SetBinContent(i,lin_res.GetBinContent(i)-lin_res.GetBinCenter(i))
         r2mpl.plot(lin_res, axes=a1, errors=True, color="k")
 
+        if par is not "yield_signal_br":
+            #ymin = result.GetYaxis().GetXmin()
+            #ymax = result.GetYaxis().GetXmax()
+            a1.set_ylim(-1.2,1.2)
+        a2.set_ylim(-1,1)
+        a3.set_ylim(0,2)
+
     elif isinstance(result,root.TH1D):
         toymc.draw_toyMC(result,title)
         toymc.draw_toyMC(pull,title + ", pull")
 
-r2mpl.save_all(infile,png=False)
+r2mpl.save_all(infile,png=False,single_pdf=True)

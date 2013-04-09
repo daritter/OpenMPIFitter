@@ -16,21 +16,18 @@ lock = threading.Lock()
 
 def draw_toyMC(hist,title,xlabel="",ylabel="",exponent=None):
     fit = root.TF1("gauss","gaus")
-    bbox_props = dict(boxstyle="round", fc="w", ec="k")
-    font_props = matplotlib.font_manager.FontProperties(size="small")
     textbox = r"\begin{align*}\mu&=%s\\\sigma&=%s\end{align*}"
     fig, a = utils.get_plotaxes()
-    a.set_title(title)
-    a.set_xlabel(xlabel)
-    a.set_xlabel(ylabel)
     hist.Fit(fit,"LQ")
     r2mpl.plot(hist,axes=a, errors=True, color="k", zorder=1)
     r2mpl.plot(fit,axes=a, color="r", zorder=0)
-    a.annotate(textbox % (
+    utils.text_box(a, "tl", textbox % (
         utils.format_error(fit.GetParameter(1), fit.GetParError(1), exponent=exponent),
-        utils.format_error(fit.GetParameter(2), fit.GetParError(2), exponent=exponent)),
-        xy=(1,1), xycoords="axes fraction", xytext=(-8,-8),
-        textcoords="offset points", color="k", ha="right", va="top", bbox=bbox_props, font_properties=font_props)
+        utils.format_error(fit.GetParameter(2), fit.GetParError(2), exponent=exponent)))
+
+    a.set_title(title)
+    a.set_xlabel(xlabel)
+    a.set_ylabel(ylabel)
     return a, (fit.GetParameter(1), fit.GetParError(1)), (fit.GetParameter(2), fit.GetParError(2))
 
 
@@ -57,10 +54,8 @@ def fit_experiment(basename, initial, files, flags, components, log):
     log.flush()
     parfile  = basename + ".par"
     if os.path.exists(parfile): return parfile
-    for run in range(10):
-        ret = subprocess.call(["./ddk-fitter", "-i", initial, "-o", parfile, "--cmp=%s" % components] + files + flags, stdout = log)
-        initial = parfile
-        if ret == 0: return parfile
+    ret = subprocess.call(["./ddk-fitter", "-i", initial, "-o", parfile, "--cmp=%s" % components] + files + flags, stdout = log)
+    if ret == 0: return parfile
 
     os.remove(parfile)
     raise Exception("Experiment %s failed to converge" % basename)
@@ -118,17 +113,17 @@ def run_jobs(refit=False, deltaT=True):
 
 
 if __name__ == "__main__":
-    nexp = 1000
-    toyname = "gsim"
+    nexp = 200
+    toyname = "pdf"
 
     params = dspdsmks.Parameters()
     params.load("ddk-out.par")
 
-    params("signal_svd1_nbb").value, params("signal_svd1_nbb").error = utils.nbb[0]
-    params("signal_svd2_nbb").value, params("signal_svd2_nbb").error = utils.nbb[1]
-    params("signal_dt_Jc").value = utils.cpv[0,0]
-    params("signal_dt_Js1").value = utils.cpv[1,0]
-    params("signal_dt_Js2").value = utils.cpv[2,0]
+    params("signal_svd1_nbb").value, params("signal_svd1_nbb").error = utils.nbb[0] #* 10
+    params("signal_svd2_nbb").value, params("signal_svd2_nbb").error = utils.nbb[1] #* 10
+    params("signal_dt_Jc").value = 0.0 #utils.cpv[0,0]
+    params("signal_dt_Js1").value = 0.0 #utils.cpv[1,0]
+    params("signal_dt_Js2").value = 0.9 #utils.cpv[2,0]
     params("yield_mixed_svd1").value /= 10
     params("yield_mixed_svd2").value /= 10
 
@@ -147,7 +142,7 @@ if __name__ == "__main__":
     if "mixed" in templates or "charged" in templates:
         fitflags[-1] += "|yield_mixed.*"
 
-    #fitflags = ["--fix=.*","--release=yield_signal.*"]
+    #fitflags = ["--fix=.*","--release=yield_.*|signal_dt_J.*"]
 
     if toyname.find("gsim")>=0:
         genflags.append("--gsim")
@@ -160,21 +155,21 @@ if __name__ == "__main__":
     for i in range(nexp):
         add_job("toymc/%s-%03d" % (toyname,i), paramfile, genflags, fitflags, data, templates)
 
-    br_result = root.TH1D("brresult","",50,0,2*utils.br)
-    br_pull   = root.TH1D("brpull","",50,-5,5)
-    jc_result = root.TH1D("jc","",50,-1.5,1.5)
-    js1_result = root.TH1D("js1","",50,-1.5,1.5)
-    js2_result = root.TH1D("js2","",50,-1.5,1.5)
+    br_result = root.TH1D("brresult","",100,0,2*utils.br)
+    br_pull   = root.TH1D("brpull","",100,-5,5)
+    jc_result = root.TH1D("jc","",100,-1.5,1.5)
+    js1_result = root.TH1D("js1","",100,-1.5,1.5)
+    js2_result = root.TH1D("js2","",100,-1.5,1.5)
     bl_result = root.TH1D("blifetime","",50,1.0,2.0)
-    mixed_svd1_result = root.TH1D("mixed_svd1","",50,params("yield_mixed_svd1").value*0.5,params("yield_mixed_svd1").value*1.5)
-    mixed_svd2_result = root.TH1D("mixed_svd2","",50,params("yield_mixed_svd2").value*0.5,params("yield_mixed_svd2").value*1.5)
+    mixed_svd1_result = root.TH1D("mixed_svd1","",100,params("yield_mixed_svd1").value*0.5,params("yield_mixed_svd1").value*1.5)
+    mixed_svd2_result = root.TH1D("mixed_svd2","",100,params("yield_mixed_svd2").value*0.5,params("yield_mixed_svd2").value*1.5)
 
     cpv_result = [jc_result, js1_result, js2_result, bl_result, mixed_svd1_result, mixed_svd2_result]
-    cpv_pull = [root.TH1D(e.GetName()+"_pull","",50,-5,5) for e in cpv_result]
+    cpv_pull = [root.TH1D(e.GetName()+"_pull","",100,-5,5) for e in cpv_result]
     cpv_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "signal_dt_blifetime", "yield_mixed_svd1", "yield_mixed_svd2"]
     cpv_input = [params(e).value for e in cpv_params]
 
-    for parfile in run_jobs(True, True):
+    for parfile in run_jobs(False, True):
         if not os.path.exists(parfile): continue
         params.load(parfile)
         br = params("yield_signal_br").value
@@ -186,7 +181,7 @@ if __name__ == "__main__":
             cpv_result[i].Fill(p.value)
             cpv_pull[i].Fill((p.value-cpv_input[i])/p.error)
 
-    a,m,s = draw_toyMC(br_result, "Branching ratio, input=%.3g" % utils.br, "Fitted Br", exponent=-3)
+    a,m,s = draw_toyMC(br_result, r"$\mathcal{B}(\ddk)$, $input=%s$" % utils.format_error(utils.br, precision=1), "$\mathcal{B}(\ddk)$", exponent=-3)
     a.set_ylim(0, br_result.GetMaximum()*1.5)
     draw_toyMC(br_pull,"Branching ratio pull")
 
@@ -195,7 +190,7 @@ if __name__ == "__main__":
     for i,name in enumerate(names):
         hist = cpv_result[i]
         pull = cpv_pull[i]
-        draw_toyMC(hist, r"%s, input=%.3g" % (name, cpv_input[i]))
+        draw_toyMC(hist, r"%s, $input=%.3g$" % (name, cpv_input[i]))
         draw_toyMC(pull, r"Pull for %s" % (name))
 
-    r2mpl.save_all("toymc-%s" % toyname, png=False)
+    r2mpl.save_all("toymc-%s" % toyname, png=False, single_pdf=True)
