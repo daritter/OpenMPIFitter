@@ -89,7 +89,15 @@ def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
             last = f.Clone("tmp")
 
         #r2mpl.plotSmooth(last, axes=data_axes, color=colors[l], samples=2000, label=l, zorder=i+1)
-        r2mpl.plot(last, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
+        #r2mpl.plot(last, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
+
+        #plot resampled histogram for better comparison
+        scale = last.GetNbinsX()/data.GetNbinsX()
+        if(scale!=1):
+            last2 = last.Clone("tmp_resampled")
+            last2.Rebin(scale)
+            last2.Scale(1./scale)
+            r2mpl.plot(last2, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
 
     r2mpl.plot(data,errors=True,axes=data_axes, color="k", label="data", linewidth=0.5, capsize=1.0, zorder=10)
 
@@ -238,12 +246,12 @@ for i in range(7):
 
 r2mpl.save_all(filename + "-dT-q", png=False, single_pdf=False)
 
-make_dT_plots("dT_svd1_qe_rbin%d" % 7, "SVD1", "q")
-make_dT_plots("dT_svd2_qe_rbin%d" % 7, "SVD2", "q")
+make_dT_plots("dT_svd1_qe_rbin%d" % 7, "SVD1", "q\eta")
+make_dT_plots("dT_svd2_qe_rbin%d" % 7, "SVD2", "q\eta")
 for i in range(7):
-    make_dT_plots("dT_svd1_qe_rbin%d" % i, "SVD1, rbin %d" % i, "q")
+    make_dT_plots("dT_svd1_qe_rbin%d" % i, "SVD1, rbin %d" % i, "q\eta")
 for i in range(7):
-    make_dT_plots("dT_svd2_qe_rbin%d" % i, "SVD2, rbin %d" % i, "q")
+    make_dT_plots("dT_svd2_qe_rbin%d" % i, "SVD2, rbin %d" % i, "q\eta")
 
 r2mpl.save_all(filename + "-dT-qe", png=False, single_pdf=False)
 
