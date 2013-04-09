@@ -80,6 +80,10 @@ namespace PAR {
     PARAM(mixed_dt_outlierscale);
     PARAM(mixed_dt_outlierscale2);
     PARAM(mixed_dt_outlierratio);
+
+    /*PARAM(mixed_dt_Jc);
+    PARAM(mixed_dt_Js1);
+    PARAM(mixed_dt_Js2);*/
 };
 
 
@@ -100,6 +104,9 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
                 PAR::mixed_dt_mul_mean1, PAR::mixed_dt_mul_mean2, PAR::mixed_dt_mul_mean3, PAR::mixed_dt_mul_mean4,
                 PAR::mixed_dt_mul_sigma1, PAR::mixed_dt_mul_sigma2, PAR::mixed_dt_mul_sigma3, PAR::mixed_dt_mul_sigma4,
                 PAR::mixed_dt_mul_weight2, PAR::mixed_dt_mul_weight3, PAR::mixed_dt_mul_weight4);
+        /*deltaT.setParameters(
+                PAR::mixed_dt_blifetime, PAR::mixed_dt_Jc, PAR::mixed_dt_Js1, PAR::mixed_dt_Js2,
+                PAR::mixed_dt_fractionscale, PAR::mixed_dt_outliermean, useDeltaT?Event::dt_mixed:-1);*/
     }
 
     virtual ~MixedPDF(){}
