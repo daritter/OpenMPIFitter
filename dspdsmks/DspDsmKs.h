@@ -382,6 +382,7 @@ struct DspDsmKsPDF {
         bool gsim = false;
         std::vector<Event> gsim_data[2];
         if(!templates.empty()){
+            std::cout << "Generating from gsim" << std::endl;
             loadEvents(gsim_data, templates, 0, 1, false);
             gsim = true;
         }
@@ -410,6 +411,7 @@ struct DspDsmKsPDF {
             real_variate random_01(random_generator, uniform_real(0,1));
 
             int nEvents = (int)round(get_yield(par, svd==0?Component::SVD1:Component::SVD2));
+            std::cout << "yield for SVD " << svd << ": " << nEvents << std::endl;
             if(nEvents<=0) continue;
             boost::random::poisson_distribution<> poisson(nEvents);
             nEvents = poisson(random_generator);
@@ -475,7 +477,8 @@ struct DspDsmKsPDF {
 
                 //Take Mbc/dE stuff from template if available
                 if(gsim){
-                    Event &e2 = rbingsim[e.rbin][random_gsimevent[e.rbin]()];//gsim_data[svd][random_gsim()];
+                    Event &e2 = rbingsim[e.rbin][random_gsimevent[e.rbin]()];
+                    //Event &e2 = gsim_data[svd][random_gsim()];
                     e.benergy = e2.benergy;
                     e.expNo = e2.expNo;
                     e.Mbc = e2.Mbc;
