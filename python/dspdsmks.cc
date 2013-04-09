@@ -1,6 +1,7 @@
 #include <boost/python.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/format.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <Parameters.h>
 #include "../dspdsmks/DspDsmKs.h"
 #include <fstream>
@@ -26,6 +27,9 @@ struct PDFHelper {
         }
     }
 };
+
+bool operator==(const Event &a, const Event &b){ return false;}
+bool operator!=(const Event &a, const Event &b){ return true;}
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadParamsFromFile, Parameters::load, 1, 4);
 
@@ -70,6 +74,41 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("__repr__", &RangeHelper::tostring)
         ;
 
+    class_<Event>("Event")
+        .def_readonly("expNo", &Event::expNo)
+        .def_readonly("svdVs", &Event::svdVs)
+        .def_readonly("isMC", &Event::isMC)
+        .def_readonly("benergy", &Event::benergy)
+        .def_readonly("Mbc", &Event::Mbc)
+        .def_readonly("dE", &Event::dE)
+        .def_readonly("m2DspKs", &Event::m2DspKs)
+        .def_readonly("m2DsmKs", &Event::m2DsmKs)
+        .def_readonly("cosTheta", &Event::cosTheta)
+        .def_readonly("deltaZ", &Event::deltaZ)
+        .def_readonly("vtx_ntrk", &Event::vtx_ntrk)
+        .def_readonly("vtx_zerr", &Event::vtx_zerr)
+        .def_readonly("vtx_chi2", &Event::vtx_chi2)
+        .def_readonly("vtx_ndf", &Event::vtx_ndf)
+        .def_readonly("tag_ntrk", &Event::tag_ntrk)
+        .def_readonly("tag_zerr", &Event::tag_zerr)
+        .def_readonly("tag_chi2", &Event::tag_chi2)
+        .def_readonly("tag_ndf", &Event::tag_ndf)
+        .def_readonly("tag_q", &Event::tag_q)
+        .def_readonly("tag_r", &Event::tag_r)
+        .def_readonly("tag_isL", &Event::tag_isL)
+        .def_readonly("rbin", &Event::rbin)
+        .def_readonly("deltaT", &Event::deltaT)
+        .def_readonly("eta", &Event::eta)
+        .def_readonly("wrongTag_w", &Event::wrongTag_w)
+        .def_readonly("wrongTag_dw", &Event::wrongTag_dw)
+        .def_readonly("Ak", &Event::Ak)
+        .def_readonly("Ck", &Event::Ck)
+        ;
+
+    class_< std::vector<Event> >("EventList")
+        .def(vector_indexing_suite< std::vector<Event> >())
+        ;
+
     Range& (DspDsmKsPDF::*range_mBC)() = &DspDsmKsPDF::getRange_mBC;
     Range& (DspDsmKsPDF::*range_dE)() = &DspDsmKsPDF::getRange_dE;
     Range& (DspDsmKsPDF::*range_dT)() = &DspDsmKsPDF::getRange_dT;
@@ -80,5 +119,6 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("range_mBC", range_mBC, return_value_policy<reference_existing_object>())
         .def("range_dE", range_dE, return_value_policy<reference_existing_object>())
         .def("range_dT", range_dT, return_value_policy<reference_existing_object>())
+        .def("data", &DspDsmKsPDF::getData, return_value_policy<reference_existing_object>())
         ;
 }
