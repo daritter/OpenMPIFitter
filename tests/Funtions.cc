@@ -7,7 +7,7 @@ double getStep(int i, int N, double min, double max){
     return 1.0*i/(N-1) * (max-min) + min;
 }
 
-#define step(var,min,max,N) for(double i##var=0, var##step=1.0*(max-min)/(N-1), var=min; i##var<N; i##var+=1, var=i##var*var##step+min)
+#define step(var,min,max,N) for(double i##var=0, var=min; i##var<N; i##var+=1, var=1.0*i##var/(N-1)*(max-min)+min)
 
 
 TEST(getStepTest,Works){
@@ -45,12 +45,13 @@ TEST(GaussTest,Sigma) {
 }
 
 TEST(GaussTest,Limits) {
-    for(int ill=0; ill<99; ++ill){
-        for(int iul=ill+1; iul<100; ++iul){
-            double ul = getStep(iul,100,-10,10);
-            double ll = getStep(ill,100,-10,10);
+    for(int ill=0; ill<100; ++ill){
+        for(int iul=ill+1; iul<101; ++iul){
+            double ul = getStep(iul,101,-10,10);
+            double ll = getStep(ill,101,-10,10);
             Gauss g1(ll,ul);
             step(x,ll,ul,1001){
+                if(x<ll || x>ul) continue;
                 g1.set(0,3);
                 double norm = Belle::norm_gaussian(ll,ul,0,3);
                 EXPECT_FLOAT_EQ(g1(x), Belle::gaussian(x,0,3)/norm);
@@ -62,13 +63,14 @@ TEST(GaussTest,Limits) {
 TEST(GaussTest,Bifur) {
     for(int ill=0; ill<10; ++ill){
         for(int iul=ill+1; iul<11; ++iul){
-            double ul = getStep(iul,10,-10,10);
-            double ll = getStep(ill,10,-10,10);
+            double ul = getStep(iul,11,-10,10);
+            double ll = getStep(ill,11,-10,10);
             Gauss g1(ll,ul);
             step(mean,-5,5,11){
                 step(sigma1,1e-5,3,10){
                     step(sigma2,1e-5,3,10){
                         step(x,ul,ll,101){
+                            if(x<ll || x>ul) continue;
                             g1.set(mean,sigma1,sigma2);
                             double norm = Belle::norm_bigauss(ll,ul,mean,sigma1,sigma2);
                             if(norm == 0) continue;
