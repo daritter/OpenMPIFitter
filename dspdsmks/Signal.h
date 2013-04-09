@@ -146,7 +146,7 @@ class SignalPDF: public DeltaTComponent<> {
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
-            //signalPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
+            signalPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             signalPDF_svd2.set(par[PAR::signal_svd2_ratio]);
 
             signalPDF_svd2.fcn1.fcnx.set(par[PAR::signal_svd2_Mbc_g3_ratio]);

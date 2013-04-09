@@ -55,9 +55,11 @@ class DeltaTPDF {
                 if(cacheId>=0) e.dTcache[cacheId].set(abs_tau, life_pdf, int_life_pdf, sin_pdf, cos_pdf);
             }
 
-            double sig_pdf = (life_pdf*(1.0 - e.tag_q*e.wrongTag_dw)
-                    + e.tag_q*(1.0-2.0*e.wrongTag_w)*(e.eta*par[Jc]*cos_pdf
-                        - (par[Js1] + e.eta*par[Js2])*sin_pdf))/int_life_pdf;
+            double sig_pdf = (
+                    life_pdf * (1.0 - e.tag_q*e.wrongTag_dw) +
+                    e.tag_q * (1.0-2.0*e.wrongTag_w) *
+                    (e.eta * par[Jc] * cos_pdf - (par[Js1] + e.eta * par[Js2]) * sin_pdf)
+                    )/int_life_pdf;
 
             double omean = 0.0;
             if(outlierMean>=0){

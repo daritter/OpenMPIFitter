@@ -87,8 +87,6 @@ struct Event {
     double tag_r;
     int    tag_isL;
 
-    mutable dTCache dTcache[MAX_DTCACHE];
-
     //Calculated variables
     int rbin;
     double wrongTag_w;
@@ -97,6 +95,8 @@ struct Event {
     double Ck;
     double deltaT;
     int eta;
+
+    mutable dTCache dTcache[MAX_DTCACHE];
 
     bool operator<(const Event& b) const {
         return benergy<b.benergy;
@@ -113,10 +113,12 @@ struct Event {
             tag_r = fabs(tag_r);
             eta = (m2DsmKs>m2DspKs)?1:-1;
         }
-        rbin = Belle::set_rbin(tag_r);
-
         //Check quality flag
         if(flag!=0 || tag_q==0) return false;
+
+        rbin = Belle::set_rbin(tag_r);
+        assert(rbin>=0);
+        assert(rbin<7);
 
         if(qualityCuts){
             //Random cuts imposed by ipcv for whatever reason
