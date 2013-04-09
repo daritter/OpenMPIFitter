@@ -263,70 +263,75 @@ int main(int argc, char* argv[]){
     PlotRoutine plotter;
     std::string componentList;
 
-    /** Read program options using boost::program_options. Could be anything else */
-    po::options_description desc("Avast, thy options be:");
-    desc.add_options()
-        ("help,h", "produce this finely crafted help message")
-        ("config,c", po::value<std::string>()->default_value("config.ini"),
-         "Config file with standard parrrrameters")
-        ("input", po::value<std::vector<std::string> >(&pdf.getFiles())->composing(),
-         "Root files containing the data")
-        ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
-         "Comma separated list of components to use for the fit")
-        ("min-Mbc", po::value<float>(&pdf.getRange_mBC().vmin)->default_value(pdf.getRange_mBC().vmin),
-         "The minimal Mbc value for the fit")
-        ("max-Mbc", po::value<float>(&pdf.getRange_mBC().vmax)->default_value(pdf.getRange_mBC().vmax),
-         "The maximal Mbc value for the fit")
-        ("min-dE", po::value<float>(&pdf.getRange_dE().vmin)->default_value(pdf.getRange_dE().vmin),
-         "The minimal dE value for the fit")
-        ("max-dE", po::value<float>(&pdf.getRange_dE().vmax)->default_value(pdf.getRange_dE().vmax),
-         "The maximal dE value for the fit")
-        ("min-dT", po::value<float>(&pdf.getRange_dT().vmin)->default_value(pdf.getRange_dT().vmin),
-         "The minimal dT value for the fit")
-        ("max-dT", po::value<float>(&pdf.getRange_dT().vmax)->default_value(pdf.getRange_dT().vmax),
-         "The maximal dT value for the fit")
-        ("bestB", po::value<std::string>(&pdf.getBestB())->default_value(pdf.getBestB()),
-         "BestB Selection method to use")
-        ("override", po::value<std::string>(&plotter.overrideParameters)->default_value(plotter.overrideParameters),
-         "Aye, give the order to be overrrridn the parrrameters which are given in a comma separated list of name:value pairs")
-        ("plot-output,o", po::value<std::string>(&plotter.rootFile)->default_value(plotter.rootFile),
-         "Basename to save the plots")
-        ("parameter-out,i", po::value<std::string>(&plotter.parameterIn)->default_value(plotter.parameterIn),
-         "Thy file to pillage thy parrrametes from")
-        ("plot-mindT", po::value<float>(&plotter.plotrange_dT.vmin)->default_value(plotter.plotrange_dT.vmin),
-         "The minimal dT value for the plot")
-        ("plot-maxdT", po::value<float>(&plotter.plotrange_dT.vmax)->default_value(plotter.plotrange_dT.vmax),
-         "The maximal dT value for the plot")
-        ("bins-Mbc", po::value<int>(&plotter.bins_mBC)->default_value(plotter.bins_mBC),
-         "Number of Bins per axis for the data")
-        ("sampling-Mbc", po::value<int>(&plotter.sampling_mBC)->default_value(plotter.sampling_mBC),
-         "sampling for the fit")
-        ("bins-dE", po::value<int>(&plotter.bins_dE)->default_value(plotter.bins_dE),
-         "Number of Bins per axis for the data")
-        ("sampling-dE", po::value<int>(&plotter.sampling_dE)->default_value(plotter.sampling_dE),
-         "sampling for the fit")
-        ("bins-dT", po::value<int>(&plotter.bins_dT)->default_value(plotter.bins_dT),
-         "Number of Bins per axis for the data")
-        ("sampling-dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
-         "sampling for the fit")
-        ("no-pdf", po::bool_switch(&plotter.no_pdf),
-         "do not create pdfs, just fill the root file")
-        ;
+    try{
+        /** Read program options using boost::program_options. Could be anything else */
+        po::options_description desc("Avast, thy options be:");
+        desc.add_options()
+            ("help,h", "produce this finely crafted help message")
+            ("config,c", po::value<std::string>()->default_value("config.ini"),
+             "Config file with standard parrrrameters")
+            ("input", po::value<std::vector<std::string> >(&pdf.getFiles())->composing(),
+             "Root files containing the data")
+            ("cmp", po::value<std::string>(&componentList)->default_value(componentList),
+             "Comma separated list of components to use for the fit")
+            ("min-Mbc", po::value<float>(&pdf.getRange_mBC().vmin)->default_value(pdf.getRange_mBC().vmin),
+             "The minimal Mbc value for the fit")
+            ("max-Mbc", po::value<float>(&pdf.getRange_mBC().vmax)->default_value(pdf.getRange_mBC().vmax),
+             "The maximal Mbc value for the fit")
+            ("min-dE", po::value<float>(&pdf.getRange_dE().vmin)->default_value(pdf.getRange_dE().vmin),
+             "The minimal dE value for the fit")
+            ("max-dE", po::value<float>(&pdf.getRange_dE().vmax)->default_value(pdf.getRange_dE().vmax),
+             "The maximal dE value for the fit")
+            ("min-dT", po::value<float>(&pdf.getRange_dT().vmin)->default_value(pdf.getRange_dT().vmin),
+             "The minimal dT value for the fit")
+            ("max-dT", po::value<float>(&pdf.getRange_dT().vmax)->default_value(pdf.getRange_dT().vmax),
+             "The maximal dT value for the fit")
+            ("bestB", po::value<std::string>(&pdf.getBestB())->default_value(pdf.getBestB()),
+             "BestB Selection method to use")
+            ("override", po::value<std::string>(&plotter.overrideParameters)->default_value(plotter.overrideParameters),
+             "Aye, give the order to be overrrridn the parrrameters which are given in a comma separated list of name:value pairs")
+            ("plot-output,o", po::value<std::string>(&plotter.rootFile)->default_value(plotter.rootFile),
+             "Basename to save the plots")
+            ("parameter-out,i", po::value<std::string>(&plotter.parameterIn)->default_value(plotter.parameterIn),
+             "Thy file to pillage thy parrrametes from")
+            ("plot-mindT", po::value<float>(&plotter.plotrange_dT.vmin)->default_value(plotter.plotrange_dT.vmin),
+             "The minimal dT value for the plot")
+            ("plot-maxdT", po::value<float>(&plotter.plotrange_dT.vmax)->default_value(plotter.plotrange_dT.vmax),
+             "The maximal dT value for the plot")
+            ("bins-Mbc", po::value<int>(&plotter.bins_mBC)->default_value(plotter.bins_mBC),
+             "Number of Bins per axis for the data")
+            ("sampling-Mbc", po::value<int>(&plotter.sampling_mBC)->default_value(plotter.sampling_mBC),
+             "sampling for the fit")
+            ("bins-dE", po::value<int>(&plotter.bins_dE)->default_value(plotter.bins_dE),
+             "Number of Bins per axis for the data")
+            ("sampling-dE", po::value<int>(&plotter.sampling_dE)->default_value(plotter.sampling_dE),
+             "sampling for the fit")
+            ("bins-dT", po::value<int>(&plotter.bins_dT)->default_value(plotter.bins_dT),
+             "Number of Bins per axis for the data")
+            ("sampling-dT", po::value<int>(&plotter.sampling_dT)->default_value(plotter.sampling_dT),
+             "sampling for the fit")
+            ("no-pdf", po::bool_switch(&plotter.no_pdf),
+             "do not create pdfs, just fill the root file")
+            ;
 
-    po::variables_map vm;
-    po::positional_options_description pod;
-    pod.add("input", -1);
-    po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
-    std::ifstream config(vm["config"].as<std::string>().c_str());
-    if(config.is_open()){
-        po::store(po::parse_config_file(config, desc, true), vm);
-        config.close();
-    }
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
+        po::variables_map vm;
+        po::positional_options_description pod;
+        pod.add("input", -1);
+        po::store(po::command_line_parser(argc, argv).options(desc).positional(pod).run(), vm);
+        std::ifstream config(vm["config"].as<std::string>().c_str());
+        if(config.is_open()){
+            po::store(po::parse_config_file(config, desc, true), vm);
+            config.close();
+        }
+        if (vm.count("help")) {
+            std::cout << desc << "\n";
+            return 1;
+        }
+        po::notify(vm);
+    }catch(std::exception &e){
+        std::cerr<< e.what() << std::endl;
         return 1;
     }
-    po::notify(vm);
 
     if(!componentList.empty()){
         try{
