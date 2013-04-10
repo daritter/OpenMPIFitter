@@ -86,11 +86,8 @@ void Parameters::load_stream(istream &in){
                 cerr << "ERROR reading parameter '" << name << "' (line " << lineNr << "): " << e.what() << endl;
                 throw e;
             }catch(invalid_argument &e){
-                cerr << "WARNING: Unknown parameter '" << name << "' (line " << lineNr << ")\n";
-                if(!comment.empty()) {
-                    line += " " + comment;
-                    trim(line);
-                }
+                cerr << "ERROR: Unknown parameter '" << name << "' (line " << lineNr << ")\n";
+                throw e;
             }
         }
         //Remember which parameter (-1 for none) and the comment for this line
