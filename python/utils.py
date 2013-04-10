@@ -50,6 +50,24 @@ br_ctrl = 2.47e-3
 nevents = nbb[:,0] * efficiency_mc[:,0] * br
 nevents_ctrl = nbb[:,0] * efficiency_ctrl[:,0] * br_ctrl
 
+#Cuts to make sure we only use the correct Events
+cuts = "{bb}.flag==0 && {bb}.tag.flavour!=0 && \
+    ({bb}.Mbc>{min_Mbc} && {bb}.Mbc<{max_Mbc}) &&\
+    ({bb}.dE>{min_dE} && {bb}.dE<{max_dE}) &&\
+    ({bb}.deltaZ*{inv_bgc}>{min_dT} && {bb}.deltaZ*{inv_bgc}<{max_dT}) && !(\
+    ({bb}.vtx.ntrk>1    && {bb}.vtx.chi2/{bb}.vtx.ndf > {qual_cut}) ||\
+    ({bb}.tag.ntrk>1    && {bb}.tag.chi2/{bb}.tag.ndf > {qual_cut}) ||\
+    ({bb}.vtx.ntrk == 1 && {bb}.vtx.zerr > {sngl_cut}) ||\
+    ({bb}.vtx.ntrk > 1  && {bb}.vtx.zerr > {mult_cut}) ||\
+    ({bb}.tag.ntrk == 1 && {bb}.tag.zerr > {sngl_cut}) ||\
+    ({bb}.tag.ntrk > 1  && {bb}.tag.zerr > {mult_cut}) )".format(
+    bb="bestLHsig", qual_cut=50, mult_cut=0.02, sngl_cut=0.05,
+    min_Mbc=5.24, max_Mbc=5.30,
+    min_dE=-0.15, max_dE=0.1,
+    min_dT=-70, max_dT=70,
+    inv_bgc=78.48566945838871754705,
+)
+
 def get_plotaxes():
     """Return axes"""
     f = pl.figure(figsize=(4,4))
