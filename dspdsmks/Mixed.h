@@ -45,6 +45,7 @@ namespace PAR {
     PARAM(mixed_svd2_dE_mean);
     PARAM(mixed_svd2_dE_sigma);
     PARAM(mixed_svd2_dE_cheb1);
+    PARAM(mixed_svd2_dE_cheb2);
     PARAM(mixed_svd2_ctrlpeak_ratio);
     PARAM(mixed_svd2_ctrlpeak_Mbc_mean);
     PARAM(mixed_svd2_ctrlpeak_Mbc_sigma);
@@ -172,7 +173,7 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
     > mixedPDF_svd1;
     Add2DFcn<
         Add2DFcn< CompoundFcn2D<Gauss, Gauss>, CompoundFcn2D<Gauss, Gauss> >,
-        CompoundFcn2D<Argus, Chebychev<1> >
+        CompoundFcn2D<Argus, Chebychev<2> >
     > mixedPDF_svd2;
 };
 

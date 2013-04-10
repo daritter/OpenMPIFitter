@@ -40,6 +40,7 @@ namespace PAR {
     PARAM(charged_svd2_dE_mean);
     PARAM(charged_svd2_dE_sigma);
     PARAM(charged_svd2_dE_cheb1);
+    PARAM(charged_svd2_dE_cheb2);
 
     PARAM(charged_dt_blifetime);
     PARAM(charged_dt_sgl_mean1);
@@ -145,7 +146,7 @@ class ChargedPDF: public DeltaTComponent<GenericTPDF> {
     > chargedPDF_svd1;
     Add2DFcn<
         CompoundFcn2D<Gauss, Gauss>,
-        CompoundFcn2D<Argus, Chebychev<1> >
+        CompoundFcn2D<Argus, Chebychev<2> >
     > chargedPDF_svd2;
 };
 

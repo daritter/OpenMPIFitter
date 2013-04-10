@@ -196,6 +196,7 @@ mixed_svd2_Mbc_argusC            -3.2629617769e+01  1.6212141620e+00   -inf     
 mixed_svd2_dE_mean               -1.2836241524e-02  6.3652520784e-03   -inf    inf     N
 mixed_svd2_dE_sigma               3.9178170750e-02  6.9857310971e-03      0    inf     N
 mixed_svd2_dE_cheb1              -7.1944578671e-01  8.1860308543e-02   -inf    inf     N
+mixed_svd2_dE_cheb2               0.0000000000e+00  0.0000000000e+00   -inf    inf     Y
 
 mixed_svd2_ctrlpeak_ratio         1.0000000000e+00  3.6138765792e-02      0      1     Y
 mixed_svd2_ctrlpeak_Mbc_mean      5.2796122098e+00  1.5622430394e-04   -inf    inf     Y
@@ -266,6 +267,7 @@ charged_svd2_Mbc_argusC          -3.3665396081e+01  1.8493698353e+00   -inf     
 charged_svd2_dE_mean              0.0000000000e+00  0.0000000000e+00   -inf    inf     Y
 charged_svd2_dE_sigma             2.5602526812e-02  5.5124153245e-03      0    inf     N
 charged_svd2_dE_cheb1            -1.5096570739e+00  1.1151377580e-01   -inf    inf     N
+charged_svd2_dE_cheb2             0.0000000000e+00  0.0000000000e+00   -inf    inf     Y
 
 # Charged Component, deltaT
 charged_dt_blifetime              9.9876397855e-01  2.5411913031e-02      0    inf     N
@@ -296,4 +298,3 @@ charged_dt_outliermean            0.0000000000e+00  1.0000000000e+00   -inf    i
 charged_dt_outlierscale           1.0000000000e+00  1.0000000000e+00      0    inf     Y
 charged_dt_outlierscale2          1.0000000000e+00  0.0000000000e+00   -inf    inf     Y
 charged_dt_outlierratio           1.0000000000e+00  0.0000000000e+00   -inf    inf     Y
-
