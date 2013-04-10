@@ -184,7 +184,7 @@ struct PlotRoutine {
 
         TH3D *h_allEvents = new TH3D("mbcdedt_data", "M_{BC}#DeltaE#Deltat data", 200, range_mBC.vmin, range_mBC.vmax, 200, range_dE.vmin, range_dE.vmax, 200, range_dT.vmin, range_dT.vmax);
 
-        BOOST_FOREACH(const Event& e, local_pdf.getData(0)){
+        for(const Event& e: local_pdf.getData(0)){
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
@@ -194,7 +194,7 @@ struct PlotRoutine {
             h_dT_data_q[0][7][(e.tag_q+1)/2]->Fill(e.deltaT);
             h_dT_data_qe[0][7][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
         }
-        BOOST_FOREACH(const Event& e, local_pdf.getData(1)){
+        for(const Event& e: local_pdf.getData(1)){
             h_bEnergy_svd2->Fill(e.benergy);
             h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);

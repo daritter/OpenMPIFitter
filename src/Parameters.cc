@@ -6,7 +6,6 @@
 #include <fstream>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
@@ -18,7 +17,7 @@ using namespace boost;
 Parameters::Parameters(){
     const ParameterList::list_type &parameterList = ParameterList::getParameterList();
     m_parameters.reserve(parameterList.size());
-    BOOST_FOREACH(const std::string &name, parameterList){
+    for(const std::string &name: parameterList){
         m_parameters.push_back(Parameter(name));
     }
 }
@@ -109,7 +108,7 @@ void Parameters::save_stream(ostream &out, bool istty) const {
     size_t nsaved(0);
     //Go over all the info saved when loading and print the corresponding
     //parameter and comment for each line
-    BOOST_FOREACH(const line_info &l, m_originalLines){
+    for(const line_info &l: m_originalLines){
         //Write parameter if present
         if(l.first>=0){
             const Parameter &p = m_parameters[l.first];
@@ -152,7 +151,7 @@ std::vector<double> Parameters::getValues() const {
 
 void Parameters::fixParameters(const std::string& fixParameters){
     boost::regex fixed(fixParameters);
-    BOOST_FOREACH(Parameter& p, m_parameters){
+    for(Parameter& p: m_parameters){
         if(boost::regex_match(p.name(),fixed)){
             p.setDynamicFix(+1);
         }
@@ -161,7 +160,7 @@ void Parameters::fixParameters(const std::string& fixParameters){
 
 void Parameters::releaseParameters(const std::string& fixParameters){
     boost::regex fixed(fixParameters);
-    BOOST_FOREACH(Parameter& p, m_parameters){
+    for(Parameter& p: m_parameters){
         if(boost::regex_match(p.name(),fixed)){
             p.setDynamicFix(-1);
         }
@@ -171,7 +170,7 @@ void Parameters::releaseParameters(const std::string& fixParameters){
 void Parameters::overrideParameters(const std::string &overrides){
     boost::char_separator<char> sep(", ");
     boost::tokenizer<boost::char_separator<char> > tokens(overrides,sep);
-    BOOST_FOREACH(const string & tok, tokens) {
+    for(const string & tok: tokens) {
         size_t pos = tok.find(':');
         if(pos==string::npos)
             throw std::invalid_argument("Override '" + tok + "' not well formed, expected <name>:<value>");
@@ -188,7 +187,7 @@ void Parameters::overrideParameters(const std::string &overrides){
 ROOT::Minuit2::MnUserParameters Parameters::getMnParams() const {
     ROOT::Minuit2::MnUserParameters mnParams;
 
-    BOOST_FOREACH(const Parameter& p, m_parameters){
+    for(const Parameter& p: m_parameters){
         if(!mnParams.Add(p.name(), p.value(), p.error())){
             std::cerr << "ERROR adding parameter" << std::endl;
         }
@@ -204,7 +203,7 @@ ROOT::Minuit2::MnUserParameters Parameters::getMnParams() const {
 }
 
 void Parameters::update(ROOT::Minuit2::MnUserParameters mnParams){
-    BOOST_FOREACH(const ROOT::Minuit2::MinuitParameter &mnp, mnParams.Parameters()){
+    for(const ROOT::Minuit2::MinuitParameter &mnp: mnParams.Parameters()){
         int index = ParameterList::getIndex(mnp.GetName());
         Parameter &p = m_parameters[index];
         if(!p.isFixed()) {

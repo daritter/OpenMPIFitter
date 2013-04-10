@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <functional>
 #include <boost/mpi.hpp>
-#include <boost/foreach.hpp>
 #include <Minuit2/FCNBase.h>
 #include <unistd.h>
 
@@ -152,7 +151,7 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             std::vector<double> results;
             gather(world, result, results, 0);
             result = 0;
-            BOOST_FOREACH(double &r, results){
+            for(double &r: results){
                 if(r!=r) continue;
                 if(op & OP_SUM){
                     result += r;
@@ -180,7 +179,7 @@ template<class FCN> class MPIMaster: public ROOT::Minuit2::FCNBase {
             gather(world, result, results, 0);
             result.clear();
             result.resize(results[0].size());
-            BOOST_FOREACH(std::vector<double> &r, results){
+            for(std::vector<double> &r: results){
                 std::transform(result.begin(), result.end(), r.begin(), result.begin(), std::plus<double>() );
             }
             /*    for(size_t i=0; i<result.size(); ++i){
@@ -266,7 +265,7 @@ template<class FCN> class MPIClient {
                     //And then obtain the parameter changes
                     broadcast_vec(world, changedParameters, 0);
                     //And apply them to the local parameters
-                    BOOST_FOREACH(ParameterChange &c, changedParameters){
+                    for(ParameterChange &c: changedParameters){
                         if(c.first>=params.size()) params.resize(c.first+1);
                         params[c.first] = c.second;
                     }

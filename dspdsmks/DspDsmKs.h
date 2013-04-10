@@ -7,7 +7,6 @@
 #include <iostream>
 #include <iomanip>
 #include <limits>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
@@ -46,7 +45,7 @@ struct DspDsmKsPDF {
     typedef std::plus<double> operator_type;
 
     /** Define the increase of the objective function value which is eqvivalent to 1 sigma */
-    static const double error_def = 1.0;
+    constexpr static double error_def = 1.0;
 
     /** Define all possible components to be able to enable/disable them individually */
     enum EnabledComponents {
@@ -76,7 +75,7 @@ struct DspDsmKsPDF {
 #define DspDsmKsPDF__checkComponent(name) if(component == #name) result = (EnabledComponents) (result | CMP_##name)
         boost::char_separator<char> sep(", ");
         boost::tokenizer<boost::char_separator<char> > tokens(components,sep);
-        BOOST_FOREACH(std::string component, tokens){
+        for(std::string component: tokens){
             boost::to_lower(component);
             boost::trim(component);
             DspDsmKsPDF__checkComponent(signal);
@@ -97,14 +96,14 @@ struct DspDsmKsPDF {
     {}
 
     ~DspDsmKsPDF(){
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             delete component;
         }
     }
 
     void setComponents(EnabledComponents cmp=CMP_all){
         enabledComponents = cmp;
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             delete component;
         }
         components.clear();
@@ -129,7 +128,7 @@ struct DspDsmKsPDF {
     /** Return the pdf value for a given paramater set and event */
     double PDF(const Event& e, const std::vector<double> &par) const {
         long double result(0);
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             result += (*component)(e, par);
         }
         return result;
@@ -150,7 +149,7 @@ struct DspDsmKsPDF {
     /** Return the yield of the pdf given the set of parameters */
     double get_yield(const std::vector<double> &par, int svdVs=Component::BOTH, int rbin=-1) const {
         double yield(0);
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             yield += component->get_yield(par,(Component::EnabledSVD)svdVs, rbin);
         }
         return yield;
@@ -158,7 +157,7 @@ struct DspDsmKsPDF {
 
     double get_deltaT(const Event &e, const std::vector<double> &par) const {
         long double deltaT(0);
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             deltaT += component->get_deltaT(e,par, true);
         }
         return deltaT;
@@ -168,7 +167,7 @@ struct DspDsmKsPDF {
         std::vector<double> result(7);
         std::vector<double> fractions(7);
         double yield(0);
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             const double y = component->get_yield(par, (Component::EnabledSVD)svd);
             component->get_rbinFractions(par, fractions, (Component::EnabledSVD)svd, y);
             for(int i=0; i<7; ++i){ result[i] += fractions[i]; }
@@ -182,7 +181,7 @@ struct DspDsmKsPDF {
     double get_cosTheta(const Event &e, const std::vector<double> &par, int svdVs) const {
         long double yield(0);
         long double sum(0);
-        BOOST_FOREACH(Component* component, components){
+        for(Component* component: components){
             const double y = component->get_yield(par,(Component::EnabledSVD)svdVs);
             const double c = component->get_cosTheta(e);
             sum += y*c;
@@ -229,7 +228,7 @@ struct DspDsmKsPDF {
                 if((svd==1) && !(flag & PLT_SVD2)) continue;
                 ProgressBar pbar(h_dt[0][0][0]->GetNbinsX()*data[svd].size());
                 if(rank==0 && data[svd].size()==0) std::cout << ++pbar;
-                BOOST_FOREACH(Event e, data[svd]){
+                for(Event e: data[svd]){
                     for(int ix=0; ix<h_dt[0][0][0]->GetNbinsX(); ++ix){
                         if(rank==0) std::cout << ++pbar;
                         e.deltaT = h_dt[0][0][0]->GetBinCenter(ix+1);
@@ -418,7 +417,7 @@ struct DspDsmKsPDF {
             if(nEvents==0) continue;
 
             std::vector<Event> rbinpool[7];
-            BOOST_FOREACH(const Event& e, data[svd]){
+            for(const Event& e: data[svd]){
                 rbinpool[e.rbin].push_back(e);
             }
             int_variate random_rbinevent[7] = {
@@ -431,7 +430,7 @@ struct DspDsmKsPDF {
                 int_variate(random_generator, uniform_int(0, rbinpool[6].size()-1)),
             };
             std::vector<Event> rbingsim[7];
-            BOOST_FOREACH(const Event& e, gsim_data[svd]){
+            for(const Event& e: gsim_data[svd]){
                 rbingsim[e.rbin].push_back(e);
             }
             int_variate random_gsimevent[7] = {
@@ -578,7 +577,7 @@ struct DspDsmKsPDF {
 
     void loadEvents(std::vector<Event> *data, const std::vector<std::string>& filenames, int process, int size, bool qualityCuts){
         TChain* chain = new TChain("B0");
-        BOOST_FOREACH(const std::string& filename, filenames){
+        for(const std::string& filename: filenames){
             std::cout << "Using " << filename << " to read events" << std::endl;
             chain->AddFile(filename.c_str(),-1);
         }

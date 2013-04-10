@@ -11,7 +11,7 @@ env = Environment(
     tools=tools,
     ENV=os.environ,
     CXX="mpic++",
-    CXXFLAGS=["-O3", "-Wall"],
+    CXXFLAGS=["-O3", "-Wall", "-std=c++0x"],
     #LINKFLAGS=["-Wl,--as-needed","-Wl,--strip-all"],
     RPATH = "$LIBPATH",
     CPPPATH=["#include"],

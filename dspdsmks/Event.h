@@ -40,10 +40,10 @@ class dTCache {
 };
 
 struct Event {
-    static const double deltaM = 0.507;
-    static const double quality_cut = 50;
-    static const double sigmaz_mult_cut = 0.02;
-    static const double sigmaz_sngl_cut = 0.05;
+    constexpr static double deltaM = 0.507;
+    constexpr static double quality_cut = 50;
+    constexpr static double sigmaz_mult_cut = 0.02;
+    constexpr static double sigmaz_sngl_cut = 0.05;
 
 
     enum dtCachePosition {

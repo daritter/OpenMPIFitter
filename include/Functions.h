@@ -7,7 +7,7 @@
 
 class Gauss {
     public:
-        static const double sqrt_2pi_2 = 1.2533141373155002512078826424055226265034;
+        constexpr static double sqrt_2pi_2 = 1.2533141373155002512078826424055226265034;
 
         Gauss(double lower=std::numeric_limits<double>::quiet_NaN(), double upper=0):
             lower(lower),upper(upper),mean(std::numeric_limits<double>::quiet_NaN()),sigma(-1),sigma2(-1),norm(0) {}
