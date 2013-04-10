@@ -90,9 +90,9 @@ struct DspDsmKsPDF {
         return result;
     }
 
-    DspDsmKsPDF(int maxPrintOrder = 2):
+    DspDsmKsPDF(int maxPrintOrder = 2, bool optimize=true):
         maxPrintOrder(maxPrintOrder), nCalls(0), minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
-        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt)
+        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt), optimize(optimize)
     {}
 
     ~DspDsmKsPDF(){
@@ -381,7 +381,7 @@ struct DspDsmKsPDF {
         bool gsim = false;
         std::vector<Event> gsim_data[2];
         if(!templates.empty()){
-            std::cout << "Generating from gsim" << std::endl;
+            std::cout << "Generating from gsim, fullgsim is " << (fullgsim?"on":"off") << std::endl;
             loadEvents(gsim_data, templates, 0, 1, false);
             gsim = true;
         }
@@ -457,8 +457,8 @@ struct DspDsmKsPDF {
             double min_distance(std::numeric_limits<double>::infinity());
             for(int i=0; i<nEvents; ++i){
                 //Take vertex stuff from data
+                e.rbin = random_rbin();
                 do {
-                    e.rbin = random_rbin();
                     std::vector<Event> &pool = rbinpool[e.rbin];
                     int_variate &pool_event = random_rbinevent[e.rbin];
                     //e.cosTheta = data[svd][random_event()].cosTheta;
@@ -553,8 +553,10 @@ struct DspDsmKsPDF {
      */
     void load(int process=0, int size=1, bool qualityCuts=true) {
         loadEvents(data, filenames, process, size, qualityCuts);
-        std::sort(data[0].begin(),data[0].end());
-        std::sort(data[1].begin(),data[1].end());
+        if(optimize){
+            std::sort(data[0].begin(),data[0].end());
+            std::sort(data[1].begin(),data[1].end());
+        }
         std::cout << "Aye, process " << process << " fully loaded (" << data[0].size() << ", " << data[1].size()
             << ") events and is ready for pillaging" << std::endl;
     }
@@ -622,6 +624,9 @@ struct DspDsmKsPDF {
     /** PDF function components */
     mutable std::vector<Component*> components;
     EnabledComponents enabledComponents;
+
+    /** indicate wether events should be sorted to optimize pdf evaluation */
+    bool optimize;
 };
 
 #endif //MPIFitter_DspDsmKsPDF_h

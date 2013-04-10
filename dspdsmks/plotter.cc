@@ -177,11 +177,8 @@ struct PlotRoutine {
         TH1D* h_rbin_data_svd1 = new TH1D("rbin_svd1","rbin fractions, SVD1", 9, -1, 8);
         TH1D* h_rbin_data_svd2 = new TH1D("rbin_svd2","rbin fractions, SVD2", 9, -1, 8);
 
-        TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 2000, 0,0);
-        TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 2000, 0,0);
-        h_bEnergy_svd1->SetBuffer(100000);
-        h_bEnergy_svd2->SetBuffer(200000);
-
+        TH1D *h_bEnergy_svd1 = new TH1D("svd1_benergy", "Beamenergy, SVD1", 2000, 5.2862, 5.2905);
+        TH1D *h_bEnergy_svd2 = new TH1D("svd2_benergy", "Beamenergy, SVD2", 2000, 5.2862, 5.2905);
         TH3D *h_allEvents = new TH3D("mbcdedt_data", "M_{BC}#DeltaE#Deltat data", 200, range_mBC.vmin, range_mBC.vmax, 200, range_dE.vmin, range_dE.vmax, 200, range_dT.vmin, range_dT.vmax);
 
         for(const Event& e: local_pdf.getData(0)){
@@ -204,8 +201,8 @@ struct PlotRoutine {
             h_dT_data_q[1][7][(e.tag_q+1)/2]->Fill(e.deltaT);
             h_dT_data_qe[1][7][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
         }
-        h_bEnergy_svd1->BufferEmpty();
-        h_bEnergy_svd2->BufferEmpty();
+        assert(h_bEnergy_svd1->GetBinContent(0)==0 && h_bEnergy_svd1->GetBinContent(h_bEnergy_svd1->GetNbinsX())==0);
+        assert(h_bEnergy_svd2->GetBinContent(0)==0 && h_bEnergy_svd2->GetBinContent(h_bEnergy_svd2->GetNbinsX())==0);
         h_rbin_data_svd1->Sumw2();
         h_rbin_data_svd2->Sumw2();
         h_rbin_data_svd1->Scale(1./h_rbin_data_svd1->GetEffectiveEntries());
@@ -259,7 +256,7 @@ struct PlotRoutine {
  */
 int main(int argc, char* argv[]){
 
-    DspDsmKsPDF pdf;
+    DspDsmKsPDF pdf(1,false);
     PlotRoutine plotter;
     std::string componentList;
 

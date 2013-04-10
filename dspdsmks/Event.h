@@ -107,12 +107,14 @@ struct Event {
             m2DspKs = 0;
             m2DsmKs = eta;
             tag_r = Belle::set_r(rbin);
+            assert(Belle::set_rbin(tag_r) == rbin);
             deltaZ = deltaT / Belle::dt_resol_global::inv_bgc;
         }else{
             deltaT = deltaZ * Belle::dt_resol_global::inv_bgc;
             tag_r = fabs(tag_r);
             eta = (m2DsmKs>m2DspKs)?1:-1;
         }
+
         //Check quality flag
         if(flag!=0 || tag_q==0) return false;
 
