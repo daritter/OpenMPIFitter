@@ -170,10 +170,11 @@ def make_mBCdE_plots(name, title):
 
     vmax = max(mbcde_data.GetMaximum(),mbcde_fit2.GetMaximum())
 
-    cmap = matplotlib.cm.get_cmap("binary")
+    #cmap = matplotlib.cm.get_cmap("binary")
     plot_mBCdE(mbcde_data, vmin=1, vmax=vmax, title=title) #, norm=matplotlib.colors.LogNorm())#, cmap=cmap)
     plot_mBCdE(mbcde_fit2, vmin=1, vmax=vmax, title=title) #, norm=matplotlib.colors.LogNorm())#, cmap=cmap)
-    plot_mBCdE(mbcde_sigma, vmin=-5, vmax=5, label="normalized residuals", title=title)
+    rescmap = matplotlib.cm.get_cmap("bwr")
+    plot_mBCdE(mbcde_sigma, vmin=-5, vmax=5, label="normalized residuals", title=title, cmap=rescmap)
 
     mbc_data = mbcde_data.ProjectionX()
     de_data = mbcde_data.ProjectionY()
@@ -187,9 +188,9 @@ def make_mBCdE_plots(name, title):
         de_fits.append((component,de_fit))
 
     plot_dfs("mbc", mbc_data, mbc_fits, "$M_{BC}$ / GeV",   title=title)
-    plot_dfs("mbc", mbc_data, mbc_fits, "$M_{BC}$ / GeV",   title=title, log=True)
+    #plot_dfs("mbc", mbc_data, mbc_fits, "$M_{BC}$ / GeV",   title=title, log=True)
     plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title)
-    plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title, log=True)
+    #plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title, log=True)
 
 def make_dT_plots(name, title, label):
     """Make all deltaT plots for a given data set"""
