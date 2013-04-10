@@ -113,8 +113,8 @@ def run_jobs(refit=False, deltaT=True):
 
 
 if __name__ == "__main__":
-    nexp = 200
-    toyname = "pdf"
+    nexp = int(sys.argv[2]) #200
+    toyname = sys.argv[1] #"gsim"
 
     params = dspdsmks.Parameters()
     params.load("ddk-out.par")
