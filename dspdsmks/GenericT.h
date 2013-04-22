@@ -7,7 +7,7 @@
 class GenericTPDF {
     public:
         GenericTPDF(Range range_dT, int isCharged=0):
-            range_dT(range_dT), outlierPDF(range_dT.vmin, range_dT.vmax)
+            range_dT(range_dT), acp0(-1), outlierPDF(range_dT.vmin, range_dT.vmax)
         {}
 
         void setParameters(bool multi, int mean1, int mean2, int mean3, int mean4, int sigma1, int sigma2, int sigma3, int sigma4, int weight2, int weight3, int weight4){
@@ -34,6 +34,10 @@ class GenericTPDF {
             this->outlierRatio = outlierRatio;
         }
 
+        void setAcp(int rbin0){
+            this->acp0 = rbin0;
+        }
+
         double conv_gauss(double weight, double dt, double tau, double mean, double sigma) const {
             if(weight==0.0) return 0;
             return weight * Belle::Ef_conv_gauss(dt, tau, mean, sigma);
@@ -48,6 +52,7 @@ class GenericTPDF {
         double operator()(const Event& e, const std::vector<double> &par) {
             const Belle::dtres_param_t* const dtres_param = Belle::get_dtres_param( e.expNo, e.isMC );
             const double abs_tau = par[tau];
+            const double dT = e.deltaT;
             const double sigma = sqrt(e.tag_zerr*e.tag_zerr+e.vtx_zerr*e.vtx_zerr);
             const int i = (e.tag_ntrk>1 && e.vtx_ntrk>1)?1:0;
 
@@ -68,10 +73,10 @@ class GenericTPDF {
 
             //Calculate Lifetime components
             const double life_pdf = res_sumw * (
-                    conv_gauss(        1.0, e.deltaT, abs_tau, res_mean1, res_sigma1) +
-                    conv_gauss(res_weight2, e.deltaT, abs_tau, res_mean2, res_sigma2) +
-                    conv_gauss(res_weight3, e.deltaT, abs_tau, res_mean3, res_sigma3) +
-                    conv_gauss(res_weight4, e.deltaT, abs_tau, res_mean4, res_sigma4));
+                    conv_gauss(        1.0, dT, abs_tau, res_mean1, res_sigma1) +
+                    conv_gauss(res_weight2, dT, abs_tau, res_mean2, res_sigma2) +
+                    conv_gauss(res_weight3, dT, abs_tau, res_mean3, res_sigma3) +
+                    conv_gauss(res_weight4, dT, abs_tau, res_mean4, res_sigma4));
 
             const double int_life_pdf = res_sumw * (
                     norm_conv_gauss(        1.0, abs_tau, res_mean1, res_sigma1) +
@@ -79,12 +84,13 @@ class GenericTPDF {
                     norm_conv_gauss(res_weight3, abs_tau, res_mean3, res_sigma3) +
                     norm_conv_gauss(res_weight4, abs_tau, res_mean4, res_sigma4));
 
+            const double pdf = ((acp0>=0)?(1+e.tag_q*par[acp0+e.rbin]):1.)*(life_pdf/int_life_pdf);
             const double osig = dtres_param->sig_ol*par[outlierScale];
             outlierPDF.set( par[outlierRatio], par[outlierMean], 0.0, osig, par[outlierScale2]);
             double fraction = (e.tag_ntrk>1 && e.vtx_ntrk>1)?dtres_param->fol_mul:dtres_param->fol_sgl;
             if(fractionScale>=0) fraction*=par[fractionScale];
 
-            return (fraction*outlierPDF(e.deltaT) + (1.0-fraction)*(life_pdf/int_life_pdf))/4.0;
+            return (fraction*outlierPDF(dT) + (1.0-fraction)*pdf)/4.0;
         }
 
     private:
@@ -106,6 +112,7 @@ class GenericTPDF {
         int outlierScale;
         int outlierScale2;
         int outlierRatio;
+        int acp0;
 
         DoubleGauss outlierPDF;
 };

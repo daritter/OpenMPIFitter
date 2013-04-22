@@ -59,7 +59,7 @@ class MisreconPDF: public DeltaTComponent<> {
     {
         deltaT.setParameters(
                 PAR::misrecon_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
-                PAR::misrecon_dt_fractionscale, -1, useDeltaT?Event::dt_misrecon:-1);
+                PAR::misrecon_dt_fractionscale, -1, Event::dt_misrecon);
     }
 
     virtual ~MisreconPDF(){}
