@@ -14,7 +14,7 @@ env = Environment(
     CXXFLAGS=["-O3", "-Wall", "-std=c++0x"],
     #LINKFLAGS=["-Wl,--as-needed","-Wl,--strip-all"],
     RPATH = "$LIBPATH",
-    CPPPATH=["#include"],
+    CPPPATH=["#include","."],
     LIBS=[
         "boost_mpi", "boost_serialization", "boost_program_options", "boost_regex", "boost_random",
         "Minuit2"
