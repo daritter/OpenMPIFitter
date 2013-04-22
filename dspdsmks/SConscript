@@ -1,7 +1,8 @@
 Import('*')
 
 ddkEnv = env.Clone()
-ddkEnv.Program("#ddk-fitter", ["fitter.cc"] + mpiFitter)
-ddkEnv.Program("#ddk-plotter", ["plotter.cc"] + mpiFitter)
-ddkEnv.Program("#ddk-toymc", ["toymc.cc"] + mpiFitter)
+ddkLib = ddkEnv.Library("ddk",Glob("src/*.cc"))
+ddkEnv.Program("#ddk-fitter", ["fitter.cc"] + ddkLib + mpiFitter)
+ddkEnv.Program("#ddk-plotter", ["plotter.cc"] + ddkLib + mpiFitter)
+ddkEnv.Program("#ddk-toymc", ["toymc.cc"] + ddkLib + mpiFitter)
 

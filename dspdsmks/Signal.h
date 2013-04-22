@@ -117,7 +117,7 @@ class SignalPDF: public DeltaTComponent<> {
     {
         deltaT.setParameters(
                 PAR::signal_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
-                PAR::signal_dt_fractionscale, -1, useDeltaT?Event::dt_signal:-1);
+                PAR::signal_dt_fractionscale, -1, Event::dt_signal);
     }
     virtual ~SignalPDF(){}
 
