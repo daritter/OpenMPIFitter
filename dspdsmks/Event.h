@@ -9,6 +9,14 @@
 #include "Range.h"
 
 #include <wtag.h>
+
+//Hacky dT inclusion to get rid of warning
+#include "tatami/libcnvl.h"
+#include "tatami/dt_resolution_const.h"
+#define typedef
+namespace Belle {
+#include "tatami/dt_resolution.h"
+#undef typedef
 #include "tatami/tatami.h"
 
 class dTCache {
