@@ -154,6 +154,8 @@ struct PlotRoutine {
             }
         }
 
+        dTCache::print_stats();
+
         //Parallel is done now, rest is faster in single core. close all other processes and reload all data
         parallel_pdf.close();
         DspDsmKsPDF &local_pdf = parallel_pdf.localFCN();

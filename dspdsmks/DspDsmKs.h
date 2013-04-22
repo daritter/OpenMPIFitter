@@ -92,7 +92,7 @@ struct DspDsmKsPDF {
 
     DspDsmKsPDF(int maxPrintOrder = 2, bool optimize=true):
         maxPrintOrder(maxPrintOrder), nCalls(0), minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
-        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt), optimize(optimize)
+        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt), optimize(optimize), svdFlag(Component::BOTH)
     {}
 
     ~DspDsmKsPDF(){
@@ -138,6 +138,8 @@ struct DspDsmKsPDF {
     double operator()(const std::vector<double> &par) const {
         double log_pdf(0.0);
         for(int svd=0; svd<2; ++svd){
+            if((svd==0) && !(svdFlag & Component::SVD1)) continue;
+            if((svd==1) && !(svdFlag & Component::SVD2)) continue;
             for( unsigned int i=0; i<data[svd].size(); i++ ){
                 const double pdf = PDF(data[svd][i], par);
                 if( 0.0 < pdf ) log_pdf += log( pdf ) ;
@@ -193,7 +195,7 @@ struct DspDsmKsPDF {
     /** finalize the event after all processes are collected */
     double finalize(const std::vector<double> &par, double value) const {
         static boost::format output("call #%-5d: -2logL =%18.10g     (min =%18.10g, max =%18.10g)\n");
-        const double logL = -2.0*(value-get_yield(par));
+        const double logL = -2.0*(value-get_yield(par,svdFlag));
         if(logL<minLogL) minLogL = logL;
         if(logL>maxLogL) maxLogL = logL;
 
@@ -232,7 +234,7 @@ struct DspDsmKsPDF {
                     for(int ix=0; ix<h_dt[0][0][0]->GetNbinsX(); ++ix){
                         if(rank==0) std::cout << ++pbar;
                         e.deltaT = h_dt[0][0][0]->GetBinCenter(ix+1);
-                        e.reset();
+                        //e.reset();
                         for(int q=0; q<2; ++q){
                             e.tag_q = 2*q-1;
                             for(int eta=0; eta<2; ++eta){
@@ -575,6 +577,10 @@ struct DspDsmKsPDF {
     std::string& getBestB() { return bestBSelection; }
     std::vector<std::string>& getFiles(){ return filenames; }
 
+    void setSVD(int svdFlag = Component::BOTH){
+        this->svdFlag=(Component::EnabledSVD)svdFlag;
+    }
+
     protected:
 
     void loadEvents(std::vector<Event> *data, const std::vector<std::string>& filenames, int process, int size, bool qualityCuts){
@@ -627,6 +633,9 @@ struct DspDsmKsPDF {
 
     /** indicate wether events should be sorted to optimize pdf evaluation */
     bool optimize;
+
+    /** which SVD version to use when fitting */
+    Component::EnabledSVD svdFlag;
 };
 
 #endif //MPIFitter_DspDsmKsPDF_h
