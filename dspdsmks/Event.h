@@ -11,11 +11,17 @@
 #include <wtag.h>
 
 //Hacky dT inclusion to get rid of warning
+//Include all dependencies of dt_resolution.h first
 #include "tatami/libcnvl.h"
 #include "tatami/dt_resolution_const.h"
+//define typedef as empty token to get rid of the "typedef ignored" warning
 #define typedef
+//open Belle namespace as closing of namespace is out of include-guard in
+//dt_resolution_const.h. as this is included first in dt_resolution.h this
+//works. How wonderful
 namespace Belle {
 #include "tatami/dt_resolution.h"
+//restore typedef and include the rest
 #undef typedef
 #include "tatami/tatami.h"
 
