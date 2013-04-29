@@ -2,11 +2,11 @@ import os
 Import('*')
 
 mpiSource = Glob("src/*.cc")
-mpiFitter = env.Library("mpifitter", mpiSource)
+mpiFitter = env.SharedLibrary("mpifitter", mpiSource)
 
-Export(["env", "mpiFitter", "mpiSource"])
-env.SConscript('dspdsmks/SConscript')
-env.SConscript('python/SConscript')
+Export(["env", "mpiFitter"])
+ddkLib = env.SConscript('dspdsmks/SConscript')
+env.SConscript('python/SConscript', exports=['ddkLib'])
 
 if not kekcc:
     env.SConscript('note/SConscript')
