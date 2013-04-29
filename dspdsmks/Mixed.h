@@ -4,18 +4,11 @@
 #include <Functions.h>
 #include "Event.h"
 #include "Component.h"
-#include "GenericT.h"
+#include "BkgT.h"
 
 namespace PAR {
+    PARAM(scale_mixed);
     PARAM(yield_mixed_svd1);
-    PARAM(mixed_svd1_rbin1);
-    PARAM(mixed_svd1_rbin2);
-    PARAM(mixed_svd1_rbin3);
-    PARAM(mixed_svd1_rbin4);
-    PARAM(mixed_svd1_rbin5);
-    PARAM(mixed_svd1_rbin6);
-    PARAM(mixed_svd1_rbin7);
-
     PARAM(mixed_svd1_ratio);
     PARAM(mixed_svd1_Mbc_mean);
     PARAM(mixed_svd1_Mbc_sigma);
@@ -30,14 +23,6 @@ namespace PAR {
     PARAM(mixed_svd1_ctrlpeak_dE_sigma);
 
     PARAM(yield_mixed_svd2);
-    PARAM(mixed_svd2_rbin1);
-    PARAM(mixed_svd2_rbin2);
-    PARAM(mixed_svd2_rbin3);
-    PARAM(mixed_svd2_rbin4);
-    PARAM(mixed_svd2_rbin5);
-    PARAM(mixed_svd2_rbin6);
-    PARAM(mixed_svd2_rbin7);
-
     PARAM(mixed_svd2_ratio);
     PARAM(mixed_svd2_Mbc_mean);
     PARAM(mixed_svd2_Mbc_sigma);
@@ -52,73 +37,59 @@ namespace PAR {
     PARAM(mixed_svd2_ctrlpeak_dE_mean);
     PARAM(mixed_svd2_ctrlpeak_dE_sigma);
 
-
-    PARAM(mixed_dt_blifetime);
-    PARAM(mixed_dt_sgl_mean1);
-    PARAM(mixed_dt_sgl_mean2);
-    PARAM(mixed_dt_sgl_mean3);
-    PARAM(mixed_dt_sgl_mean4);
-    PARAM(mixed_dt_sgl_sigma1);
-    PARAM(mixed_dt_sgl_sigma2);
-    PARAM(mixed_dt_sgl_sigma3);
-    PARAM(mixed_dt_sgl_sigma4);
-    PARAM(mixed_dt_sgl_weight2);
-    PARAM(mixed_dt_sgl_weight3);
-    PARAM(mixed_dt_sgl_weight4);
-    PARAM(mixed_dt_mul_mean1);
-    PARAM(mixed_dt_mul_mean2);
-    PARAM(mixed_dt_mul_mean3);
-    PARAM(mixed_dt_mul_mean4);
-    PARAM(mixed_dt_mul_sigma1);
-    PARAM(mixed_dt_mul_sigma2);
-    PARAM(mixed_dt_mul_sigma3);
-    PARAM(mixed_dt_mul_sigma4);
-    PARAM(mixed_dt_mul_weight2);
-    PARAM(mixed_dt_mul_weight3);
-    PARAM(mixed_dt_mul_weight4);
-    PARAM(mixed_dt_fractionscale);
-    PARAM(mixed_dt_outliermean);
-    PARAM(mixed_dt_outlierscale);
-    PARAM(mixed_dt_outlierscale2);
-    PARAM(mixed_dt_outlierratio);
-
-    /*PARAM(mixed_dt_Jc);
-    PARAM(mixed_dt_Js1);
-    PARAM(mixed_dt_Js2);
-    PARAM(mixed_dt_offset);*/
-    PARAM(mixed_dt_acp0);
-    PARAM(mixed_dt_acp1);
-    PARAM(mixed_dt_acp2);
-    PARAM(mixed_dt_acp3);
-    PARAM(mixed_dt_acp4);
-    PARAM(mixed_dt_acp5);
-    PARAM(mixed_dt_acp6);
+    PARAM(bkg_svd2_rbin1);
+    PARAM(bkg_svd2_rbin2);
+    PARAM(bkg_svd2_rbin3);
+    PARAM(bkg_svd2_rbin4);
+    PARAM(bkg_svd2_rbin5);
+    PARAM(bkg_svd2_rbin6);
+    PARAM(bkg_svd2_rbin7);
+    PARAM(bkg_svd1_rbin1);
+    PARAM(bkg_svd1_rbin2);
+    PARAM(bkg_svd1_rbin3);
+    PARAM(bkg_svd1_rbin4);
+    PARAM(bkg_svd1_rbin5);
+    PARAM(bkg_svd1_rbin6);
+    PARAM(bkg_svd1_rbin7);
+    PARAM(bkg_dt_blifetime);
+    PARAM(bkg_dt_mean_delta);
+    PARAM(bkg_dt_mean_tau);
+    PARAM(bkg_dt_sigma_main_sgl);
+    PARAM(bkg_dt_sigma_tail_sgl);
+    PARAM(bkg_dt_fraction_delta_sgl);
+    PARAM(bkg_dt_fraction_tail_sgl);
+    PARAM(bkg_dt_sigma_main_mul);
+    PARAM(bkg_dt_sigma_tail_mul);
+    PARAM(bkg_dt_fraction_delta_mul);
+    PARAM(bkg_dt_fraction_tail_mul);
+    PARAM(bkg_dt_outlier_fraction);
+    PARAM(bkg_dt_outlier_mean);
+    PARAM(bkg_dt_outlier_scale);
+    PARAM(bkg_dt_acp0);
+    PARAM(bkg_dt_acp1);
+    PARAM(bkg_dt_acp2);
+    PARAM(bkg_dt_acp3);
+    PARAM(bkg_dt_acp4);
+    PARAM(bkg_dt_acp5);
+    PARAM(bkg_dt_acp6);
 
 };
 
 
-class MixedPDF: public DeltaTComponent<GenericTPDF> {
+class MixedPDF: public DeltaTComponent<BkgTPDF> {
     public:
     MixedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        DeltaTComponent<GenericTPDF>(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
+        DeltaTComponent<BkgTPDF>(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setCommonParameters(PAR::mixed_dt_blifetime, PAR::mixed_dt_fractionscale,
-                PAR::mixed_dt_outliermean, PAR::mixed_dt_outlierscale, PAR::mixed_dt_outlierscale2, PAR::mixed_dt_outlierratio);
-        deltaT.setAcp(PAR::mixed_dt_acp0);
-        deltaT.setParameters(false,
-                PAR::mixed_dt_sgl_mean1, PAR::mixed_dt_sgl_mean2, PAR::mixed_dt_sgl_mean3, PAR::mixed_dt_sgl_mean4,
-                PAR::mixed_dt_sgl_sigma1, PAR::mixed_dt_sgl_sigma2, PAR::mixed_dt_sgl_sigma3,  PAR::mixed_dt_sgl_sigma4,
-                PAR::mixed_dt_sgl_weight2, PAR::mixed_dt_sgl_weight3, PAR::mixed_dt_sgl_weight4);
-        deltaT.setParameters(true,
-                PAR::mixed_dt_mul_mean1, PAR::mixed_dt_mul_mean2, PAR::mixed_dt_mul_mean3, PAR::mixed_dt_mul_mean4,
-                PAR::mixed_dt_mul_sigma1, PAR::mixed_dt_mul_sigma2, PAR::mixed_dt_mul_sigma3, PAR::mixed_dt_mul_sigma4,
-                PAR::mixed_dt_mul_weight2, PAR::mixed_dt_mul_weight3, PAR::mixed_dt_mul_weight4);
-        /*deltaT.setParameters(
-                PAR::mixed_dt_blifetime, PAR::mixed_dt_Jc, PAR::mixed_dt_Js1, PAR::mixed_dt_Js2,
-                PAR::mixed_dt_fractionscale, PAR::mixed_dt_outliermean, Event::dt_mixed);
-        deltaT.setOffset(PAR::mixed_dt_offset);*/
+        deltaT.setCommonParameters(PAR::bkg_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_dt_mean_tau,
+                PAR::bkg_dt_outlier_fraction, PAR::bkg_dt_outlier_mean, PAR::bkg_dt_outlier_scale);
+        deltaT.setParameters(PAR::bkg_dt_sigma_main_sgl, PAR::bkg_dt_sigma_tail_sgl,
+                PAR::bkg_dt_fraction_delta_sgl, PAR::bkg_dt_fraction_tail_sgl, false);
+        deltaT.setParameters(PAR::bkg_dt_sigma_main_mul, PAR::bkg_dt_sigma_tail_mul,
+                PAR::bkg_dt_fraction_delta_mul, PAR::bkg_dt_fraction_tail_mul, true);
+        deltaT.setAcp(PAR::bkg_dt_acp0);
     }
 
     virtual ~MixedPDF(){}
@@ -160,16 +131,16 @@ class MixedPDF: public DeltaTComponent<GenericTPDF> {
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_mixed_svd1] * get_rbinFraction(rbin, PAR::mixed_svd1_rbin1, par);
+            yield += par[PAR::yield_mixed_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_mixed_svd2] * get_rbinFraction(rbin, PAR::mixed_svd2_rbin1, par);
+            yield += par[PAR::yield_mixed_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
         }
-        return yield;
+        return par[PAR::scale_mixed] * yield;
     }
 
     virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0){
-        fill_rbinFractions(par, fractions, svd, PAR::mixed_svd1_rbin1, PAR::mixed_svd2_rbin1, scale);
+        fill_rbinFractions(par, fractions, svd, PAR::bkg_svd1_rbin1, PAR::bkg_svd2_rbin1, scale);
     }
 
     private:

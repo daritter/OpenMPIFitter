@@ -208,9 +208,9 @@ int main(int argc, char* argv[]){
     pdf.setComponents(activeComponents);
     pdf.setSVD(svdFlag);
 
-    std::string names[] = {"signal","misrecon","mixed","charged"};
-    int components[] = {DspDsmKsPDF::CMP_signal,DspDsmKsPDF::CMP_misrecon,DspDsmKsPDF::CMP_mixed,DspDsmKsPDF::CMP_charged};
-    for(int i=0; i<4; ++i){
+    std::string names[] = {"signal", "misrecon", "mixed", "charged", "continuum"};
+    int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_mixed, DspDsmKsPDF::CMP_charged, DspDsmKsPDF::CMP_continuum};
+    for(int i=0; i<5; ++i){
         if(!(activeComponents & components[i])){
             if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
             std::string name = names[i];
@@ -220,6 +220,18 @@ int main(int argc, char* argv[]){
     if(!(activeComponents & DspDsmKsPDF::CMP_deltat)){
         if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
         fitter.fixParameters += ".*_dt_.*";
+    }
+    if(!(activeComponents & ( DspDsmKsPDF::CMP_mixed |  DspDsmKsPDF::CMP_charged |  DspDsmKsPDF::CMP_continuum))){
+        if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
+        fitter.fixParameters += "bkg.*";
+    }
+    if(!(svdFlag & Component::SVD1)){
+        if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
+        fitter.fixParameters += ".*svd1.*";
+    }
+    if(!(svdFlag & Component::SVD2)){
+        if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
+        fitter.fixParameters += ".*svd2.*";
     }
 
     /** Call the MPI Fitting core and return the result */

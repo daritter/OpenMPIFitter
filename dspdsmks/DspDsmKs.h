@@ -28,6 +28,7 @@
 #include "Misrecon.h"
 #include "Mixed.h"
 #include "Charged.h"
+#include "Continuum.h"
 #include "progress.h"
 
 /** DspDsmKs PDF function.
@@ -54,8 +55,9 @@ struct DspDsmKsPDF {
         CMP_misrecon = 1<<1,
         CMP_mixed    = 1<<2,
         CMP_charged  = 1<<3,
-        CMP_deltat   = 1<<4,
-        CMP_all      = CMP_signal | CMP_misrecon | CMP_mixed | CMP_charged | CMP_deltat
+        CMP_continuum= 1<<4,
+        CMP_deltat   = 1<<5,
+        CMP_all      = CMP_signal | CMP_misrecon | CMP_mixed | CMP_charged | CMP_continuum | CMP_deltat
     };
 
     enum PlotFlags {
@@ -82,6 +84,7 @@ struct DspDsmKsPDF {
             else DspDsmKsPDF__checkComponent(misrecon);
             else DspDsmKsPDF__checkComponent(mixed);
             else DspDsmKsPDF__checkComponent(charged);
+            else DspDsmKsPDF__checkComponent(continuum);
             else DspDsmKsPDF__checkComponent(deltat);
             else DspDsmKsPDF__checkComponent(all);
             else throw std::invalid_argument("Unknown component: '" + component + "'");
@@ -118,6 +121,9 @@ struct DspDsmKsPDF {
         }
         if(cmp & CMP_charged){
             components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+        }
+        if(cmp & CMP_continuum){
+            components.push_back(new ContinuumPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
     }
 
