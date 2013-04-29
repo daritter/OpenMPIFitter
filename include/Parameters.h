@@ -21,9 +21,9 @@ class Parameters {
         void load_stream(std::istream &in);
         void save(const std::string &filename) const;
         //Save the parameters to a stream, is istty is true, use color and show only non-fixed parameters
-        void save_stream(std::ostream &out, bool istty=false) const;
+        void save_stream(std::ostream &out, bool istty=false, bool onlyfree=false) const;
         //Short hand for printing with color
-        void print() const { save_stream(std::cout, true); }
+        void print(bool istty=true, bool onlyfree=false) const { save_stream(std::cout, istty, onlyfree); }
         //Dynamically fix the parameters which match the given regular expression
         void fixParameters(const std::string& fixParameters = "");
         //Dynamically release the parameters which match the given regular expression

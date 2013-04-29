@@ -94,7 +94,7 @@ void Parameters::load_stream(istream &in){
     }
 }
 
-void Parameters::save_stream(ostream &out, bool istty) const {
+void Parameters::save_stream(ostream &out, bool istty, bool onlyfree) const {
     //If istty is set we want nice color output of the non fixed parameters only
     if(istty){
         out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %6s %6s %9s %9s\n")
@@ -115,6 +115,8 @@ void Parameters::save_stream(ostream &out, bool istty) const {
             //Remember we saved this parameter
             if(!saved[l.first]) ++nsaved;
             saved[l.first] = true;
+            //If we only show fre parameters: skip fixed ones
+            if(onlyfree && p.isFixed()) continue;
             //If the parameter is fixed we don't show it or its comment in tty
             //mode, go to the next line
             if(!p.save(out, istty)) continue;
@@ -127,7 +129,7 @@ void Parameters::save_stream(ostream &out, bool istty) const {
             if(istty) out << ANSI_END;
         }
         //Write newline when appropriate
-        if(!istty || l.first>=0 || !l.second.empty()) out << std::endl;
+        if(!(istty || onlyfree) || l.first>=0 || !l.second.empty()) out << std::endl;
     }
 
     //Print all parameters which are not saved yet

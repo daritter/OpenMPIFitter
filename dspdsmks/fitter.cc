@@ -36,8 +36,7 @@ struct FitRoutine {
             return 2;
         }
         std::cout << "Aye, this be thy initial parrrrrameters: " << std::endl;
-        std::cout << params << std::endl;
-
+        params.print(false,true);
 
         bool success(true);
         //Call Minuit2 to do the actual fit
@@ -58,11 +57,6 @@ struct FitRoutine {
             std::cout << min << std::endl;
             std::cout << "Function Minimum: " << std::setprecision(10)
                       << min.Fval() << std::endl;
-            if(!min.IsValid()){
-                std::cout << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
-            }else{
-                std::cout << "Avast, Minuit be converrrrging." << std::endl;
-            }
             params.update(min.UserParameters());
             success &= min.IsValid();
 
@@ -92,6 +86,14 @@ struct FitRoutine {
         }
 
         dTCache::print_stats();
+
+        if(!success){
+            std::cout << ANSI_RED;
+            std::cout << "ARRRRRRRRR: Minuit is being a harsh mistress and be not converrrrging" << std::endl;
+            std::cout << ANSI_END;
+        }else{
+            std::cout << "Avast, Minuit be converrrrging." << std::endl;
+        }
 
         return success?0:1;
     }
