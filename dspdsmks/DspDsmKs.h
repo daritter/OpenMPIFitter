@@ -57,6 +57,7 @@ struct DspDsmKsPDF {
         CMP_charged  = 1<<3,
         CMP_continuum= 1<<4,
         CMP_deltat   = 1<<5,
+        CMP_nombc    = 1<<6,
         CMP_all      = CMP_signal | CMP_misrecon | CMP_mixed | CMP_charged | CMP_continuum | CMP_deltat
     };
 
@@ -87,6 +88,7 @@ struct DspDsmKsPDF {
             else DspDsmKsPDF__checkComponent(continuum);
             else DspDsmKsPDF__checkComponent(deltat);
             else DspDsmKsPDF__checkComponent(all);
+            else DspDsmKsPDF__checkComponent(nombc);
             else throw std::invalid_argument("Unknown component: '" + component + "'");
         }
 #undef DspDsmKsPDF__checkComponent
@@ -117,7 +119,7 @@ struct DspDsmKsPDF {
             components.push_back(new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
         if(cmp & CMP_mixed){
-            components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+            components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat));
         }
         if(cmp & CMP_charged){
             components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));

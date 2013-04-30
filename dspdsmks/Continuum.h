@@ -9,12 +9,7 @@
 namespace PAR {
     PARAM(scale_continuum);
     PARAM(ratio_continuum_svd1);
-    PARAM(continuum_svd1_Mbc_argusC);
-    PARAM(continuum_svd1_dE_cheb1);
-
     PARAM(ratio_continuum_svd2);
-    PARAM(continuum_svd2_Mbc_argusC);
-    PARAM(continuum_svd2_dE_cheb1);
 };
 
 
@@ -40,15 +35,15 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
         if(e.svdVs == 0){
             //Set Parameters for continuum component
             continuumPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
-            continuumPDF_svd1.fcnx.set(e.benergy, par[PAR::continuum_svd1_Mbc_argusC]);
-            continuumPDF_svd1.fcny.set(&par[PAR::continuum_svd1_dE_cheb1]);
+            continuumPDF_svd1.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
+            continuumPDF_svd1.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
 
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * continuumPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for continuum component
             continuumPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
-            continuumPDF_svd2.fcnx.set(e.benergy, par[PAR::continuum_svd2_Mbc_argusC]);
-            continuumPDF_svd2.fcny.set(&par[PAR::continuum_svd2_dE_cheb1]);
+            continuumPDF_svd2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
+            continuumPDF_svd2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
 
             return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * continuumPDF_svd2(e.Mbc, e.dE);
         }

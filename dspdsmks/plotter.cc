@@ -93,6 +93,7 @@ struct PlotRoutine {
 
         std::string names[] = {"signal","misrecon","mixed","charged","continuum"};
         int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_mixed, DspDsmKsPDF::CMP_charged, DspDsmKsPDF::CMP_continuum};
+        int noMbcdE = activeComponents & DspDsmKsPDF::CMP_nombc;
 
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
             std::vector<double> yields[2] = {std::vector<double>(7,0), std::vector<double>(7,0)};
@@ -104,7 +105,7 @@ struct PlotRoutine {
                 int cmp = components[i];
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
-                parallel_pdf.setOptions(cmp | DspDsmKsPDF::CMP_deltat);
+                parallel_pdf.setOptions(cmp | DspDsmKsPDF::CMP_deltat | noMbcdE);
 
                 TH1D *h_dT_fit[56];
                 boost::format dt_hist_name("dT_svd%1%_%2%_rbin%3%_fit_%4%_%5%");
@@ -216,7 +217,7 @@ struct PlotRoutine {
             if(!(cmp & activeComponents)) continue;
             if(!name.empty()) name = "_"+name;
 
-            local_pdf.setOptions(cmp);
+            local_pdf.setOptions(cmp | noMbcdE);
             TH2D *h_MbcdE_fit_svd1 = new TH2D(("mbcde_svd1_fit" + name).c_str(),
                     "M_{BC}#DeltaE fit, SVD1", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
             TH2D *h_MbcdE_fit_svd2 = new TH2D(("mbcde_svd2_fit" + name).c_str(),

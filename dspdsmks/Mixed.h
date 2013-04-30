@@ -78,8 +78,8 @@ namespace PAR {
 
 class MixedPDF: public DeltaTComponent<BkgTPDF> {
     public:
-    MixedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
-        DeltaTComponent<BkgTPDF>(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
+    MixedPDF(Range range_mBC, Range range_dE, Range range_dT, bool useMbcdE = true, bool useDeltaT=false):
+        DeltaTComponent<BkgTPDF>(range_dT, false, useDeltaT), useMbcdE(useMbcdE), range_mBC(range_mBC), range_dE(range_dE),
         mixedPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         mixedPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
@@ -96,35 +96,39 @@ class MixedPDF: public DeltaTComponent<BkgTPDF> {
 
     virtual double operator()(const Event& e, const std::vector<double> &par) {
         if(e.svdVs == 0){
-            //Set Parameters for mixed component
-            mixedPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
-            mixedPDF_svd1.set(par[PAR::mixed_svd1_ratio]);
-            mixedPDF_svd1.fcn1.set(par[PAR::mixed_svd1_ctrlpeak_ratio]);
-            mixedPDF_svd1.fcn1.fcn1.fcnx.set(par[PAR::mixed_svd1_Mbc_mean], par[PAR::mixed_svd1_Mbc_sigma]);
-            mixedPDF_svd1.fcn1.fcn1.fcny.set(par[PAR::mixed_svd1_dE_mean], par[PAR::mixed_svd1_dE_sigma]);
-            if(par[PAR::mixed_svd1_ctrlpeak_ratio]<1){
-                mixedPDF_svd1.fcn1.fcn2.fcnx.set(par[PAR::mixed_svd1_ctrlpeak_Mbc_mean], par[PAR::mixed_svd1_ctrlpeak_Mbc_sigma]);
-                mixedPDF_svd1.fcn1.fcn2.fcny.set(par[PAR::mixed_svd1_ctrlpeak_dE_mean], par[PAR::mixed_svd1_ctrlpeak_dE_sigma]);
+            if(useMbcdE){
+                //Set Parameters for mixed component
+                mixedPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
+                mixedPDF_svd1.set(par[PAR::mixed_svd1_ratio]);
+                mixedPDF_svd1.fcn1.set(par[PAR::mixed_svd1_ctrlpeak_ratio]);
+                mixedPDF_svd1.fcn1.fcn1.fcnx.set(par[PAR::mixed_svd1_Mbc_mean], par[PAR::mixed_svd1_Mbc_sigma]);
+                mixedPDF_svd1.fcn1.fcn1.fcny.set(par[PAR::mixed_svd1_dE_mean], par[PAR::mixed_svd1_dE_sigma]);
+                if(par[PAR::mixed_svd1_ctrlpeak_ratio]<1){
+                    mixedPDF_svd1.fcn1.fcn2.fcnx.set(par[PAR::mixed_svd1_ctrlpeak_Mbc_mean], par[PAR::mixed_svd1_ctrlpeak_Mbc_sigma]);
+                    mixedPDF_svd1.fcn1.fcn2.fcny.set(par[PAR::mixed_svd1_ctrlpeak_dE_mean], par[PAR::mixed_svd1_ctrlpeak_dE_sigma]);
+                }
+                mixedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
+                mixedPDF_svd1.fcn2.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
             }
-            mixedPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
-            mixedPDF_svd1.fcn2.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
 
-            return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * mixedPDF_svd1(e.Mbc, e.dE);
+            return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * (useMbcdE?mixedPDF_svd1(e.Mbc, e.dE):1);
         } else {
-            //Set Parameters for mixed component
-            mixedPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
-            mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
-            mixedPDF_svd2.fcn1.set(par[PAR::mixed_svd2_ctrlpeak_ratio]);
-            mixedPDF_svd2.fcn1.fcn1.fcnx.set(par[PAR::mixed_svd2_Mbc_mean], par[PAR::mixed_svd2_Mbc_sigma]);
-            mixedPDF_svd2.fcn1.fcn1.fcny.set(par[PAR::mixed_svd2_dE_mean], par[PAR::mixed_svd2_dE_sigma]);
-            if(par[PAR::mixed_svd2_ctrlpeak_ratio]<1){
-                mixedPDF_svd2.fcn1.fcn2.fcnx.set(par[PAR::mixed_svd2_ctrlpeak_Mbc_mean], par[PAR::mixed_svd2_ctrlpeak_Mbc_sigma]);
-                mixedPDF_svd2.fcn1.fcn2.fcny.set(par[PAR::mixed_svd2_ctrlpeak_dE_mean], par[PAR::mixed_svd2_ctrlpeak_dE_sigma]);
+            if(useMbcdE){
+                //Set Parameters for mixed component
+                mixedPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
+                mixedPDF_svd2.set(par[PAR::mixed_svd2_ratio]);
+                mixedPDF_svd2.fcn1.set(par[PAR::mixed_svd2_ctrlpeak_ratio]);
+                mixedPDF_svd2.fcn1.fcn1.fcnx.set(par[PAR::mixed_svd2_Mbc_mean], par[PAR::mixed_svd2_Mbc_sigma]);
+                mixedPDF_svd2.fcn1.fcn1.fcny.set(par[PAR::mixed_svd2_dE_mean], par[PAR::mixed_svd2_dE_sigma]);
+                if(par[PAR::mixed_svd2_ctrlpeak_ratio]<1){
+                    mixedPDF_svd2.fcn1.fcn2.fcnx.set(par[PAR::mixed_svd2_ctrlpeak_Mbc_mean], par[PAR::mixed_svd2_ctrlpeak_Mbc_sigma]);
+                    mixedPDF_svd2.fcn1.fcn2.fcny.set(par[PAR::mixed_svd2_ctrlpeak_dE_mean], par[PAR::mixed_svd2_ctrlpeak_dE_sigma]);
+                }
+                mixedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
+                mixedPDF_svd2.fcn2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
             }
-            mixedPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
-            mixedPDF_svd2.fcn2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
 
-            return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * mixedPDF_svd2(e.Mbc, e.dE);
+            return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * (useMbcdE?mixedPDF_svd2(e.Mbc, e.dE):1);
         }
     }
 
@@ -144,6 +148,8 @@ class MixedPDF: public DeltaTComponent<BkgTPDF> {
     }
 
     private:
+
+    bool useMbcdE;
 
     Range range_mBC;
     Range range_dE;
