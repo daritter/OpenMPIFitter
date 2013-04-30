@@ -178,6 +178,16 @@ int main(int argc, char* argv[]){
              "Maximum tries to run the fit when Edm>max")
             ("svd", po::value<int>(&svdFlag)->default_value(Component::BOTH),
              "SVD Version to use, 1=svd1, 2=svd2, 3=both")
+            ("veto-min-Mbc", po::value<float>(&pdf.getVeto_mBC().vmin)->default_value(pdf.getVeto_mBC().vmin),
+             "The minimal Mbc value to veto")
+            ("veto-max-Mbc", po::value<float>(&pdf.getVeto_mBC().vmax)->default_value(pdf.getVeto_mBC().vmax),
+             "The maximal Mbc value to veto")
+            ("veto-min-dE", po::value<float>(&pdf.getVeto_dE().vmin)->default_value(pdf.getVeto_dE().vmin),
+             "The minimal dE value to veto")
+            ("veto-max-dE", po::value<float>(&pdf.getVeto_dE().vmax)->default_value(pdf.getVeto_dE().vmax),
+             "The maximal dE value to veto")
+            ("veto", po::bool_switch(&pdf.getVeto()),
+             "Apply the veto")
             ;
 
         po::variables_map vm;

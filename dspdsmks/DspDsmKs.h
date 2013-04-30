@@ -93,8 +93,11 @@ struct DspDsmKsPDF {
     }
 
     DspDsmKsPDF(int maxPrintOrder = 2, bool optimize=true):
-        maxPrintOrder(maxPrintOrder), nCalls(0), minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
-        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt), optimize(optimize), svdFlag(Component::BOTH)
+        maxPrintOrder(maxPrintOrder), nCalls(0),
+        minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
+        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt),
+        veto_mBC(5.24,5.30), veto_dE(-0.1,0.1), use_veto(false),
+        optimize(optimize), svdFlag(Component::BOTH)
     {}
 
     ~DspDsmKsPDF(){
@@ -576,6 +579,10 @@ struct DspDsmKsPDF {
     Range& getRange_dE() { return range_dE; }
     Range& getRange_dT() { return range_dT; }
 
+    Range& getVeto_mBC() { return veto_mBC; }
+    Range& getVeto_dE() { return veto_dE; }
+    bool & getVeto() { return use_veto; }
+
     std::string& getBestB() { return bestBSelection; }
     std::vector<std::string>& getFiles(){ return filenames; }
 
@@ -603,6 +610,7 @@ struct DspDsmKsPDF {
             }
             if(!event.calculateValues(qualityCuts)) continue;
             if(!range_mBC(event.Mbc) || !range_dE(event.dE) || !range_dT(event.deltaT)) continue;
+            if(use_veto && veto_mBC(event.Mbc) && veto_dE(event.dE)) continue;
             data[event.svdVs].push_back(event);
         }
         delete chain;
@@ -628,6 +636,11 @@ struct DspDsmKsPDF {
     Range range_dE;
     /** Range of the dT fit */
     Range range_dT;
+
+    /** Veto range */
+    Range veto_mBC;
+    Range veto_dE;
+    bool  use_veto;
 
     /** PDF function components */
     mutable std::vector<Component*> components;
