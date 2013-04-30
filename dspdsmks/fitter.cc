@@ -210,9 +210,9 @@ int main(int argc, char* argv[]){
     pdf.setComponents(activeComponents);
     pdf.setSVD(svdFlag);
 
-    std::string names[] = {"signal", "misrecon", "mixed", "charged", "continuum"};
-    int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_mixed, DspDsmKsPDF::CMP_charged, DspDsmKsPDF::CMP_continuum};
-    for(int i=0; i<5; ++i){
+    std::string names[] = {"signal", "misrecon", "bbar", "continuum"};
+    int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_bbar, DspDsmKsPDF::CMP_continuum};
+    for(int i=0; i<4; ++i){
         if(!(activeComponents & components[i])){
             if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
             std::string name = names[i];
@@ -223,7 +223,7 @@ int main(int argc, char* argv[]){
         if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
         fitter.fixParameters += ".*_dt_.*";
     }
-    if(!(activeComponents & ( DspDsmKsPDF::CMP_mixed |  DspDsmKsPDF::CMP_charged |  DspDsmKsPDF::CMP_continuum))){
+    if(!(activeComponents & ( DspDsmKsPDF::CMP_bbar |  DspDsmKsPDF::CMP_continuum))){
         if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
         fitter.fixParameters += "bkg.*";
     }

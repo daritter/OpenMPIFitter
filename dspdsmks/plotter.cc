@@ -91,8 +91,8 @@ struct PlotRoutine {
         TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
                 "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
 
-        std::string names[] = {"signal","misrecon","mixed","charged","continuum"};
-        int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_mixed, DspDsmKsPDF::CMP_charged, DspDsmKsPDF::CMP_continuum};
+        std::string names[] = {"signal","misrecon","bbar","continuum"};
+        int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_bbar, DspDsmKsPDF::CMP_continuum};
         int noMbcdE = activeComponents & DspDsmKsPDF::CMP_nombc;
 
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
@@ -101,7 +101,7 @@ struct PlotRoutine {
                 yields[0][rbin] = parallel_pdf.localFCN().get_yield(par, 1, rbin);
                 yields[1][rbin] = parallel_pdf.localFCN().get_yield(par, 2, rbin);
             }
-            for(int i=0; i<5; ++i){
+            for(int i=0; i<4; ++i){
                 int cmp = components[i];
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
@@ -211,7 +211,7 @@ struct PlotRoutine {
         h_rbin_data_svd1->Scale(1./h_rbin_data_svd1->GetEffectiveEntries());
         h_rbin_data_svd2->Scale(1./h_rbin_data_svd2->GetEffectiveEntries());
 
-        for(int i=0; i<5; ++i){
+        for(int i=0; i<4; ++i){
             int cmp = components[i];
             std::string name = names[i];
             if(!(cmp & activeComponents)) continue;

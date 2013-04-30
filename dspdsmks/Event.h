@@ -76,8 +76,6 @@ struct Event {
     enum dtCachePosition {
         dt_signal,
         dt_misrecon,
-        dt_mixed,
-        dt_charged,
         MAX_DTCACHE
     };
 

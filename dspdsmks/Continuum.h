@@ -4,7 +4,7 @@
 #include <Functions.h>
 #include "Event.h"
 #include "Component.h"
-#include "Mixed.h"
+#include "BBar.h"
 
 namespace PAR {
     PARAM(scale_continuum);
@@ -35,15 +35,15 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
         if(e.svdVs == 0){
             //Set Parameters for continuum component
             continuumPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
-            continuumPDF_svd1.fcnx.set(e.benergy, par[PAR::mixed_svd1_Mbc_argusC]);
-            continuumPDF_svd1.fcny.set(&par[PAR::mixed_svd1_dE_cheb1]);
+            continuumPDF_svd1.fcnx.set(e.benergy, par[PAR::bbar_svd1_Mbc_argusC]);
+            continuumPDF_svd1.fcny.set(&par[PAR::bbar_svd1_dE_cheb1]);
 
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * continuumPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for continuum component
             continuumPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
-            continuumPDF_svd2.fcnx.set(e.benergy, par[PAR::mixed_svd2_Mbc_argusC]);
-            continuumPDF_svd2.fcny.set(&par[PAR::mixed_svd2_dE_cheb1]);
+            continuumPDF_svd2.fcnx.set(e.benergy, par[PAR::bbar_svd2_Mbc_argusC]);
+            continuumPDF_svd2.fcny.set(&par[PAR::bbar_svd2_dE_cheb1]);
 
             return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * continuumPDF_svd2(e.Mbc, e.dE);
         }
@@ -52,10 +52,10 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::ratio_continuum_svd1] * par[PAR::yield_mixed_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
+            yield += par[PAR::ratio_continuum_svd1] * par[PAR::yield_bbar_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
         }
         if(svd & SVD2){
-            yield += par[PAR::ratio_continuum_svd2] * par[PAR::yield_mixed_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
+            yield += par[PAR::ratio_continuum_svd2] * par[PAR::yield_bbar_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
         }
         return par[PAR::scale_continuum] * yield;
     }

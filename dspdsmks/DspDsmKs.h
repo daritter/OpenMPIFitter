@@ -26,8 +26,7 @@
 #include "Event.h"
 #include "Signal.h"
 #include "Misrecon.h"
-#include "Mixed.h"
-#include "Charged.h"
+#include "BBar.h"
 #include "Continuum.h"
 #include "progress.h"
 
@@ -53,12 +52,11 @@ struct DspDsmKsPDF {
         CMP_NONE     = 0,
         CMP_signal   = 1<<0,
         CMP_misrecon = 1<<1,
-        CMP_mixed    = 1<<2,
-        CMP_charged  = 1<<3,
-        CMP_continuum= 1<<4,
-        CMP_deltat   = 1<<5,
-        CMP_nombc    = 1<<6,
-        CMP_all      = CMP_signal | CMP_misrecon | CMP_mixed | CMP_charged | CMP_continuum | CMP_deltat
+        CMP_bbar    = 1<<2,
+        CMP_continuum= 1<<3,
+        CMP_deltat   = 1<<4,
+        CMP_nombc    = 1<<5,
+        CMP_all      = CMP_signal | CMP_misrecon | CMP_bbar | CMP_continuum | CMP_deltat
     };
 
     enum PlotFlags {
@@ -83,8 +81,7 @@ struct DspDsmKsPDF {
             boost::trim(component);
             DspDsmKsPDF__checkComponent(signal);
             else DspDsmKsPDF__checkComponent(misrecon);
-            else DspDsmKsPDF__checkComponent(mixed);
-            else DspDsmKsPDF__checkComponent(charged);
+            else DspDsmKsPDF__checkComponent(bbar);
             else DspDsmKsPDF__checkComponent(continuum);
             else DspDsmKsPDF__checkComponent(deltat);
             else DspDsmKsPDF__checkComponent(all);
@@ -118,11 +115,8 @@ struct DspDsmKsPDF {
         if(cmp & CMP_misrecon){
             components.push_back(new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
-        if(cmp & CMP_mixed){
-            components.push_back(new MixedPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat));
-        }
-        if(cmp & CMP_charged){
-            components.push_back(new ChargedPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+        if(cmp & CMP_bbar){
+            components.push_back(new BBarPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat));
         }
         if(cmp & CMP_continuum){
             components.push_back(new ContinuumPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
