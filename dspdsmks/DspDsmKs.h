@@ -441,13 +441,13 @@ struct DspDsmKsPDF {
                 rbingsim[e.rbin].push_back(e);
             }
             int_variate random_gsimevent[7] = {
-                int_variate(random_generator, uniform_int(0, rbingsim[0].size()-1)),
-                int_variate(random_generator, uniform_int(0, rbingsim[1].size()-1)),
-                int_variate(random_generator, uniform_int(0, rbingsim[2].size()-1)),
-                int_variate(random_generator, uniform_int(0, rbingsim[3].size()-1)),
-                int_variate(random_generator, uniform_int(0, rbingsim[4].size()-1)),
-                int_variate(random_generator, uniform_int(0, rbingsim[5].size()-1)),
-                int_variate(random_generator, uniform_int(0, rbingsim[6].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[0].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[1].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[2].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[3].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[4].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[5].size()-1)),
+                int_variate(random_generator, uniform_int(gsim?0:-1, rbingsim[6].size()-1)),
             };
 
             std::vector<double> rbinFractions = get_rbinFractions(par, svd==0?Component::SVD1:Component::SVD2);

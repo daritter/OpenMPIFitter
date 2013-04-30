@@ -65,6 +65,10 @@ struct ToyMCRoutine {
 
         //If we have templates but no gsim parameter we generate from pdf, thus removing the templates
         if(!gsim) templates.clear();
+        if(templates.empty()) {
+            std::cout << "No template, generating from pdf." << std::endl;
+            gsim = false;
+        }
 
         //Now we need to get the maximal value of the pdf
         const Range range_mBC = local_pdf.getRange_mBC();
