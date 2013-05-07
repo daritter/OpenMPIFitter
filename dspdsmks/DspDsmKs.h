@@ -96,7 +96,7 @@ struct DspDsmKsPDF {
         maxPrintOrder(maxPrintOrder), nCalls(0),
         minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
         range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt),
-        veto_mBC(5.24,5.30), veto_dE(-0.1,0.1), use_veto(false),
+        veto_mBC(5.24,5.30), veto_dE(-0.1,0.1), use_veto(false), combined_dT(false),
         optimize(optimize), svdFlag(Component::BOTH)
     {}
 
@@ -119,10 +119,10 @@ struct DspDsmKsPDF {
             components.push_back(new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
         }
         if(cmp & CMP_bbar){
-            components.push_back(new BBarPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat));
+            components.push_back(new BBarPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat, combined_dT));
         }
         if(cmp & CMP_continuum){
-            components.push_back(new ContinuumPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+            components.push_back(new ContinuumPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, combined_dT));
         }
     }
 
@@ -582,6 +582,7 @@ struct DspDsmKsPDF {
     Range& getVeto_mBC() { return veto_mBC; }
     Range& getVeto_dE() { return veto_dE; }
     bool & getVeto() { return use_veto; }
+    bool & getCombined_dT() { return combined_dT; }
 
     std::string& getBestB() { return bestBSelection; }
     std::vector<std::string>& getFiles(){ return filenames; }
@@ -595,8 +596,19 @@ struct DspDsmKsPDF {
     void loadEvents(std::vector<Event> *data, const std::vector<std::string>& filenames, int process, int size, bool qualityCuts){
         TChain* chain = new TChain("B0");
         for(const std::string& filename: filenames){
-            std::cout << "Using " << filename << " to read events" << std::endl;
+            if(process==0) std::cout << "Using " << filename << " to read events" << std::endl;
             chain->AddFile(filename.c_str(),-1);
+        }
+        if(process==0){
+            if(use_veto){
+                std::cout << "Aye, being harsh and rejecting events in ";
+                veto_mBC.print(std::cout, "mBC");
+                std::cout << " and ";
+                veto_dE.print(std::cout, "dE");
+                std::cout << std::endl;
+            }else{
+                std::cout << "Aye, no veto applied" << std::endl;
+            }
         }
         data[0].clear();
         data[1].clear();
@@ -640,7 +652,10 @@ struct DspDsmKsPDF {
     /** Veto range */
     Range veto_mBC;
     Range veto_dE;
-    bool  use_veto;
+    bool use_veto;
+
+    /** use combined dT for svd1 and svd2 */
+    bool combined_dT;
 
     /** PDF function components */
     mutable std::vector<Component*> components;

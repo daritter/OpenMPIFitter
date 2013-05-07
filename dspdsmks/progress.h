@@ -3,6 +3,16 @@
 
 #include <cmath>
 
+/** Progressbar class
+ *
+ * Usage:
+ * ProgressBar pbar(100);
+ * for(int i=0; i<100; ++i){
+ *     ... do something ...
+ *
+ *     std::cout << pbar++;
+ * }
+ */
 class ProgressBar {
     protected:
         int maxval;

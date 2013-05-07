@@ -27,6 +27,8 @@ bool Parameters::load(const std::string &filename, const std::string &overrides,
     if(!input){
         std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
         return false;
+    }else{
+        std::cout << "Aye, loading thy parrrameters from " << filename << std::endl;
     }
     try{
         load_stream(input);

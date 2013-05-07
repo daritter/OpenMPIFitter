@@ -37,13 +37,6 @@ namespace PAR {
     PARAM(bbar_svd2_ctrlpeak_dE_mean);
     PARAM(bbar_svd2_ctrlpeak_dE_sigma);
 
-    PARAM(bkg_svd2_rbin1);
-    PARAM(bkg_svd2_rbin2);
-    PARAM(bkg_svd2_rbin3);
-    PARAM(bkg_svd2_rbin4);
-    PARAM(bkg_svd2_rbin5);
-    PARAM(bkg_svd2_rbin6);
-    PARAM(bkg_svd2_rbin7);
     PARAM(bkg_svd1_rbin1);
     PARAM(bkg_svd1_rbin2);
     PARAM(bkg_svd1_rbin3);
@@ -51,45 +44,109 @@ namespace PAR {
     PARAM(bkg_svd1_rbin5);
     PARAM(bkg_svd1_rbin6);
     PARAM(bkg_svd1_rbin7);
-    PARAM(bkg_dt_blifetime);
-    PARAM(bkg_dt_mean_delta);
-    PARAM(bkg_dt_mean_tau);
-    PARAM(bkg_dt_sigma_main_sgl);
-    PARAM(bkg_dt_sigma_tail_sgl);
-    PARAM(bkg_dt_fraction_delta_sgl);
-    PARAM(bkg_dt_fraction_tail_sgl);
-    PARAM(bkg_dt_sigma_main_mul);
-    PARAM(bkg_dt_sigma_tail_mul);
-    PARAM(bkg_dt_fraction_delta_mul);
-    PARAM(bkg_dt_fraction_tail_mul);
-    PARAM(bkg_dt_outlier_fraction);
-    PARAM(bkg_dt_outlier_mean);
-    PARAM(bkg_dt_outlier_scale);
-    PARAM(bkg_dt_acp0);
-    PARAM(bkg_dt_acp1);
-    PARAM(bkg_dt_acp2);
-    PARAM(bkg_dt_acp3);
-    PARAM(bkg_dt_acp4);
-    PARAM(bkg_dt_acp5);
-    PARAM(bkg_dt_acp6);
+
+    PARAM(bkg_svd2_rbin1);
+    PARAM(bkg_svd2_rbin2);
+    PARAM(bkg_svd2_rbin3);
+    PARAM(bkg_svd2_rbin4);
+    PARAM(bkg_svd2_rbin5);
+    PARAM(bkg_svd2_rbin6);
+    PARAM(bkg_svd2_rbin7);
+
+    PARAM(bkg_svd1_dt_blifetime);
+    PARAM(bkg_svd1_dt_mean_delta);
+    PARAM(bkg_svd1_dt_mean_tau);
+    PARAM(bkg_svd1_dt_sigma_main_sgl);
+    PARAM(bkg_svd1_dt_sigma_tail_sgl);
+    PARAM(bkg_svd1_dt_fraction_delta_sgl);
+    PARAM(bkg_svd1_dt_fraction_tail_sgl);
+    PARAM(bkg_svd1_dt_sigma_main_mul);
+    PARAM(bkg_svd1_dt_sigma_tail_mul);
+    PARAM(bkg_svd1_dt_fraction_delta_mul);
+    PARAM(bkg_svd1_dt_fraction_tail_mul);
+    PARAM(bkg_svd1_dt_outlier_fraction);
+    PARAM(bkg_svd1_dt_outlier_mean);
+    PARAM(bkg_svd1_dt_outlier_scale);
+    PARAM(bkg_svd1_dt_acp0);
+    PARAM(bkg_svd1_dt_acp1);
+    PARAM(bkg_svd1_dt_acp2);
+    PARAM(bkg_svd1_dt_acp3);
+    PARAM(bkg_svd1_dt_acp4);
+    PARAM(bkg_svd1_dt_acp5);
+    PARAM(bkg_svd1_dt_acp6);
+
+    PARAM(bkg_svd2_dt_blifetime);
+    PARAM(bkg_svd2_dt_mean_delta);
+    PARAM(bkg_svd2_dt_mean_tau);
+    PARAM(bkg_svd2_dt_sigma_main_sgl);
+    PARAM(bkg_svd2_dt_sigma_tail_sgl);
+    PARAM(bkg_svd2_dt_fraction_delta_sgl);
+    PARAM(bkg_svd2_dt_fraction_tail_sgl);
+    PARAM(bkg_svd2_dt_sigma_main_mul);
+    PARAM(bkg_svd2_dt_sigma_tail_mul);
+    PARAM(bkg_svd2_dt_fraction_delta_mul);
+    PARAM(bkg_svd2_dt_fraction_tail_mul);
+    PARAM(bkg_svd2_dt_outlier_fraction);
+    PARAM(bkg_svd2_dt_outlier_mean);
+    PARAM(bkg_svd2_dt_outlier_scale);
+    PARAM(bkg_svd2_dt_acp0);
+    PARAM(bkg_svd2_dt_acp1);
+    PARAM(bkg_svd2_dt_acp2);
+    PARAM(bkg_svd2_dt_acp3);
+    PARAM(bkg_svd2_dt_acp4);
+    PARAM(bkg_svd2_dt_acp5);
+    PARAM(bkg_svd2_dt_acp6);
 
 };
 
 
 class BBarPDF: public DeltaTComponent<BkgTPDF> {
     public:
-    BBarPDF(Range range_mBC, Range range_dE, Range range_dT, bool useMbcdE = true, bool useDeltaT=false):
+    static void init_deltaT(BkgTPDF &deltaT, bool combined){
+        /*if(!combined){
+            deltaT.setCommonParameters(0,PAR::bkg_svd1_dt_mean_delta, PAR::bkg_svd1_dt_blifetime, PAR::bkg_svd1_dt_mean_tau,
+                    PAR::bkg_svd1_dt_outlier_fraction, PAR::bkg_svd1_dt_outlier_mean, PAR::bkg_svd1_dt_outlier_scale);
+            deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_sgl, PAR::bkg_svd1_dt_sigma_tail_sgl,
+                    PAR::bkg_svd1_dt_fraction_delta_sgl, PAR::bkg_svd1_dt_fraction_tail_sgl, false);
+            deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_mul, PAR::bkg_svd1_dt_sigma_tail_mul,
+                    PAR::bkg_svd1_dt_fraction_delta_mul, PAR::bkg_svd1_dt_fraction_tail_mul, true);
+            deltaT.setAcp(0,PAR::bkg_svd1_dt_acp0);
+        }else{
+            deltaT.setCommonParameters(0,PAR::bkg_svd2_dt_mean_delta, PAR::bkg_svd2_dt_blifetime, PAR::bkg_svd2_dt_mean_tau,
+                    PAR::bkg_svd2_dt_outlier_fraction, PAR::bkg_svd2_dt_outlier_mean, PAR::bkg_svd2_dt_outlier_scale);
+            deltaT.setParameters(0,PAR::bkg_svd2_dt_sigma_main_sgl, PAR::bkg_svd2_dt_sigma_tail_sgl,
+                    PAR::bkg_svd2_dt_fraction_delta_sgl, PAR::bkg_svd2_dt_fraction_tail_sgl, false);
+            deltaT.setParameters(0,PAR::bkg_svd2_dt_sigma_main_mul, PAR::bkg_svd2_dt_sigma_tail_mul,
+                    PAR::bkg_svd2_dt_fraction_delta_mul, PAR::bkg_svd2_dt_fraction_tail_mul, true);
+            deltaT.setAcp(0,PAR::bkg_svd2_dt_acp0);
+        }*/
+
+
+        deltaT.setCommonParameters(0,PAR::bkg_svd1_dt_mean_delta, PAR::bkg_svd1_dt_blifetime, PAR::bkg_svd1_dt_mean_tau,
+                PAR::bkg_svd1_dt_outlier_fraction, PAR::bkg_svd1_dt_outlier_mean, PAR::bkg_svd1_dt_outlier_scale);
+        deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_sgl, PAR::bkg_svd1_dt_sigma_tail_sgl,
+                PAR::bkg_svd1_dt_fraction_delta_sgl, PAR::bkg_svd1_dt_fraction_tail_sgl, false);
+        if(!combined) {
+            deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_mul, PAR::bkg_svd1_dt_sigma_tail_mul,
+                PAR::bkg_svd1_dt_fraction_delta_mul, PAR::bkg_svd1_dt_fraction_tail_mul, true);
+        }
+        deltaT.setAcp(0,PAR::bkg_svd1_dt_acp0);
+
+        deltaT.setCommonParameters(1,PAR::bkg_svd2_dt_mean_delta, PAR::bkg_svd2_dt_blifetime, PAR::bkg_svd2_dt_mean_tau,
+                PAR::bkg_svd2_dt_outlier_fraction, PAR::bkg_svd2_dt_outlier_mean, PAR::bkg_svd2_dt_outlier_scale);
+        deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_sgl, PAR::bkg_svd2_dt_sigma_tail_sgl,
+                PAR::bkg_svd2_dt_fraction_delta_sgl, PAR::bkg_svd2_dt_fraction_tail_sgl, false);
+        deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_mul, PAR::bkg_svd2_dt_sigma_tail_mul,
+                PAR::bkg_svd2_dt_fraction_delta_mul, PAR::bkg_svd2_dt_fraction_tail_mul, true);
+        deltaT.setAcp(1,PAR::bkg_svd2_dt_acp0);
+    }
+
+    BBarPDF(Range range_mBC, Range range_dE, Range range_dT, bool useMbcdE, bool useDeltaT, bool combinedDeltaT):
         DeltaTComponent<BkgTPDF>(range_dT, false, useDeltaT), useMbcdE(useMbcdE), range_mBC(range_mBC), range_dE(range_dE),
         bbarPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         bbarPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setCommonParameters(PAR::bkg_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_dt_mean_tau,
-                PAR::bkg_dt_outlier_fraction, PAR::bkg_dt_outlier_mean, PAR::bkg_dt_outlier_scale);
-        deltaT.setParameters(PAR::bkg_dt_sigma_main_sgl, PAR::bkg_dt_sigma_tail_sgl,
-                PAR::bkg_dt_fraction_delta_sgl, PAR::bkg_dt_fraction_tail_sgl, false);
-        deltaT.setParameters(PAR::bkg_dt_sigma_main_mul, PAR::bkg_dt_sigma_tail_mul,
-                PAR::bkg_dt_fraction_delta_mul, PAR::bkg_dt_fraction_tail_mul, true);
-        deltaT.setAcp(PAR::bkg_dt_acp0);
+        init_deltaT(deltaT,combinedDeltaT);
     }
 
     virtual ~BBarPDF(){}

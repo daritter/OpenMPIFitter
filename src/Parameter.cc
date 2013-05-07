@@ -56,10 +56,10 @@ bool Parameter::save(ostream& out, bool istty) const {
         else if(changed>2) out << ANSI_RED;
         else if(changed>1) out << ANSI_GREEN;
         end = changed>1;
-        out << format("%s %|32t| %17.10e %17.10e %6.6g %6.6g %9.2f %9.2f")
+        out << format("%s %|32t| %13.6e %13.6e %6.6g %6.6g %9.2f %9.2f")
             % m_name % m_value % m_error % m_min % m_max % significance % diff;
     }else{
-        out << format("%s %|32t| %17.10e %17.10e %6.6g %6.6g %5s")
+        out << format("%s %|32t| %13.6e %13.6e %6.6g %6.6g %5s")
             % m_name % m_value % m_error % m_min % m_max % (m_fixed?"Y":"N");
     }
 

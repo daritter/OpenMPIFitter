@@ -188,6 +188,8 @@ int main(int argc, char* argv[]){
              "The maximal dE value to veto")
             ("veto", po::bool_switch(&pdf.getVeto()),
              "Apply the veto")
+            ("combined-dT", po::bool_switch(&pdf.getCombined_dT()),
+             "Use combined dT for SVD1 and SVD2")
             ;
 
         po::variables_map vm;
@@ -244,6 +246,10 @@ int main(int argc, char* argv[]){
     if(!(svdFlag & Component::SVD2)){
         if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
         fitter.fixParameters += ".*svd2.*";
+    }
+    if(pdf.getCombined_dT()){
+        if(!fitter.fixParameters.empty()) fitter.fixParameters += "|";
+        fitter.fixParameters += "bkg_svd1_dt.*mul";
     }
 
     /** Call the MPI Fitting core and return the result */

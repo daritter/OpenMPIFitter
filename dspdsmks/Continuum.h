@@ -10,23 +10,21 @@ namespace PAR {
     PARAM(scale_continuum);
     PARAM(ratio_continuum_svd1);
     PARAM(ratio_continuum_svd2);
+    PARAM(continuum_svd1_dE);
+    PARAM(continuum_svd1_dE_cheb1);
+    PARAM(continuum_svd2_dE);
+    PARAM(continuum_svd2_dE_cheb1);
 };
 
 
 class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
     public:
-    ContinuumPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
+    ContinuumPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool combinedDeltaT):
         DeltaTComponent<BkgTPDF>(range_dT, true, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         continuumPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         continuumPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        deltaT.setCommonParameters(PAR::bkg_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_dt_mean_tau,
-                PAR::bkg_dt_outlier_fraction, PAR::bkg_dt_outlier_mean, PAR::bkg_dt_outlier_scale);
-        deltaT.setParameters(PAR::bkg_dt_sigma_main_sgl, PAR::bkg_dt_sigma_tail_sgl,
-                PAR::bkg_dt_fraction_delta_sgl, PAR::bkg_dt_fraction_tail_sgl, false);
-        deltaT.setParameters(PAR::bkg_dt_sigma_main_mul, PAR::bkg_dt_sigma_tail_mul,
-                PAR::bkg_dt_fraction_delta_mul, PAR::bkg_dt_fraction_tail_mul, true);
-        deltaT.setAcp(PAR::bkg_dt_acp0);
+        BBarPDF::init_deltaT(deltaT, combinedDeltaT);
     }
 
     virtual ~ContinuumPDF(){}
@@ -36,14 +34,22 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
             //Set Parameters for continuum component
             continuumPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             continuumPDF_svd1.fcnx.set(e.benergy, par[PAR::bbar_svd1_Mbc_argusC]);
-            continuumPDF_svd1.fcny.set(&par[PAR::bbar_svd1_dE_cheb1]);
+            if(par[PAR::continuum_svd1_dE]!=0){
+                continuumPDF_svd1.fcny.set(&par[PAR::continuum_svd1_dE_cheb1]);
+            }else{
+                continuumPDF_svd1.fcny.set(&par[PAR::bbar_svd1_dE_cheb1]);
+            }
 
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * continuumPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for continuum component
             continuumPDF_svd2.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
             continuumPDF_svd2.fcnx.set(e.benergy, par[PAR::bbar_svd2_Mbc_argusC]);
-            continuumPDF_svd2.fcny.set(&par[PAR::bbar_svd2_dE_cheb1]);
+            if(par[PAR::continuum_svd2_dE]!=0){
+                continuumPDF_svd2.fcny.set(&par[PAR::continuum_svd2_dE_cheb1]);
+            }else{
+                continuumPDF_svd2.fcny.set(&par[PAR::bbar_svd2_dE_cheb1]);
+            }
 
             return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * continuumPDF_svd2(e.Mbc, e.dE);
         }

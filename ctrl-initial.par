@@ -1,0 +1,250 @@
+# Name                                 value             error          min    max fixed
+# Reconstruction efficiency
+signal_svd1_eff                   5.309343e-05  3.176515e-07      0      0     Y
+signal_svd2_eff                   1.979208e-04  6.133048e-07      0      0     Y
+
+#Component scales
+scale_bbar                        1.000000e+00  0.000000e+00      0      0     Y # N times expected bbar
+scale_continuum                   1.000000e-01  0.000000e+00      0      0     Y # N times expected continuum
+
+# Yields for all components
+yield_signal_br                   3.225252e-03  1.000584e-05   -inf    inf     Y
+ratio_misrecon_svd1               2.450183e-01  2.568621e-03   -inf    inf     N # ratio between signal and misrecon
+ratio_misrecon_svd2               3.311267e-01  2.226992e-03   -inf    inf     N # ratio between signal and misrecon
+yield_bbar_svd1                   2.741200e+04  1.655615e+02   -inf    inf     N
+yield_bbar_svd2                   3.364650e+05  5.742590e+02   -inf    inf     N
+ratio_continuum_svd1              2.338392e-01  9.236087e-03   -inf    inf     N # ratio between bbar and continuum
+ratio_continuum_svd2              3.523992e-01  3.236291e-03   -inf    inf     N # ratio between bbar and continuum
+
+# Signal Component, SVD1
+signal_svd1_rbin1                 1.000000e+00  1.478776e-03      0    inf     Y
+signal_svd1_rbin2                 7.505727e-01  1.293084e-02      0    inf     N
+signal_svd1_rbin3                 7.499364e-01  1.292304e-02      0    inf     N
+signal_svd1_rbin4                 5.000000e-01  9.769440e-03      0    inf     N
+signal_svd1_rbin5                 5.067447e-01  9.857178e-03      0    inf     N
+signal_svd1_rbin6                 4.465513e-01  9.066524e-03      0    inf     N
+signal_svd1_rbin7                 7.720794e-01  1.319514e-02      0    inf     N
+
+#signal_svd1_nbb                  1.519610e+08  1.241000e+06      0      0     Y
+signal_svd1_nbb                   2.168656e+11  1.162501e+09      0    inf     N
+signal_svd1_ratio                 8.236382e-01  3.683494e-03      0      1     N
+signal_svd1_Mbc_mean_m0           5.279865e+00  1.326862e-04   -inf    inf     N
+signal_svd1_Mbc_mean_m1           0.000000e+00  8.104316e-03   -inf    inf     Y
+signal_svd1_Mbc_mean_m2           0.000000e+00  0.000000e+00   -inf    inf     Y
+signal_svd1_Mbc_sigma_m0          2.475894e-03  2.452434e-05   -inf    inf     N
+signal_svd1_Mbc_sigma_m1          0.000000e+00  2.350225e-03   -inf    inf     Y
+signal_svd1_Mbc_sigma_m2          0.000000e+00  3.784374e-02   -inf    inf     Y
+signal_svd1_Mbc_ratio             3.481806e-01  3.969357e-02      0      1     N
+signal_svd1_Mbc_ratio_m1          0.000000e+00  1.454607e+00   -inf    inf     Y
+signal_svd1_Mbc_ratio_m2          0.000000e+00  1.036436e+01   -inf    inf     Y
+signal_svd1_Mbc_meanshift        -3.816179e-04  2.057008e-04   -inf    inf     N
+signal_svd1_Mbc_meanshift_m1     -5.208597e-02  3.765197e-03   -inf    inf     N
+signal_svd1_Mbc_meanshift_m2      0.000000e+00  9.164180e-02   -inf    inf     Y
+signal_svd1_Mbc_sigmascale        1.156312e+00  2.963455e-02      1    inf     N
+signal_svd1_Mbc_sigmascale_m1     0.000000e+00  1.043143e+00   -inf    inf     Y
+signal_svd1_Mbc_sigmascale_m2     5.276518e+02  5.260833e+01   -inf    inf     N
+signal_svd1_Mbc_sigma2            1.000000e+00  4.810876e-03      0    inf     Y
+signal_svd1_Mbc_sigma2_m1         0.000000e+00  1.627860e+00   -inf    inf     Y
+signal_svd1_Mbc_sigma2_m2         0.000000e+00  6.333299e+00   -inf    inf     Y
+signal_svd1_Mbc_sigma2scale       1.000000e+00  3.528839e-02      0    inf     Y
+signal_svd1_Mbc_argusC           -1.179407e+02  3.833033e+00   -inf      0     N
+
+signal_svd1_dE_mean               1.508854e-03  1.942311e-04   -inf    inf     N
+signal_svd1_dE_sigma              7.550885e-03  2.526558e-04      0    inf     N
+signal_svd1_dE_norm1              1.097100e+00  1.371210e-01      0    inf     N
+signal_svd1_dE_meanshift1        -5.696486e-03  6.022978e-04   -inf    inf     N
+signal_svd1_dE_sigmascale1        2.131881e+00  9.144904e-02      1    inf     N
+signal_svd1_dE_norm2              8.160878e-01  1.207987e-01      0    inf     N
+signal_svd1_dE_meanshift2        -3.872506e-03  1.136479e-03   -inf    inf     N
+signal_svd1_dE_sigmascale2        1.995890e+00  6.974826e-02      1    inf     N
+signal_svd1_dE_bkg_mean          -6.111364e-03  4.180251e-03   -inf    inf     N
+signal_svd1_dE_bkg_sigma          1.315922e-01  7.922013e-03      0      1     N
+
+# Signal Component, SVD2
+signal_svd2_rbin1                 1.000000e+00  1.173670e-03      0    inf     Y
+signal_svd2_rbin2                 8.432058e-01  1.124497e-02      0    inf     N
+signal_svd2_rbin3                 1.065663e+00  1.338276e-02      0    inf     N
+signal_svd2_rbin4                 6.340114e-01  9.181041e-03      0    inf     N
+signal_svd2_rbin5                 4.772172e-01  7.573450e-03      0    inf     N
+signal_svd2_rbin6                 5.092758e-01  7.908006e-03      0    inf     N
+signal_svd2_rbin7                 9.031733e-01  1.182597e-02      0    inf     N
+
+#signal_svd2_nbb                  6.196200e+08  9.441000e+06      0      0     Y
+signal_svd2_nbb                   1.045924e+11  3.852887e+08      0    inf     N
+signal_svd2_ratio                 7.956312e-01  2.947179e-03      0      1     N
+signal_svd2_Mbc_mean_m0           5.280117e+00  1.034208e-04   -inf    inf     N
+signal_svd2_Mbc_mean_m1           0.000000e+00  8.104316e-03   -inf    inf     Y
+signal_svd2_Mbc_mean_m2           0.000000e+00  0.000000e+00   -inf    inf     Y
+signal_svd2_Mbc_sigma_m0          2.488817e-03  2.022250e-05   -inf    inf     N
+signal_svd2_Mbc_sigma_m1          0.000000e+00  2.350225e-03   -inf    inf     Y
+signal_svd2_Mbc_sigma_m2          0.000000e+00  3.784374e-02   -inf    inf     Y
+signal_svd2_Mbc_ratio             3.736921e-01  2.655020e-02      0      1     N
+signal_svd2_Mbc_ratio_m1          0.000000e+00  1.454607e+00   -inf    inf     Y
+signal_svd2_Mbc_ratio_m2          0.000000e+00  1.036436e+01   -inf    inf     Y
+signal_svd2_Mbc_meanshift        -9.322380e-04  1.401863e-04   -inf    inf     N
+signal_svd2_Mbc_meanshift_m1     -5.742172e-02  2.901305e-03   -inf    inf     N
+signal_svd2_Mbc_meanshift_m2      0.000000e+00  9.164180e-02   -inf    inf     Y
+signal_svd2_Mbc_sigmascale        1.123862e+00  1.958904e-02      1    inf     N
+signal_svd2_Mbc_sigmascale_m1     0.000000e+00  1.043143e+00   -inf    inf     Y
+signal_svd2_Mbc_sigmascale_m2     4.882546e+02  3.280173e+01   -inf    inf     N
+signal_svd2_Mbc_sigma2            1.000000e+00  4.810876e-03      0    inf     Y
+signal_svd2_Mbc_sigma2_m1         0.000000e+00  1.627860e+00   -inf    inf     Y
+signal_svd2_Mbc_sigma2_m2         0.000000e+00  6.333299e+00   -inf    inf     Y
+signal_svd2_Mbc_sigma2scale       1.000000e+00  3.528839e-02      0    inf     Y
+signal_svd2_Mbc_argusC           -1.212267e+02  2.662002e+00   -inf      0     N
+
+signal_svd2_dE_mean              -1.548324e-03  1.506408e-04   -inf    inf     N
+signal_svd2_dE_sigma              7.113677e-03  3.092646e-04      0    inf     N
+signal_svd2_dE_norm1              1.564231e+00  2.389156e-01      0    inf     N
+signal_svd2_dE_meanshift1        -8.780125e-04  4.008660e-04   -inf    inf     N
+signal_svd2_dE_sigmascale1        2.107836e+00  6.794050e-02      1    inf     N
+signal_svd2_dE_norm2              1.230762e+00  1.983399e-01      0    inf     N
+signal_svd2_dE_meanshift2        -4.770785e-03  6.251071e-04   -inf    inf     N
+signal_svd2_dE_sigmascale2        2.140243e+00  7.491758e-02      1    inf     N
+signal_svd2_dE_bkg_mean          -1.504897e-02  2.539070e-03   -inf    inf     N
+signal_svd2_dE_bkg_sigma          1.286310e-01  5.088738e-03      0      1     N
+
+# Signal Component, deltaT
+signal_dt_blifetime               1.530000e+00  6.781624e-03      0    inf     Y
+signal_dt_Jc                      0.000000e+00  6.275598e-03   -inf    inf     Y
+signal_dt_Js1                     0.000000e+00  9.609460e-03   -inf    inf     Y
+signal_dt_Js2                     0.000000e+00  9.609471e-03   -inf    inf     Y
+signal_dt_fractionscale           6.889552e-01  3.601543e-02      0    inf     N
+
+# Misreconstructed Component, SVD1
+misrecon_svd1_rbin1               1.000000e+00  1.478776e-03      0    inf     Y
+misrecon_svd1_rbin2               8.118006e-01  2.735042e-02      0    inf     N
+misrecon_svd1_rbin3               8.245168e-01  2.766044e-02      0    inf     N
+misrecon_svd1_rbin4               5.518820e-01  2.087046e-02      0    inf     N
+misrecon_svd1_rbin5               6.149542e-01  2.247408e-02      0    inf     N
+misrecon_svd1_rbin6               4.343845e-01  1.780106e-02      0    inf     N
+misrecon_svd1_rbin7               3.906409e-01  1.662160e-02      0    inf     N
+
+misrecon_svd1_ratio               1.327440e-01  2.269871e-02      0      1     N
+misrecon_svd1_Mbc_mean            5.280439e+00  9.761266e-04   -inf    inf     N
+misrecon_svd1_Mbc_sigma           7.432963e-03  1.407452e-03      0    inf     N
+misrecon_svd1_Mbc_sigma2          4.258228e-03  7.299995e-04      0    inf     N
+misrecon_svd1_Mbc_argusC         -4.866621e+01  5.390295e+00   -inf      0     N
+misrecon_svd1_dE_mean             4.960384e-03  2.898425e-03   -inf    inf     N
+misrecon_svd1_dE_sigma            4.215833e-02  4.136106e-03      0    inf     N
+misrecon_svd1_dE_bkg_mean         5.928792e-03  9.460218e-03   -inf    inf     N
+misrecon_svd1_dE_bkg_sigma        1.924677e-01  2.368804e-02      0    inf     N
+
+# Misreconstructed Component, SVD2
+misrecon_svd2_rbin1               1.000000e+00  1.173670e-03      0    inf     Y
+misrecon_svd2_rbin2               9.691296e-01  2.197249e-02      0    inf     N
+misrecon_svd2_rbin3               1.289221e+00  2.732457e-02      0    inf     N
+misrecon_svd2_rbin4               7.292510e-01  1.786149e-02      0    inf     N
+misrecon_svd2_rbin5               5.910931e-01  1.542508e-02      0    inf     N
+misrecon_svd2_rbin6               5.220142e-01  1.417765e-02      0    inf     N
+misrecon_svd2_rbin7               4.934211e-01  1.365396e-02      0    inf     N
+
+misrecon_svd2_ratio               1.529065e-01  1.858362e-02      0      1     N
+misrecon_svd2_Mbc_mean            5.282073e+00  6.249770e-04   -inf    inf     N
+misrecon_svd2_Mbc_sigma           9.968699e-03  8.828537e-04      0    inf     N
+misrecon_svd2_Mbc_sigma2          3.762508e-03  5.042982e-04      0    inf     N
+misrecon_svd2_Mbc_argusC         -4.625377e+01  4.046923e+00   -inf      0     N
+misrecon_svd2_dE_mean             2.616297e-03  1.997094e-03   -inf    inf     N
+misrecon_svd2_dE_sigma            4.612956e-02  3.220255e-03      0    inf     N
+misrecon_svd2_dE_bkg_mean         2.518214e-03  8.080218e-03   -inf    inf     N
+misrecon_svd2_dE_bkg_sigma        2.193710e-01  2.471500e-02      0    inf     N
+
+# Misreconstructed Component, deltaT
+misrecon_dt_blifetime             9.915992e-01  8.766814e-03      0    inf     N
+misrecon_dt_fractionscale         1.297432e+00  1.188914e-01      0    inf     N
+
+# bbar Component, SVD1
+bbar_svd1_ratio                   2.014640e-02  2.724016e-03      0      1     N
+bbar_svd1_Mbc_mean                5.281190e+00  5.748744e-04   -inf    inf     N
+bbar_svd1_Mbc_sigma               1.042108e-03  4.418320e-04      0    inf     N
+bbar_svd1_Mbc_argusC             -2.635252e+01  1.483362e+00   -inf      0     N
+bbar_svd1_dE_mean                 0.000000e+00  1.980905e-03   -inf    inf     Y
+bbar_svd1_dE_sigma                6.466032e-02  5.460732e-02      0    inf     N
+bbar_svd1_dE_cheb1               -9.835046e-01  9.232207e-02   -inf    inf     N
+
+bbar_svd1_ctrlpeak_ratio          1.826086e-01  8.984657e-02      0      1     N
+bbar_svd1_ctrlpeak_Mbc_mean       5.279258e+00  4.606601e-04   -inf    inf     N
+bbar_svd1_ctrlpeak_Mbc_sigma      4.501761e-03  4.103754e-04      0    inf     N
+bbar_svd1_ctrlpeak_dE_mean       -1.402282e-01  1.609343e-03   -inf    inf     N
+bbar_svd1_ctrlpeak_dE_sigma       1.016808e-02  1.495600e-03      0    inf     N
+
+# bbar Component, SVD2
+bbar_svd2_ratio                   1.983242e-02  2.446768e-03      0      1     N
+bbar_svd2_Mbc_mean                5.278897e+00  5.566744e-04   -inf    inf     N
+bbar_svd2_Mbc_sigma               5.664044e-03  5.188814e-04      0    inf     N
+bbar_svd2_Mbc_argusC             -2.191195e+01  7.023037e-01   -inf      0     N
+bbar_svd2_dE_mean                -1.606154e-01  3.232550e-02   -inf    inf     N
+bbar_svd2_dE_sigma                1.446787e-01  1.477792e-02      0    inf     N
+bbar_svd2_dE_cheb1               -6.279036e-01  1.505583e-01   -inf    inf     N
+bbar_svd2_dE_cheb2                5.483566e-01  9.684707e-02   -inf    inf     N
+
+bbar_svd2_ctrlpeak_ratio          7.805272e-01  3.159078e-02      0      1     N
+bbar_svd2_ctrlpeak_Mbc_mean       5.279480e+00  2.964120e-04   -inf    inf     N
+bbar_svd2_ctrlpeak_Mbc_sigma      3.395566e-03  2.483778e-04      0    inf     N
+bbar_svd2_ctrlpeak_dE_mean       -1.463351e-01  1.298394e-03   -inf    inf     N
+bbar_svd2_ctrlpeak_dE_sigma       9.181256e-03  1.024518e-03      0    inf     N
+
+continuum_svd1_dE                 1.000000e+00  0.000000e+00      0      0     Y
+continuum_svd1_dE_cheb1           9.666775e-01  5.038834e-01   -inf    inf     N
+continuum_svd2_dE                 1.000000e+00  0.000000e+00      0      0     Y
+continuum_svd2_dE_cheb1          -1.535642e-01  1.279895e-01   -inf    inf     N
+
+# Bkg deltaT, SVD1
+bkg_svd1_rbin1                    1.000000e+00  1.173670e-03      0    inf     Y
+bkg_svd1_rbin2                    7.139668e-01  1.363426e-02      0    inf     N
+bkg_svd1_rbin3                    5.748194e-01  1.172667e-02      0    inf     N
+bkg_svd1_rbin4                    3.522746e-01  8.507051e-03      0    inf     N
+bkg_svd1_rbin5                    3.076137e-01  7.817209e-03      0    inf     N
+bkg_svd1_rbin6                    1.967211e-01  5.980504e-03      0    inf     N
+bkg_svd1_rbin7                    1.134756e-01  4.381351e-03      0    inf     N
+bkg_svd1_dt_blifetime             1.361788e+00  6.292135e-02      0    inf     N
+bkg_svd1_dt_mean_delta           -7.918947e-03  3.327990e-02   -inf    inf     N
+bkg_svd1_dt_mean_tau             -1.189882e-01  3.138374e-02   -inf    inf     N
+bkg_svd1_dt_sigma_main_sgl        1.111788e+00  3.147935e-02      0    inf     N
+bkg_svd1_dt_sigma_tail_sgl        4.245932e+00  3.817934e-01      1    inf     N
+bkg_svd1_dt_fraction_delta_sgl    3.044363e-01  4.688688e-02      0      1     N
+bkg_svd1_dt_fraction_tail_sgl     8.412553e-02  1.293734e-02      0      1     N
+bkg_svd1_dt_sigma_main_mul        1.279353e+00  3.409962e-02      0    inf     N
+bkg_svd1_dt_sigma_tail_mul        6.595372e+00  9.636547e-01      1    inf     N
+bkg_svd1_dt_fraction_delta_mul    3.910000e-01  3.790349e-02      0      1     N
+bkg_svd1_dt_fraction_tail_mul     1.985179e-02  7.175443e-03      0      1     N
+bkg_svd1_dt_outlier_fraction      7.266064e-01  8.210969e-02   -inf    inf     N
+bkg_svd1_dt_outlier_mean         -2.482414e-01  4.039593e+00   -inf    inf     N
+bkg_svd1_dt_outlier_scale         1.015205e+00  1.528637e-01   -inf    inf     N
+bkg_svd1_dt_acp0                  6.047950e-02  1.238836e-02   -inf    inf     N
+bkg_svd1_dt_acp1                 -2.156017e-02  1.469193e-02   -inf    inf     N
+bkg_svd1_dt_acp2                  3.442298e-03  1.637066e-02   -inf    inf     N
+bkg_svd1_dt_acp3                  3.486285e-02  2.086352e-02   -inf    inf     N
+bkg_svd1_dt_acp4                 -2.736690e-03  2.236974e-02   -inf    inf     N
+bkg_svd1_dt_acp5                 -3.680737e-02  2.795146e-02   -inf    inf     N
+bkg_svd1_dt_acp6                 -2.560137e-03  3.683481e-02   -inf    inf     N
+
+# Bkg deltaT, SVD2
+bkg_svd2_rbin1                    1.000000e+00  1.173670e-03      0    inf     Y
+bkg_svd2_rbin2                    9.663699e-01  5.013233e-03      0    inf     N
+bkg_svd2_rbin3                    1.084393e+00  5.467552e-03      0    inf     N
+bkg_svd2_rbin4                    5.205922e-01  3.235939e-03      0    inf     N
+bkg_svd2_rbin5                    3.618876e-01  2.553411e-03      0    inf     N
+bkg_svd2_rbin6                    2.767804e-01  2.162226e-03      0    inf     N
+bkg_svd2_rbin7                    1.612579e-01  1.573954e-03      0    inf     N
+bkg_svd2_dt_blifetime             1.109940e+00  1.111627e-02      0    inf     N
+bkg_svd2_dt_mean_delta           -4.399094e-03  9.792714e-03   -inf    inf     N
+bkg_svd2_dt_mean_tau             -5.316454e-02  6.529884e-03   -inf    inf     N
+bkg_svd2_dt_sigma_main_sgl        1.203972e+00  1.173326e-02      0    inf     N
+bkg_svd2_dt_sigma_tail_sgl        3.663873e+00  7.772763e-02      1    inf     N
+bkg_svd2_dt_fraction_delta_sgl    2.372502e-01  1.328074e-02      0      1     N
+bkg_svd2_dt_fraction_tail_sgl     1.515927e-01  5.653983e-03      0      1     N
+bkg_svd2_dt_sigma_main_mul        1.429953e+00  9.975090e-03      0    inf     N
+bkg_svd2_dt_sigma_tail_mul        4.608975e+00  8.423620e-02      1    inf     N
+bkg_svd2_dt_fraction_delta_mul    2.974941e-01  9.082578e-03      0      1     N
+bkg_svd2_dt_fraction_tail_mul     6.113863e-02  2.958930e-03      0      1     N
+bkg_svd2_dt_outlier_fraction      1.123126e+00  3.680095e-02   -inf    inf     N
+bkg_svd2_dt_outlier_mean         -1.416273e+00  6.043155e-01   -inf    inf     N
+bkg_svd2_dt_outlier_scale         9.213835e-01  2.094677e-02   -inf    inf     N
+bkg_svd2_dt_acp0                 -2.301211e-02  3.660076e-03   -inf    inf     N
+bkg_svd2_dt_acp1                 -6.478643e-04  3.728320e-03   -inf    inf     N
+bkg_svd2_dt_acp2                 -3.265402e-03  3.519118e-03   -inf    inf     N
+bkg_svd2_dt_acp3                  1.325989e-02  5.074596e-03   -inf    inf     N
+bkg_svd2_dt_acp4                 -1.612620e-02  6.084251e-03   -inf    inf     N
+bkg_svd2_dt_acp5                 -3.270615e-02  6.955608e-03   -inf    inf     N
+bkg_svd2_dt_acp6                 -1.457481e-02  9.113681e-03   -inf    inf     N

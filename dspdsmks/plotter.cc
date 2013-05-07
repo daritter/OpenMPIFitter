@@ -322,6 +322,8 @@ int main(int argc, char* argv[]){
              "The maximal dE value to veto")
             ("veto", po::bool_switch(&pdf.getVeto()),
              "Apply the veto")
+            ("combined-dT", po::bool_switch(&pdf.getCombined_dT()),
+             "Use combined dT for SVD1 and SVD2")
             ;
 
         po::variables_map vm;
