@@ -69,7 +69,7 @@ def plot(obj, errors=False, fill=None, **argk):
         return plotF1(obj,**argk)
 
 
-def plot1D(hist, axes = None,  fill=None, **argk):
+def plot1D(hist, axes=None, fill=None, log=None, **argk):
     """Plot 1D root Histogram"""
     if axes is None: axes = pl.gca()
 
@@ -96,7 +96,14 @@ def plot1D(hist, axes = None,  fill=None, **argk):
     if fill is not None:
         axes.fill_between(x,0,y,color=fill,alpha=0.05)
 
-    return axes.plot(x,y,**argk)
+    plot = axes.plot(x,y,**argk)
+
+    if log is not None:
+        axes.set_yscale("log",nonposy="clip")
+        ymin = hist.GetMinimum(0.5)/2.0
+        axes.set_ylim(ymin)
+
+    return plot
 
 def plotSmooth(hist, axes=None, smoothing=0, samples=1024, **argk):
     if axes is None: axes = pl.gca()
