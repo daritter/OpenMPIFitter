@@ -44,6 +44,7 @@ def plot_manager(nx=1,ny=1,*args,**argk):
 
 def save_all(basename,pdf=True,png=True,single_pdf=False,close=True):
     """Save all figures"""
+    if pl.get_fignums()==0: return
     if pdf: pp = PdfPages(basename+".pdf")
     for i in pl.get_fignums():
         fig = pl.figure(i)

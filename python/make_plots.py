@@ -88,16 +88,16 @@ def plot_dfs(name,data,fits,label,title=None,log=False, unit="GeV"):
         else:
             last = f.Clone("tmp")
 
-        #r2mpl.plotSmooth(last, axes=data_axes, color=colors[l], samples=2000, label=l, zorder=i+1)
+        r2mpl.plotSmooth(last, axes=data_axes, color=colors[l], samples=2000, label=l, zorder=i+1)
         #r2mpl.plot(last, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
 
         #plot resampled histogram for better comparison
-        scale = last.GetNbinsX()/data.GetNbinsX()
-        if(scale!=1):
-            last2 = last.Clone("tmp_resampled")
-            last2.Rebin(scale)
-            last2.Scale(1./scale)
-            r2mpl.plot(last2, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
+        #scale = last.GetNbinsX()/data.GetNbinsX()
+        #if(scale!=1):
+            #last2 = last.Clone("tmp_resampled")
+            #last2.Rebin(scale)
+            #last2.Scale(1./scale)
+            #r2mpl.plot(last2, axes=data_axes, color=colors[l], label=l, linewidth=0.2)
 
     r2mpl.plot(data,errors=True,axes=data_axes, color="k", label="data", linewidth=0.5, capsize=1.0, zorder=10)
 
@@ -212,13 +212,14 @@ def make_dT_plots(name, title, label):
 
     if not (dt_data_p and dt_data_m and fits_p and fits_m):
         print "Could not make dT plots for", name
-        return
+        return 0
 
-    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps")
-    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps")
+    #plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps")
+    #plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps")
     plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps", log=True)
     plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps", log=True)
     plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, label)
+    return 1
 
 try:
     make_mBCdE_plots("mbcde_svd1", "SVD1")
@@ -227,34 +228,16 @@ except ValueError:
 
 make_mBCdE_plots("mbcde_svd2", "SVD2")
 make_mBCdE_plots("mbcde", "SVD1 + SVD2")
-r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=False)
+r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=True)
 
-#try:
-    #make_dT_plots("dT_svd1_q", "SVD1", "q")
-    #make_dT_plots("dT_svd1_qe", "SVD1", "q\cdot\eta")
-#except OverflowError:
-    #pl.close("all")
+for t,l in [("q","q"),("qe","q\eta")]:
+    nplots = 0
+    nplots += make_dT_plots("dT_svd1_%s_rbin%d" % (t,7), "SVD1", l)
+    nplots += make_dT_plots("dT_svd2_%s_rbin%d" % (t,7), "SVD2", l)
+    for i in range(7):
+        nplots += make_dT_plots("dT_svd1_%s_rbin%d" % (t,i), "SVD1, rbin %d" % i, l)
+    for i in range(7):
+        nplots += make_dT_plots("dT_svd2_%s_rbin%d" % (t,i), "SVD2, rbin %d" % i, l)
 
-#make_dT_plots("dT_svd2_q", "SVD2", "q")
-#make_dT_plots("dT_svd2_qe", "SVD2", "q\cdot\eta")
-
-make_dT_plots("dT_svd1_q_rbin%d" % 7, "SVD1", "q")
-make_dT_plots("dT_svd2_q_rbin%d" % 7, "SVD2", "q")
-for i in range(7):
-    make_dT_plots("dT_svd1_q_rbin%d" % i, "SVD1, rbin %d" % i, "q")
-for i in range(7):
-    make_dT_plots("dT_svd2_q_rbin%d" % i, "SVD2, rbin %d" % i, "q")
-
-r2mpl.save_all(filename + "-dT-q", png=False, single_pdf=False)
-
-make_dT_plots("dT_svd1_qe_rbin%d" % 7, "SVD1", "q\eta")
-make_dT_plots("dT_svd2_qe_rbin%d" % 7, "SVD2", "q\eta")
-for i in range(7):
-    make_dT_plots("dT_svd1_qe_rbin%d" % i, "SVD1, rbin %d" % i, "q\eta")
-for i in range(7):
-    make_dT_plots("dT_svd2_qe_rbin%d" % i, "SVD2, rbin %d" % i, "q\eta")
-
-r2mpl.save_all(filename + "-dT-qe", png=False, single_pdf=False)
-
-
-#pl.show()
+    if nplots>0:
+        r2mpl.save_all(filename + "-dT-"+t, png=False, single_pdf=True)
