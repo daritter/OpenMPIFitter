@@ -600,6 +600,11 @@ struct DspDsmKsPDF {
             chain->AddFile(filename.c_str(),-1);
         }
         if(process==0){
+            std::cout << "Avast, accepting events inside of ";
+            range_mBC.print(std::cout, "mBC");
+            std::cout << " and ";
+            range_dE.print(std::cout, "dE");
+            std::cout << std::endl;
             if(use_veto){
                 std::cout << "Aye, being harsh and rejecting events in ";
                 veto_mBC.print(std::cout, "mBC");
