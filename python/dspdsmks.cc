@@ -26,6 +26,17 @@ struct PDFHelper {
             filenames.push_back(boost::python::extract<std::string>(ns[i]));
         }
     }
+    static void print_yields(DspDsmKsPDF &self, const Parameters &p){
+        const std::vector<double> par = p.getValues();
+        std::string names[] = {"signal","misrecon","bbar","continuum"};
+        int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_bbar, DspDsmKsPDF::CMP_continuum};
+        for(int i=0; i<4; ++i){
+                int cmp = components[i];
+                self.setComponents((DspDsmKsPDF::EnabledComponents)cmp);
+                std::string name = names[i];
+                std::cout << name << ": SVD1 = " << self.get_yield(par, Component::SVD1) << ", SVD2 = " << self.get_yield(par, Component::SVD2) << std::endl;
+        }
+    }
 };
 
 bool operator==(const Event &a, const Event &b){ return false;}
@@ -120,5 +131,6 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("range_dE", range_dE, return_value_policy<reference_existing_object>())
         .def("range_dT", range_dT, return_value_policy<reference_existing_object>())
         .def("data", &DspDsmKsPDF::getData, return_value_policy<reference_existing_object>())
+        .def("yields", &PDFHelper::print_yields)
         ;
 }
