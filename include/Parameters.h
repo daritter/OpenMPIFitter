@@ -33,7 +33,9 @@ class Parameters {
         //Return Minut2 user parameter object
         ROOT::Minuit2::MnUserParameters getMnParams() const;
         //Update the parameters from the Minuit2 user parameter object
-        void update(const ROOT::Minuit2::MnUserParameters mnParams);
+        void update(const ROOT::Minuit2::MnUserParameters &mnParams);
+        //Update the parameters from an double vector containing the values
+        void update(const std::vector<double> &params);
         //Return vector containing the values for all parameters
         std::vector<double> getValues() const;
         //Return the number of parameters

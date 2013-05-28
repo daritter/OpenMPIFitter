@@ -99,10 +99,10 @@ void Parameters::load_stream(istream &in){
 void Parameters::save_stream(ostream &out, bool istty, bool onlyfree) const {
     //If istty is set we want nice color output of the non fixed parameters only
     if(istty){
-        out << ANSI_BLUE << boost::format("# Name %|32t| %=17s %=17s %6s %6s %9s %9s\n")
+        out << ANSI_BLUE << boost::format("# Name %|32t| %=13s %=13s %6s %6s %9s %9s\n")
             % "value" % "error" % "min" % "max" % "sig" % "change" << ANSI_END;
     }else{
-        out << boost::format("# Name %|32t| %=17s %=17s %6s %6s %5s\n")
+        out << boost::format("# Name %|32t| %=13s %=13s %6s %6s %5s\n")
             % "value" % "error" % "min" % "max" % "fixed";
     }
     //Bookkeeping to see if we have saved all parameters
@@ -206,7 +206,7 @@ ROOT::Minuit2::MnUserParameters Parameters::getMnParams() const {
     return mnParams;
 }
 
-void Parameters::update(ROOT::Minuit2::MnUserParameters mnParams){
+void Parameters::update(const ROOT::Minuit2::MnUserParameters &mnParams){
     for(const ROOT::Minuit2::MinuitParameter &mnp: mnParams.Parameters()){
         int index = ParameterList::getIndex(mnp.GetName());
         Parameter &p = m_parameters[index];
@@ -214,5 +214,12 @@ void Parameters::update(ROOT::Minuit2::MnUserParameters mnParams){
             p.error(mnp.Error());
             p.value(mnp.Value());
         }
+    }
+}
+
+void Parameters::update(const std::vector<double> &params){
+    assert(params.size() == m_parameters.size());
+    for(size_t i=0; i<params.size(); ++i){
+        m_parameters[i].value(params[i]);
     }
 }
