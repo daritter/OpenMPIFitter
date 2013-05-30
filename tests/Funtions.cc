@@ -3,8 +3,10 @@
 #include "func.h"
 #include <iostream>
 
-double getStep(int i, int N, double min, double max){
-    return 1.0*i/(N-1) * (max-min) + min;
+namespace {
+    inline double getStep(int i, int N, double min, double max){
+        return 1.0*i/(N-1) * (max-min) + min;
+    }
 }
 
 #define step(var,min,max,N) for(double i##var=0, var=min; i##var<N; i##var+=1, var=1.0*i##var/(N-1)*(max-min)+min)
@@ -75,7 +77,7 @@ TEST(GaussTest,Bifur) {
                             double norm = Belle::norm_bigauss(ll,ul,mean,sigma1,sigma2);
                             if(norm == 0) continue;
                             EXPECT_FLOAT_EQ(g1(x), Belle::bigauss(x, mean, sigma1, sigma2)/norm)
-                                 << "ll: " << ll << " ul: " << ul << " µ: " << mean << " s1: " << sigma1 << " s2: " << sigma2 << " x: " << x;
+                                << "ll: " << ll << " ul: " << ul << " µ: " << mean << " s1: " << sigma1 << " s2: " << sigma2 << " x: " << x;
                         }
                     }
                 }

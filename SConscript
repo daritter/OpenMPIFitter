@@ -12,4 +12,4 @@ if not kekcc:
     testEnv = env.Clone()
     testEnv.AppendUnique( CPPPATH = ["gtest/include", "gtest"])
     gtest = testEnv.Library("gtest", ["gtest/src/gtest-all.cc", "gtest/src/gtest_main.cc"])
-    testEnv.Program("unittest", Glob('tests/*.cc') + gtest + mpiFitter)
+    testEnv.Program("unittest", Glob('tests/*.cc') + gtest + ddkLib + mpiFitter)
