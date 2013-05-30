@@ -14,7 +14,7 @@ struct ParameterHelper {
 
 struct RangeHelper {
     static const std::string tostring(Range &self){
-        return (boost::format("<Range vmin=%1% vmax=%2%>") % self.vmin % self.vmax).str();
+        return (boost::format("<Range name=%1% min=%2% max=%3%>") % self.name % self.vmin % self.vmax).str();
     }
 };
 
@@ -42,7 +42,7 @@ struct PDFHelper {
 bool operator==(const Event &a, const Event &b){ return false;}
 bool operator!=(const Event &a, const Event &b){ return true;}
 
-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadParamsFromFile, Parameters::load, 1, 4);
+BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadParamsFromFile, Parameters::load, 1, 5);
 
 BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(LoadEvents, DspDsmKsPDF::load, 0, 3);
 
@@ -78,7 +78,7 @@ BOOST_PYTHON_MODULE(dspdsmks)
         .def("print", &Parameters::print)
         ;
 
-    class_<Range>("Range", init<double, double>())
+    class_<Range>("Range", init<std::string, double, double>())
         .def("__call__", &Range::operator())
         .def_readwrite("vmin",&Range::vmin)
         .def_readwrite("vmax",&Range::vmax)
