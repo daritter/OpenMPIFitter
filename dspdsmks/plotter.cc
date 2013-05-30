@@ -104,62 +104,20 @@ struct PlotRoutine {
         int noMbcdE = activeComponents & DspDsmKsPDF::CMP_nombc;
 
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
-            std::vector<double> yields[2] = {std::vector<double>(7,0), std::vector<double>(7,0)};
-            for(int rbin=0; rbin<7; ++rbin){
-                yields[0][rbin] = parallel_pdf.localFCN().get_yield(par, 1, rbin);
-                yields[1][rbin] = parallel_pdf.localFCN().get_yield(par, 2, rbin);
-            }
             for(int i=0; i<4; ++i){
                 int cmp = components[i];
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
+                std::cout << "Plotting dT for " << name << ": " << std::endl;
                 parallel_pdf.setOptions(cmp | DspDsmKsPDF::CMP_deltat | noMbcdE);
-
-                TH1D *h_dT_fit[56];
-                boost::format dt_hist_name("dT_svd%1%_%2%_rbin%3%_fit_%4%_%5%");
-                boost::format dt_hist_title("#Deltat, SVD%1%, %5%, rbin %3%, %2%=%4%");
-                TH1D* h_dT_fit_all[2][2][2] = {{{0}}};
-                int index(0);
-                for(int svd=0; svd<2; ++svd){
-                    for(int rbin=0; rbin<7; ++rbin){
-                        for(int type=0; type<2; ++type){
-                            for(int q=0; q<2; ++q){
-                                const std::string hname = (dt_hist_name % (svd+1) % (type>0?"qe":"q") % rbin % (q>0?"p":"m") % name).str();
-                                const std::string htitle = (dt_hist_title % (svd+1) % (type>0?"qe":"q") % rbin % (q>0?"p":"m") % name).str();
-                                h_dT_fit[index++] = new TH1D(hname.c_str(),htitle.c_str(), bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                                if(!h_dT_fit_all[svd][type][q]){
-                                    const std::string hname = (dt_hist_name % (svd+1) % (type>0?"qe":"q") % 7 % (q>0?"p":"m") % name).str();
-                                    const std::string htitle = (dt_hist_title % (svd+1) % (type>0?"qe":"q") % 7 % (q>0?"p":"m") % name).str();
-                                    h_dT_fit_all[svd][type][q] = new TH1D(hname.c_str(),htitle.c_str(), bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                for(int svd=0; svd<2; ++svd){
-                    std::cout << "Plotting dT for " << name << ", SVD" << (svd+1) << ": ";
-                    int svdVs = (svd==0?DspDsmKsPDF::PLT_SVD1:DspDsmKsPDF::PLT_SVD2) | DspDsmKsPDF::PLT_DT;
-                    std::vector<double> values(3);
-                    values[0] = bins_dT*sampling_dT;
-                    values[1] = plotrange_dT.vmin;
-                    values[2] = plotrange_dT.vmax;
-                    std::vector<double> result = parallel_pdf.plotM(svdVs, values, par);
-                    index = 0;
-                    for(int rbin=0; rbin<7; ++rbin){
-                        for(int type=0; type<2; ++type){
-                            for(int q=0; q<2; ++q){
-                                TH1D* h = h_dT_fit[index+svd*28];
-                                for(int i = 0; i<h->GetNbinsX(); ++i){
-                                    h->SetBinContent(i+1, result[index*h->GetNbinsX()+i]);
-                                }
-                                h->Scale(parallel_pdf.localFCN().get_yield(par, svdVs, rbin)/yields[svd][rbin]);
-                                h_dT_fit_all[svd][type][q]->Add(h);
-                                index++;
-                            }
-                        }
-                    }
-                }
+                DeltaTHists dthists(bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax, name);
+                int svdVs = DspDsmKsPDF::PLT_SVD1 | DspDsmKsPDF::PLT_SVD2 | DspDsmKsPDF::PLT_DT;
+                std::vector<double> values({(double) bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax});
+                std::vector<double> result = parallel_pdf.plotM(svdVs, values, par);
+                dthists.recieve(result);
+                dthists.finalize(true, [&](int svd, int rbin){
+                    return parallel_pdf.localFCN().get_yield(par, (svd>0)?Component::SVD2:Component::SVD1, rbin);
+                });
             }
         }
 
@@ -175,19 +133,8 @@ struct PlotRoutine {
         TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2",
                 bins_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
                 bins_dE, plotrange_dE.vmin, plotrange_dE.vmax);
-        TH1D* h_dT_data_q[2][8][2];
-        TH1D* h_dT_data_qe[2][8][2];
 
-        for(int svd=0; svd<2; ++svd){
-            for(int rbin=0; rbin<8; ++rbin){
-                for(int q=0; q<2; ++q){
-                    h_dT_data_q[svd][rbin][q] = new TH1D((boost::format("dT_svd%d_q_rbin%d_data_%s") % (svd+1) % rbin % (q>0?"p":"m")).str().c_str(),
-                            (boost::format("#Deltat, SVD%d, rbin %d, q=%+d") % (svd+1) % rbin % (2*q-1)).str().c_str(), bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                    h_dT_data_qe[svd][rbin][q] = new TH1D((boost::format("dT_svd%d_qe_rbin%d_data_%s") % (svd+1) % rbin % (q>0?"p":"m")).str().c_str(),
-                            (boost::format("#Deltat, SVD%d, rbin %d, q#eta=%+d") % (svd+1) % rbin % (2*q-1)).str().c_str(), bins_dT, plotrange_dT.vmin, plotrange_dT.vmax);
-                }
-            }
-        }
+        DeltaTHists dthists(bins_dT, plotrange_dT.vmin, plotrange_dT.vmax, "data");
 
         TH1D* h_rbin_data_svd1 = new TH1D("rbin_svd1","rbin fractions, SVD1", 9, -1, 8);
         TH1D* h_rbin_data_svd2 = new TH1D("rbin_svd2","rbin fractions, SVD2", 9, -1, 8);
@@ -198,10 +145,7 @@ struct PlotRoutine {
 
         for(const Event& e: local_pdf.getData(0)){
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
-            h_dT_data_q[0][e.rbin][(e.tag_q+1)/2]->Fill(e.deltaT);
-            h_dT_data_qe[0][e.rbin][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
-            h_dT_data_q[0][7][(e.tag_q+1)/2]->Fill(e.deltaT);
-            h_dT_data_qe[0][7][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
+            dthists(0, e.rbin, (e.tag_q+1)/2, (e.eta+1)/2)->Fill(e.deltaT);
             if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE))) continue;
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
@@ -209,15 +153,13 @@ struct PlotRoutine {
         }
         for(const Event& e: local_pdf.getData(1)){
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
-            h_dT_data_q[1][e.rbin][(e.tag_q+1)/2]->Fill(e.deltaT);
-            h_dT_data_qe[1][e.rbin][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
-            h_dT_data_q[1][7][(e.tag_q+1)/2]->Fill(e.deltaT);
-            h_dT_data_qe[1][7][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
+            dthists(1, e.rbin, (e.tag_q+1)/2, (e.eta+1)/2)->Fill(e.deltaT);
             if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE))) continue;
             h_bEnergy_svd2->Fill(e.benergy);
             h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
             h_rbin_data_svd2->Fill(e.rbin);
         }
+        dthists.finalize(false);
         assert(h_bEnergy_svd1->GetBinContent(0)==0 && h_bEnergy_svd1->GetBinContent(h_bEnergy_svd1->GetNbinsX())==0);
         assert(h_bEnergy_svd2->GetBinContent(0)==0 && h_bEnergy_svd2->GetBinContent(h_bEnergy_svd2->GetNbinsX())==0);
         h_rbin_data_svd1->Sumw2();

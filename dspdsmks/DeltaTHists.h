@@ -24,7 +24,7 @@ class DeltaTHists {
 
         ~DeltaTHists();
 
-        void finalize(std::function<double (int, int)> pdf_yield = [](int,int){return 1.;});
+        void finalize(bool scale, std::function<double (int, int)> pdf_yield = [](int,int){return 1.;});
 
         void recieve(const std::vector<double> &values);
 
@@ -61,6 +61,10 @@ class DeltaTHists {
             return svd*NHISTS_PER_SVD + rbin*NHISTS_PER_RBIN + q*2 + eta;
         }
 
+        int nbins;
+        double mindt;
+        double maxdt;
+        std::string name;
         bool deleteHists;// = false;
         TH2D* yields;// = 0;
         TH1D* hists[NHISTS];// = {0};

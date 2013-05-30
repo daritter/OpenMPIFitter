@@ -29,6 +29,7 @@
 #include "BBar.h"
 #include "Continuum.h"
 #include "progress.h"
+#include "DeltaTHists.h"
 
 /** DspDsmKs PDF function.
  *
@@ -221,50 +222,18 @@ struct DspDsmKsPDF {
         if(flag & PLT_SVD2) svdVs |= Component::SVD2;
 
         if(flag & PLT_DT){
-            TH1D *h_dt[7][2][2];
-            for(int rbin=0; rbin<7; ++rbin){
-                for(int i=0; i<2; ++i){
-                    for(int j=0; j<2; ++j){
-                        const std::string name = (boost::format("dt_%d_%d_%d") % rbin % i % j).str();
-                        h_dt[rbin][i][j] = new TH1D(name.c_str(),"",(int)values[0],values[1],values[2]);
-                    }
-                }
-            }
+            DeltaTHists dthists((int)values[0], values[1], values[2]);
             for(int svd=0; svd<2; ++svd){
                 if((svd==0) && !(flag & PLT_SVD1)) continue;
                 if((svd==1) && !(flag & PLT_SVD2)) continue;
-                ProgressBar pbar(h_dt[0][0][0]->GetNbinsX()*data[svd].size());
-                if(rank==0 && data[svd].size()==0) std::cout << ++pbar;
-                for(Event e: data[svd]){
-                    for(int ix=0; ix<h_dt[0][0][0]->GetNbinsX(); ++ix){
-                        if(rank==0) std::cout << ++pbar;
-                        e.deltaT = h_dt[0][0][0]->GetBinCenter(ix+1);
-                        //e.reset();
-                        for(int q=0; q<2; ++q){
-                            e.tag_q = 2*q-1;
-                            for(int eta=0; eta<2; ++eta){
-                                e.eta = 2*eta-1;
-                                double pdf_value = get_deltaT(e, par);
-                                h_dt[e.rbin][0][q]->Fill(e.deltaT, pdf_value);
-                                h_dt[e.rbin][1][(q!=eta)?0:1]->Fill(e.deltaT, pdf_value);
-                            }
-                        }
-                    }
+                ProgressBar pbar(data[svd].size());
+                if(rank==0 && data[svd].size()==0) std::cout << "SVD" << (svd+1) << ": " << ++pbar;
+                for(Event &e: data[svd]){
+                    if(rank==0) std::cout << ++pbar;
+                    dthists.fill(e, [&](const Event &e){ return get_deltaT(e, par); });
                 }
             }
-            for(int rbin=0; rbin<7; ++rbin){
-                for(int i=0; i<2; ++i){
-                    double h_scale = h_dt[rbin][i][0]->GetXaxis()->GetBinWidth(1);
-                    for(int j=0; j<2; ++j){
-                        TH1D* h = h_dt[rbin][i][j];
-                        h->Scale(h_scale);
-                        const double* array = h->GetArray();
-                        //Stupid underflow bin is array[0], so we need to start at element 1
-                        results.insert(results.end(), array + 1, array + h->GetNbinsX() + 1);
-                        delete h;
-                    }
-                }
-            }
+            return dthists.send();
         }
         return results;
     }
