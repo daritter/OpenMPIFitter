@@ -16,9 +16,9 @@ class Parameters {
 
         Parameters();
 
-        bool load(const std::string &filename, const std::string &overrides="", const std::string &fixes="", const std::string &releases="");
+        bool load(const std::string &filename, const std::string &overrides="", const std::string &fixes="", const std::string &releases="", bool ignore_unknown=false);
         //Load the parameters from a stream, usually used with the >> operator
-        void load_stream(std::istream &in);
+        void load_stream(std::istream &in, bool ignore_unknown=false);
         void save(const std::string &filename) const;
         //Save the parameters to a stream, is istty is true, use color and show only non-fixed parameters
         void save_stream(std::ostream &out, bool istty=false, bool onlyfree=false) const;

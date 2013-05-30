@@ -22,7 +22,7 @@ Parameters::Parameters(){
     }
 }
 
-bool Parameters::load(const std::string &filename, const std::string &overrides, const std::string &fixes, const std::string &releases){
+bool Parameters::load(const std::string &filename, const std::string &overrides, const std::string &fixes, const std::string &releases, bool ignore_unknown){
     std::ifstream input(filename.c_str());
     if(!input){
         std::cerr << "ARRRRRRRRR: Thy parrrrrameter file could not be opened, abandoning ship" << std::endl;
@@ -31,7 +31,7 @@ bool Parameters::load(const std::string &filename, const std::string &overrides,
         std::cout << "Aye, loading thy parrrameters from " << filename << std::endl;
     }
     try{
-        load_stream(input);
+        load_stream(input, ignore_unknown);
         input.close();
         if(!overrides.empty()) overrideParameters(overrides);
         if(!fixes.empty()) fixParameters(fixes);
@@ -53,7 +53,7 @@ void Parameters::save(const std::string& filename) const {
 }
 
 
-void Parameters::load_stream(istream &in){
+void Parameters::load_stream(istream &in, bool ignore_unknown){
     int lineNr=0;
     //Read in the whole file and store enough information that we can reproduce it completely (modulo white space change)
     while(!in.eof()){
@@ -88,7 +88,7 @@ void Parameters::load_stream(istream &in){
                 throw e;
             }catch(invalid_argument &e){
                 cerr << "ERROR: Unknown parameter '" << name << "' (line " << lineNr << ")\n";
-                throw e;
+                if(!ignore_unknown) throw e;
             }
         }
         //Remember which parameter (-1 for none) and the comment for this line
