@@ -47,6 +47,7 @@ namespace PAR {
 
     PARAM(misrecon_dt_blifetime);
     PARAM(misrecon_dt_fractionscale);
+    PARAM(misrecon_dt_offset);
 };
 
 
@@ -60,6 +61,7 @@ class MisreconPDF: public DeltaTComponent<> {
         deltaT.setParameters(
                 PAR::misrecon_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
                 PAR::misrecon_dt_fractionscale, -1, Event::dt_misrecon);
+        deltaT.setOffset(PAR::misrecon_dt_offset);
     }
 
     virtual ~MisreconPDF(){}
