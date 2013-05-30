@@ -44,7 +44,7 @@ class BkgTPDF {
 
         double operator()(const Event& e, const std::vector<double> &par) {
             const Belle::dtres_param_t* const dtres_param = Belle::get_dtres_param( e.expNo, e.isMC );
-            int svd = e.svdVs;
+            const int svd = e.svdVs;
             const double abs_tau = par[tau[svd]];
             const double dT = e.deltaT;
             const double sigma = sqrt(e.tag_zerr*e.tag_zerr+e.vtx_zerr*e.vtx_zerr) * Belle::dt_resol_global::inv_bgc;

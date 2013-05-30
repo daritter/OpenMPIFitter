@@ -53,7 +53,7 @@ namespace PAR {
     PARAM(bkg_svd2_rbin6);
     PARAM(bkg_svd2_rbin7);
 
-    PARAM(bkg_svd1_dt_blifetime);
+    PARAM(bkg_dt_blifetime);
     PARAM(bkg_svd1_dt_mean_delta);
     PARAM(bkg_svd1_dt_mean_tau);
     PARAM(bkg_svd1_dt_sigma_main_sgl);
@@ -75,7 +75,7 @@ namespace PAR {
     PARAM(bkg_svd1_dt_acp5);
     PARAM(bkg_svd1_dt_acp6);
 
-    PARAM(bkg_svd2_dt_blifetime);
+    //PARAM(bkg_svd2_dt_blifetime);
     PARAM(bkg_svd2_dt_mean_delta);
     PARAM(bkg_svd2_dt_mean_tau);
     PARAM(bkg_svd2_dt_sigma_main_sgl);
@@ -96,7 +96,6 @@ namespace PAR {
     PARAM(bkg_svd2_dt_acp4);
     PARAM(bkg_svd2_dt_acp5);
     PARAM(bkg_svd2_dt_acp6);
-
 };
 
 
@@ -122,7 +121,7 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
         }*/
 
 
-        deltaT.setCommonParameters(0,PAR::bkg_svd1_dt_mean_delta, PAR::bkg_svd1_dt_blifetime, PAR::bkg_svd1_dt_mean_tau,
+        deltaT.setCommonParameters(0,PAR::bkg_svd1_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_svd1_dt_mean_tau,
                 PAR::bkg_svd1_dt_outlier_fraction, PAR::bkg_svd1_dt_outlier_mean, PAR::bkg_svd1_dt_outlier_scale);
         deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_sgl, PAR::bkg_svd1_dt_sigma_tail_sgl,
                 PAR::bkg_svd1_dt_fraction_delta_sgl, PAR::bkg_svd1_dt_fraction_tail_sgl, false);
@@ -132,7 +131,7 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
         }
         deltaT.setAcp(0,PAR::bkg_svd1_dt_acp0);
 
-        deltaT.setCommonParameters(1,PAR::bkg_svd2_dt_mean_delta, PAR::bkg_svd2_dt_blifetime, PAR::bkg_svd2_dt_mean_tau,
+        deltaT.setCommonParameters(1,PAR::bkg_svd2_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_svd2_dt_mean_tau,
                 PAR::bkg_svd2_dt_outlier_fraction, PAR::bkg_svd2_dt_outlier_mean, PAR::bkg_svd2_dt_outlier_scale);
         deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_sgl, PAR::bkg_svd2_dt_sigma_tail_sgl,
                 PAR::bkg_svd2_dt_fraction_delta_sgl, PAR::bkg_svd2_dt_fraction_tail_sgl, false);
