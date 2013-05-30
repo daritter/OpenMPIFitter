@@ -5,15 +5,18 @@
 #include <string>
 
 struct Range {
-    Range(double vmin, double vmax):vmin(vmin),vmax(vmax) {}
+    Range(const std::string &name, double vmin, double vmax):name(name),vmin(vmin),vmax(vmax) {}
     bool operator()(double value){ return value>=vmin &&  value<=vmax; }
 
+    std::string name;
     float vmin;
     float vmax;
 
-    void print(std::ostream& out, const std::string &name) {
-        out << vmin << " <= " << name << " <= " << vmax;
-    }
 };
+
+inline std::ostream& operator<<(std::ostream& out, const Range &r) {
+    out << r.vmin << " <= " << r.name << " <= " << r.vmax;
+    return out;
+}
 
 #endif

@@ -95,8 +95,8 @@ struct DspDsmKsPDF {
     DspDsmKsPDF(int maxPrintOrder = 2, bool optimize=true):
         maxPrintOrder(maxPrintOrder), nCalls(0),
         minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
-        range_mBC(5.24,5.30), range_dE(-0.15,0.1), range_dT(Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt),
-        veto_mBC(5.24,5.30), veto_dE(-0.1,0.1), use_veto(false), combined_dT(false),
+        range_mBC("Mbc",5.24,5.30), range_dE("dE",-0.15,0.1), range_dT("dT",Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt),
+        veto_mBC("Mbc",5.24,5.30), veto_dE("dE",-0.1,0.1), use_veto(false), combined_dT(false),
         optimize(optimize), svdFlag(Component::BOTH)
     {}
 
@@ -600,17 +600,9 @@ struct DspDsmKsPDF {
             chain->AddFile(filename.c_str(),-1);
         }
         if(process==0){
-            std::cout << "Avast, accepting events inside of ";
-            range_mBC.print(std::cout, "mBC");
-            std::cout << " and ";
-            range_dE.print(std::cout, "dE");
-            std::cout << std::endl;
+            std::cout << "Avast, accepting events inside of " << range_mBC << " and " << range_dE << std::endl;
             if(use_veto){
-                std::cout << "Aye, being harsh and rejecting events in ";
-                veto_mBC.print(std::cout, "mBC");
-                std::cout << " and ";
-                veto_dE.print(std::cout, "dE");
-                std::cout << std::endl;
+                std::cout << "Aye, being harsh and rejecting events in " << veto_mBC << " and " << veto_dE << std::endl;
             }else{
                 std::cout << "Aye, no veto applied" << std::endl;
             }

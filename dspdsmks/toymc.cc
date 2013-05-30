@@ -17,7 +17,7 @@ namespace po = boost::program_options;
 
 struct ToyMCRoutine {
     /** Set some default options */
-    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT(-4,4), fudge(1.35),
+    ToyMCRoutine(): parameterIn("params-in.txt"), output("toymc.root"), scan_dT("scan-dT",-4,4), fudge(1.35),
         scansteps_mBC(100), scansteps_dE(100), scansteps_dT(100), seed(0), gsim(false), fullgsim(false),
         select(false)
     {}

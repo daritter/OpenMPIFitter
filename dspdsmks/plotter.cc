@@ -56,7 +56,7 @@ void plot_mBCdE(DspDsmKsPDF& pdf, const std::vector<double>& par, TH2D* h_pdf, T
 
 struct PlotRoutine {
     /** Set some default options */
-    PlotRoutine(): parameterIn("params-in.txt"), rootFile("plots"), plotrange_dT(-20,20),
+    PlotRoutine(): parameterIn("params-in.txt"), rootFile("plots"), plotrange_dT("dT",-20,20), plotrange_mBC("Mbc",5.24,5.3), plotrange_dE("dE",-0.15,0.1),
     bins_mBC(60), bins_dE(50), bins_dT(40), sampling_mBC(5), sampling_dE(5), sampling_dT(5), activeComponents(DspDsmKsPDF::CMP_all), no_pdf(false)
     {}
 
@@ -64,6 +64,8 @@ struct PlotRoutine {
     std::string rootFile;
     std::string overrideParameters;
     Range plotrange_dT;
+    Range plotrange_mBC;
+    Range plotrange_dE;
     int bins_mBC;
     int bins_dE;
     int bins_dT;
@@ -79,6 +81,8 @@ struct PlotRoutine {
         const Range range_dE = parallel_pdf.localFCN().getRange_dE();
         const Range range_dT = parallel_pdf.localFCN().getRange_dT();
 
+        std::cout << "Plotting Area: " << plotrange_mBC << ", " << plotrange_dE << ", " << plotrange_dT << std::endl;
+
         Parameters params;
         if(!params.load(parameterIn, overrideParameters)){
             return 2;
@@ -87,9 +91,13 @@ struct PlotRoutine {
 
         TFile *r_rootFile = new TFile((rootFile+".root").c_str(),"RECREATE");
         TH2D *total_MbcdE_fit_svd1 = new TH2D("mbcde_svd1_fit",
-                "M_{BC}#DeltaE fit, SVD1", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
+                "M_{BC}#DeltaE fit, SVD1",
+                bins_mBC*sampling_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
+                bins_dE*sampling_dE, plotrange_dE.vmin, plotrange_dE.vmax);
         TH2D *total_MbcdE_fit_svd2 = new TH2D("mbcde_svd2_fit",
-                "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
+                "M_{BC}#DeltaE fit, SVD2",
+                bins_mBC*sampling_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
+                bins_dE*sampling_dE, plotrange_dE.vmin, plotrange_dE.vmax);
 
         std::string names[] = {"signal","misrecon","bbar","continuum"};
         int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_bbar, DspDsmKsPDF::CMP_continuum};
@@ -161,8 +169,12 @@ struct PlotRoutine {
         parallel_pdf.close();
         DspDsmKsPDF &local_pdf = parallel_pdf.localFCN();
         if(parallel_pdf.size()>1) local_pdf.load(0,1);
-        TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
-        TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2", bins_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE, range_dE.vmin, range_dE.vmax);
+        TH2D *h_MbcdE_data_svd1 = new TH2D("mbcde_svd1_data", "M_{BC}#DeltaE data, SVD1",
+                bins_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
+                bins_dE, plotrange_dE.vmin, plotrange_dE.vmax);
+        TH2D *h_MbcdE_data_svd2 = new TH2D("mbcde_svd2_data", "M_{BC}#DeltaE data, SVD2",
+                bins_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
+                bins_dE, plotrange_dE.vmin, plotrange_dE.vmax);
         TH1D* h_dT_data_q[2][8][2];
         TH1D* h_dT_data_qe[2][8][2];
 
@@ -185,24 +197,26 @@ struct PlotRoutine {
         TH3D *h_allEvents = new TH3D("mbcdedt_data", "M_{BC}#DeltaE#Deltat data", 200, range_mBC.vmin, range_mBC.vmax, 200, range_dE.vmin, range_dE.vmax, 200, range_dT.vmin, range_dT.vmax);
 
         for(const Event& e: local_pdf.getData(0)){
-            h_bEnergy_svd1->Fill(e.benergy);
-            h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
-            h_rbin_data_svd1->Fill(e.rbin);
             h_dT_data_q[0][e.rbin][(e.tag_q+1)/2]->Fill(e.deltaT);
             h_dT_data_qe[0][e.rbin][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
             h_dT_data_q[0][7][(e.tag_q+1)/2]->Fill(e.deltaT);
             h_dT_data_qe[0][7][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
+            if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE))) continue;
+            h_bEnergy_svd1->Fill(e.benergy);
+            h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
+            h_rbin_data_svd1->Fill(e.rbin);
         }
         for(const Event& e: local_pdf.getData(1)){
-            h_bEnergy_svd2->Fill(e.benergy);
-            h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
-            h_rbin_data_svd2->Fill(e.rbin);
             h_dT_data_q[1][e.rbin][(e.tag_q+1)/2]->Fill(e.deltaT);
             h_dT_data_qe[1][e.rbin][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
             h_dT_data_q[1][7][(e.tag_q+1)/2]->Fill(e.deltaT);
             h_dT_data_qe[1][7][(e.tag_q*e.eta+1)/2]->Fill(e.deltaT);
+            if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE))) continue;
+            h_bEnergy_svd2->Fill(e.benergy);
+            h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
+            h_rbin_data_svd2->Fill(e.rbin);
         }
         assert(h_bEnergy_svd1->GetBinContent(0)==0 && h_bEnergy_svd1->GetBinContent(h_bEnergy_svd1->GetNbinsX())==0);
         assert(h_bEnergy_svd2->GetBinContent(0)==0 && h_bEnergy_svd2->GetBinContent(h_bEnergy_svd2->GetNbinsX())==0);
@@ -219,9 +233,13 @@ struct PlotRoutine {
 
             local_pdf.setOptions(cmp | noMbcdE);
             TH2D *h_MbcdE_fit_svd1 = new TH2D(("mbcde_svd1_fit" + name).c_str(),
-                    "M_{BC}#DeltaE fit, SVD1", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
+                    "M_{BC}#DeltaE fit, SVD1",
+                    bins_mBC*sampling_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
+                    bins_dE*sampling_dE, plotrange_dE.vmin, plotrange_dE.vmax);
             TH2D *h_MbcdE_fit_svd2 = new TH2D(("mbcde_svd2_fit" + name).c_str(),
-                    "M_{BC}#DeltaE fit, SVD2", bins_mBC*sampling_mBC, range_mBC.vmin, range_mBC.vmax, bins_dE*sampling_dE, range_dE.vmin, range_dE.vmax);
+                    "M_{BC}#DeltaE fit, SVD2",
+                    bins_mBC*sampling_mBC, plotrange_mBC.vmin, plotrange_mBC.vmax,
+                    bins_dE*sampling_dE, plotrange_dE.vmin, plotrange_dE.vmax);
 
             plot_mBCdE(local_pdf,par,h_MbcdE_fit_svd1, h_bEnergy_svd1, Component::SVD1, names[i] + ", SVD1");
             plot_mBCdE(local_pdf,par,h_MbcdE_fit_svd2, h_bEnergy_svd2, Component::SVD2, names[i] + ", SVD2");
@@ -294,9 +312,17 @@ int main(int argc, char* argv[]){
              "Basename to save the plots")
             ("parameter-out,i", po::value<std::string>(&plotter.parameterIn)->default_value(plotter.parameterIn),
              "Thy file to pillage thy parrrametes from")
-            ("plot-mindT", po::value<float>(&plotter.plotrange_dT.vmin)->default_value(plotter.plotrange_dT.vmin),
+            ("plot-min-Mbc", po::value<float>(&plotter.plotrange_mBC.vmin)->default_value(pdf.getRange_mBC().vmin),
+             "The minimal Mbc value for the plot")
+            ("plot-max-Mbc", po::value<float>(&plotter.plotrange_mBC.vmax)->default_value(pdf.getRange_mBC().vmax),
+             "The maximal dT value for the plot")
+            ("plot-min-dE", po::value<float>(&plotter.plotrange_dE.vmin)->default_value(pdf.getRange_dE().vmin),
+             "The minimal dE value for the plot")
+            ("plot-max-dE", po::value<float>(&plotter.plotrange_dE.vmax)->default_value(pdf.getRange_dE().vmax),
+             "The maximal dT value for the plot")
+            ("plot-min-dT", po::value<float>(&plotter.plotrange_dT.vmin)->default_value(plotter.plotrange_dT.vmin),
              "The minimal dT value for the plot")
-            ("plot-maxdT", po::value<float>(&plotter.plotrange_dT.vmax)->default_value(plotter.plotrange_dT.vmax),
+            ("plot-max-dT", po::value<float>(&plotter.plotrange_dT.vmax)->default_value(plotter.plotrange_dT.vmax),
              "The maximal dT value for the plot")
             ("bins-Mbc", po::value<int>(&plotter.bins_mBC)->default_value(plotter.bins_mBC),
              "Number of Bins per axis for the data")
