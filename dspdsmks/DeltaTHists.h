@@ -1,3 +1,6 @@
+#ifndef MPIFitter_DeltaTHists_h
+#define MPIFitter_DeltaTHists_h
+
 #include <vector>
 #include <string>
 #include <functional>
@@ -62,3 +65,5 @@ class DeltaTHists {
         TH2D* yields;// = 0;
         TH1D* hists[NHISTS];// = {0};
 };
+
+#endif
