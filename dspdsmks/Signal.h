@@ -16,6 +16,29 @@ namespace PAR {
     PARAM(signal_svd1_rbin6);
     PARAM(signal_svd1_rbin7);
 
+    PARAM(signal_corr_svd1_Mbc_mean);
+    PARAM(signal_corr_svd1_Mbc_sigma);
+    PARAM(signal_corr_svd1_dE_mean);
+    PARAM(signal_corr_svd1_dE_sigma);
+    PARAM(signal_corr_svd1_rbin1);
+    PARAM(signal_corr_svd1_rbin2);
+    PARAM(signal_corr_svd1_rbin3);
+    PARAM(signal_corr_svd1_rbin4);
+    PARAM(signal_corr_svd1_rbin5);
+    PARAM(signal_corr_svd1_rbin6);
+
+    PARAM(signal_corr_svd2_Mbc_mean);
+    PARAM(signal_corr_svd2_Mbc_sigma);
+    PARAM(signal_corr_svd2_dE_mean);
+    PARAM(signal_corr_svd2_dE_sigma);
+    PARAM(signal_corr_svd2_rbin1);
+    PARAM(signal_corr_svd2_rbin2);
+    PARAM(signal_corr_svd2_rbin3);
+    PARAM(signal_corr_svd2_rbin4);
+    PARAM(signal_corr_svd2_rbin5);
+    PARAM(signal_corr_svd2_rbin6);
+
+
     PARAM(signal_svd1_eff);
     PARAM(signal_svd1_nbb);
     PARAM(signal_svd1_ratio);
@@ -121,14 +144,17 @@ class SignalPDF: public DeltaTComponent<> {
 
             signalPDF_svd1.fcn1.fcnx.set(
                     std::max(0.0,std::min(1.0,par[PAR::signal_svd1_Mbc_ratio] + e.dE*par[PAR::signal_svd1_Mbc_ratio_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_ratio_m2])),
-                    par[PAR::signal_svd1_Mbc_mean_m0] + e.dE*par[PAR::signal_svd1_Mbc_mean_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_mean_m2],
+                    par[PAR::signal_svd1_Mbc_mean_m0] + e.dE*par[PAR::signal_svd1_Mbc_mean_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_mean_m2] + par[PAR::signal_corr_svd1_Mbc_mean],
                     par[PAR::signal_svd1_Mbc_meanshift] + e.dE*par[PAR::signal_svd1_Mbc_meanshift_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_meanshift_m2],
-                    std::max(0.0,par[PAR::signal_svd1_Mbc_sigma_m0] + e.dE*par[PAR::signal_svd1_Mbc_sigma_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_sigma_m2]),
+                    std::max(0.0,par[PAR::signal_svd1_Mbc_sigma_m0] + e.dE*par[PAR::signal_svd1_Mbc_sigma_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_sigma_m2]) * par[PAR::signal_corr_svd1_Mbc_sigma],
                     std::max(0.0,par[PAR::signal_svd1_Mbc_sigmascale] + e.dE*par[PAR::signal_svd1_Mbc_sigmascale_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_sigmascale_m2]),
                     std::max(0.0,par[PAR::signal_svd1_Mbc_sigma2] + e.dE*par[PAR::signal_svd1_Mbc_sigma2_m1] + e.dE*e.dE*par[PAR::signal_svd1_Mbc_sigma2_m2]),
                     par[PAR::signal_svd1_Mbc_sigma2scale]
             );
-            signalPDF_svd1.fcn1.fcny.set(&par[PAR::signal_svd1_dE_mean]);
+            signalPDF_svd1.fcn1.fcny.set(
+                    par[PAR::signal_svd1_dE_mean]  + par[PAR::signal_corr_svd1_dE_mean],
+                    par[PAR::signal_svd1_dE_sigma] * par[PAR::signal_corr_svd1_dE_sigma],
+                    &par[PAR::signal_svd1_dE_norm1]);
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(par[PAR::signal_svd1_dE_bkg_mean], par[PAR::signal_svd1_dE_bkg_sigma]);
 
@@ -140,15 +166,18 @@ class SignalPDF: public DeltaTComponent<> {
 
             signalPDF_svd2.fcn1.fcnx.set(
                     std::max(0.0,std::min(1.0,par[PAR::signal_svd2_Mbc_ratio] + e.dE*par[PAR::signal_svd2_Mbc_ratio_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_ratio_m2])),
-                    par[PAR::signal_svd2_Mbc_mean_m0] + e.dE*par[PAR::signal_svd2_Mbc_mean_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_mean_m2],
+                    par[PAR::signal_svd2_Mbc_mean_m0] + e.dE*par[PAR::signal_svd2_Mbc_mean_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_mean_m2]  + par[PAR::signal_corr_svd2_Mbc_mean],
                     par[PAR::signal_svd2_Mbc_meanshift] + e.dE*par[PAR::signal_svd2_Mbc_meanshift_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_meanshift_m2],
-                    std::max(0.0,par[PAR::signal_svd2_Mbc_sigma_m0] + e.dE*par[PAR::signal_svd2_Mbc_sigma_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_sigma_m2]),
+                    std::max(0.0,par[PAR::signal_svd2_Mbc_sigma_m0] + e.dE*par[PAR::signal_svd2_Mbc_sigma_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_sigma_m2]) * par[PAR::signal_corr_svd2_Mbc_sigma],
                     std::max(0.0,par[PAR::signal_svd2_Mbc_sigmascale] + e.dE*par[PAR::signal_svd2_Mbc_sigmascale_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_sigmascale_m2]),
                     std::max(0.0,par[PAR::signal_svd2_Mbc_sigma2] + e.dE*par[PAR::signal_svd2_Mbc_sigma2_m1] + e.dE*e.dE*par[PAR::signal_svd2_Mbc_sigma2_m2]),
                     par[PAR::signal_svd2_Mbc_sigma2scale]
             );
 
-            signalPDF_svd2.fcn1.fcny.set(&par[PAR::signal_svd2_dE_mean]);
+            signalPDF_svd2.fcn1.fcny.set(
+                    par[PAR::signal_svd2_dE_mean]  + par[PAR::signal_corr_svd2_dE_mean],
+                    par[PAR::signal_svd2_dE_sigma] * par[PAR::signal_corr_svd2_dE_sigma],
+                    &par[PAR::signal_svd2_dE_norm1]);
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(par[PAR::signal_svd2_dE_bkg_mean], par[PAR::signal_svd2_dE_bkg_sigma]);
 
@@ -159,10 +188,10 @@ class SignalPDF: public DeltaTComponent<> {
     static double get_signal_yield(const std::vector<double> &par, EnabledSVD svd, int rbin=-1) {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd1_nbb] * par[PAR::signal_svd1_eff] * get_rbinFraction(rbin, PAR::signal_svd1_rbin1, par);
+            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd1_nbb] * par[PAR::signal_svd1_eff] * get_rbinFraction(rbin, PAR::signal_svd1_rbin1, par, PAR::signal_corr_svd1_rbin1);
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd2_nbb] * par[PAR::signal_svd2_eff] * get_rbinFraction(rbin, PAR::signal_svd2_rbin1, par);
+            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd2_nbb] * par[PAR::signal_svd2_eff] * get_rbinFraction(rbin, PAR::signal_svd2_rbin1, par, PAR::signal_corr_svd2_rbin1);
         }
         return yield;
     }

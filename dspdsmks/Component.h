@@ -58,11 +58,17 @@ template<class T=DeltaTPDF> class DeltaTComponent: public Component {
         return flatCosTheta?1.0:(1.0-e.cosTheta*e.cosTheta);
     }
 
-    static double get_rbinFraction(int rbin, int rbin1, const std::vector<double> &par) {
+    static double get_rbinFraction(int rbin, int rbin1, const std::vector<double> &par, int corr_rbin1=-1) {
         if(rbin<0) return 1.0;
         if(rbin>6) return 0.0;
         double sum(0);
         for(int i=0; i<7; ++i) sum += par[rbin1+i];
+        if(corr_rbin1>=0){
+            if(rbin<6) return par[rbin1+rbin]/sum * par[corr_rbin1+rbin];
+            double corr_rbin6(1);
+            for(int i=0; i<6; ++i) corr_rbin6 -= par[rbin1+i]/sum * par[corr_rbin1+i];
+            return std::max(0., corr_rbin6);
+        }
         return par[rbin1+rbin]/sum;
     }
 
