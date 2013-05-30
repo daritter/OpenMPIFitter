@@ -21,7 +21,7 @@ class DeltaTHists {
 
         ~DeltaTHists();
 
-        void finalize();
+        void finalize(std::function<double (int, int)> pdf_yield = [](int,int){return 1.;});
 
         void recieve(const std::vector<double> &values);
 
@@ -39,6 +39,18 @@ class DeltaTHists {
                     }
                 }
             }
+        }
+
+        TH1D* operator[](int i){
+            return hists[i];
+        }
+
+        TH1D* operator()(int svd, int rbin, int q, int eta){
+            return hists[index(svd,rbin,q,eta)];
+        }
+
+        double yield(int svd, int rbin) const {
+            return yields->GetBinContent(yields->FindBin(svd,rbin));
         }
 
     protected:

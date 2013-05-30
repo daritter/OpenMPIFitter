@@ -8,8 +8,11 @@ namespace {
      */
     template<class T> void sethist(T* h, const std::vector<double> &values, size_t &index){
         const int n = h->GetSize();
-        h->Set(n, &values[index]);
-        index += (size_t)n;
+        //h->Set(n, &values[index]);
+        //index += (size_t)n;
+        for(int i=0; i<n; ++i){
+            h->SetBinContent(i,values[index++]);
+        }
     }
 
     /**
@@ -24,8 +27,9 @@ namespace {
 
 DeltaTHists::DeltaTHists(int nbins, double mindt, double maxdt, const std::string &name):deleteHists(false){
     boost::format dt_hist_name("dT_svd%1%_rbin%2%_fit_q%3%_e%4%_%5%");
-    boost::format dt_hist_title("#Deltat, SVD%1%, %5%, rbin %2%, q=%3%, #eta=%4%");
-    const std::string pm("pm");
+    boost::format dt_hist_title("#Deltat, SVD%1%, %5%, rbin %2%, q=%3%1, #eta=%4%1");
+    const std::string pmn("pm");
+    const std::string pmt("+-");
 
     if(name.empty()){
         //Do not save the histograms
@@ -37,8 +41,8 @@ DeltaTHists::DeltaTHists(int nbins, double mindt, double maxdt, const std::strin
         for(int rbin=0; rbin<NRBIN; ++rbin){
             for(int q=0; q<2; ++q){
                 for(int eta=0; eta<2; ++eta){
-                    const std::string hname = (dt_hist_name % (svd+1) % rbin % pm[q] % pm[eta] % name).str();
-                    const std::string htitle = (dt_hist_title % (svd+1) % rbin % pm[q] % pm[eta] % name).str();
+                    const std::string hname = (dt_hist_name % (svd+1) % rbin % pmn[q] % pmn[eta] % name).str();
+                    const std::string htitle = (dt_hist_title % (svd+1) % rbin % pmt[q] % pmt[eta] % name).str();
                     hists[index(svd, rbin, q, eta)] = new TH1D(hname.c_str(),htitle.c_str(), nbins, mindt, maxdt);
                 }
             }
@@ -59,15 +63,16 @@ DeltaTHists::~DeltaTHists(){
     }
 }
 
-void DeltaTHists::finalize(){
+void DeltaTHists::finalize(std::function<double (int, int)> pdf_yield){
     const double binsize = hists[0]->GetXaxis()->GetBinWidth(1);
     for(int svd=0; svd<NSVD; ++svd){
         for(int rbin=0; rbin<NRBIN; ++rbin){
-            const double nevents = yields->GetBinContent(yields->FindBin(svd,rbin));
+            const double nevents = yield(svd,rbin);
+            if(nevents==0) continue;
             for(int q=0; q<2; ++q){
                 for(int eta=0; eta<2; ++eta){
                     TH1D* h = hists[index(svd,rbin,q,eta)];
-                    h->Scale(binsize / nevents);
+                    h->Scale(pdf_yield(svd,rbin) * binsize / nevents);
                 }
             }
         }
