@@ -16,7 +16,9 @@ colors = {
     "signal_dt_Jc":"r",
     "signal_dt_Js1":"g",
     "signal_dt_Js2":"b",
-    "signal_dt_blifetime":"k"
+    "signal_dt_blifetime":"k",
+    "ratio_continuum_svd1":"r",
+    "ratio_continuum_svd2":"r",
 }
 
 for par, title in zip(linearity_full.lintest_params, linearity_full.lintest_pnames):
@@ -24,9 +26,9 @@ for par, title in zip(linearity_full.lintest_params, linearity_full.lintest_pnam
     pull = rfile.Get("%s_pull" % par)
 
     if isinstance(result,root.TH2D):
-        fig1, a1 = utils.get_plotaxes()
-        fig2, a2 = utils.get_plotaxes()
-        fig3, a3 = utils.get_plotaxes()
+        fig1, a1 = utils.get_plotaxes((4,3.2))
+        fig2, a2 = utils.get_plotaxes((4,3.2))
+        fig3, a3 = utils.get_plotaxes((4,3.2))
         a1.set_ylabel("fit result")
         a2.set_ylabel("mean of pull")
         a3.set_ylabel("sigma of pull")
@@ -64,7 +66,7 @@ for par, title in zip(linearity_full.lintest_params, linearity_full.lintest_pnam
         fit = root.TF1("line","pol1",-0.8,0.8)
         for a,h in (a1,lin_result),(a2,lin_pull_mean),(a3,lin_pull_sigma):
             if par is not "yield_signal_br":
-                h.Fit(fit,"QR")
+                h.Fit(fit,"Q")
             else:
                 h.Fit(fit,"Q")
             r2mpl.plot(h, axes=a, errors=True, color=colors[par])

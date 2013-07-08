@@ -17,7 +17,7 @@ lock = threading.Lock()
 def draw_toyMC(hist,title,xlabel="",ylabel="",exponent=None):
     fit = root.TF1("gauss","gaus")
     textbox = r"\begin{align*}\mu&=%s\\\sigma&=%s\end{align*}"
-    fig, a = utils.get_plotaxes()
+    fig, a = utils.get_plotaxes((4,3.2))
     hist.Fit(fit,"LQ")
     r2mpl.plot(hist,axes=a, errors=True, color="k", zorder=1)
     r2mpl.plot(fit,axes=a, color="r", zorder=0)
@@ -41,7 +41,10 @@ def generate_experiment(basename, params, data, components, flags, log, deltaT=T
         if os.path.exists(rootfile): continue
         log.write("Generating events for %s\n" % component)
         log.flush()
-        ret = subprocess.call(["./ddk-toymc","--cmp=%s%s" % (component,deltaT), "-i", params, "-o",rootfile, "--template=%s" % events, data] + flags, stdout = log)
+        arguments = ["./ddk-toymc","--cmp=%s%s" % (component,deltaT), "-i", params, "-o",rootfile]
+        if events is not None:
+            arguments.append("--template=%s" % events)
+        ret = subprocess.call(arguments + [data] + flags, stdout = log)
         if ret!=0:
             if os.path.exists(rootfile): os.remove(rootfile)
             raise Exception("ToyMC generation failed for %s" % basename)
@@ -121,26 +124,26 @@ if __name__ == "__main__":
 
     params("signal_svd1_nbb").value, params("signal_svd1_nbb").error = utils.nbb[0] #* 10
     params("signal_svd2_nbb").value, params("signal_svd2_nbb").error = utils.nbb[1] #* 10
-    params("signal_dt_Jc").value = 0.0 #utils.cpv[0,0]
-    params("signal_dt_Js1").value = 0.0 #utils.cpv[1,0]
-    params("signal_dt_Js2").value = 0.9 #utils.cpv[2,0]
-    params("yield_mixed_svd1").value /= 10
-    params("yield_mixed_svd2").value /= 10
+    params("signal_dt_Jc").value = utils.cpv[0,0]
+    params("signal_dt_Js1").value = utils.cpv[1,0]
+    params("signal_dt_Js2").value = utils.cpv[2,0]
+    params("scale_bbar").value = 1
+    params("scale_continuum").value = 1
 
     paramfile = "toymc/%s-params.par" % toyname
     params.save(paramfile)
     templates = {
         "signal": "~/belle/DspDsmKs/skim/ddk-signal-correct.root",
         "misrecon": "~/belle/DspDsmKs/skim/ddk-signal-misrecon.root",
-        "mixed": "~/belle/DspDsmKs/skim/ddk-mixed.root",
-        "charged": "~/belle/DspDsmKs/skim/ddk-charged.root",
+        "bbar": "~/belle/DspDsmKs/skim/ddk-bbar.root",
+        "continuum": None,
     }
     data = "~/belle/DspDsmKs/skim/ddk-on_resonance.root"
 
     genflags = ["--fudge=2"]
     fitflags = ["--fix=.*","--release=yield_signal_.*|signal_dt_J.*|signal_dt_blifetime"]
-    if "mixed" in templates or "charged" in templates:
-        fitflags[-1] += "|yield_mixed.*"
+    if "bbar" in templates:
+        fitflags[-1] += "|yield_bbar.*"
 
     #fitflags = ["--fix=.*","--release=yield_.*|signal_dt_J.*"]
 
@@ -161,12 +164,12 @@ if __name__ == "__main__":
     js1_result = root.TH1D("js1","",100,-1.5,1.5)
     js2_result = root.TH1D("js2","",100,-1.5,1.5)
     bl_result = root.TH1D("blifetime","",50,1.0,2.0)
-    mixed_svd1_result = root.TH1D("mixed_svd1","",100,params("yield_mixed_svd1").value*0.5,params("yield_mixed_svd1").value*1.5)
-    mixed_svd2_result = root.TH1D("mixed_svd2","",100,params("yield_mixed_svd2").value*0.5,params("yield_mixed_svd2").value*1.5)
+    bbar_svd1_result = root.TH1D("bbar_svd1","",100,params("yield_bbar_svd1").value*0.5,params("yield_bbar_svd1").value*1.5)
+    bbar_svd2_result = root.TH1D("bbar_svd2","",100,params("yield_bbar_svd2").value*0.5,params("yield_bbar_svd2").value*1.5)
 
-    cpv_result = [jc_result, js1_result, js2_result, bl_result, mixed_svd1_result, mixed_svd2_result]
+    cpv_result = [jc_result, js1_result, js2_result, bl_result, bbar_svd1_result, bbar_svd2_result]
     cpv_pull = [root.TH1D(e.GetName()+"_pull","",100,-5,5) for e in cpv_result]
-    cpv_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "signal_dt_blifetime", "yield_mixed_svd1", "yield_mixed_svd2"]
+    cpv_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "signal_dt_blifetime", "yield_bbar_svd1", "yield_bbar_svd2"]
     cpv_input = [params(e).value for e in cpv_params]
 
     for parfile in run_jobs(False, True):
@@ -181,16 +184,16 @@ if __name__ == "__main__":
             cpv_result[i].Fill(p.value)
             cpv_pull[i].Fill((p.value-cpv_input[i])/p.error)
 
-    a,m,s = draw_toyMC(br_result, r"$\mathcal{B}(\ddk)$, $input=%s$" % utils.format_error(utils.br, precision=1), "$\mathcal{B}(\ddk)$", exponent=-3)
+    a,m,s = draw_toyMC(br_result, r"fit results, input=$%s$" % utils.format_error(utils.br, precision=1), "$\mathcal{B}(\ddk)$", exponent=-3, ylabel=r"Entries / \num{%s}" % br_result.GetBinWidth(1))
     a.set_ylim(0, br_result.GetMaximum()*1.5)
-    draw_toyMC(br_pull,"Branching ratio pull")
+    draw_toyMC(br_pull,"pull distribution", xlabel=r"Pull($\mathcal{B}(\ddk)$)", ylabel="Entries / %s" % br_pull.GetBinWidth(1))
 
-    names = [r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$",r"$\tau$","m1","m2"]
+    names = [r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$",r"$\tau / ps$","m1","m2"]
 
     for i,name in enumerate(names):
         hist = cpv_result[i]
         pull = cpv_pull[i]
-        draw_toyMC(hist, r"%s, $input=%.3g$" % (name, cpv_input[i]))
-        draw_toyMC(pull, r"Pull for %s" % (name))
+        draw_toyMC(hist, r"fit results, input=$%.3g$" % cpv_input[i], xlabel=name, ylabel="Entries / %s" % hist.GetBinWidth(1))
+        draw_toyMC(pull, r"pull distribution", xlabel="Pull(%s)" % name, ylabel="Entries / %s" % pull.GetBinWidth(1))
 
     r2mpl.save_all("toymc-%s" % toyname, png=False, single_pdf=True)

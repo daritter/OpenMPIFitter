@@ -192,33 +192,27 @@ def make_mBCdE_plots(name, title):
     plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title)
     #plot_dfs("de",  de_data,  de_fits,  "$\Delta E$ / GeV", title=title, log=True)
 
-def make_dT_plots(name, title, label):
+def make_dT_plots(name, title):
     """Make all deltaT plots for a given data set"""
-    print "Make dT plot for", name
-    dt_data_p = rootfile.Get(name + "_data_p")
-    dt_data_m = rootfile.Get(name + "_data_m")
+    print "Make dT plot for", title
+    data = rootfile.Get(name + "_data")
 
-    fits_p = []
-    fits_m = []
+    fits = []
     for component in ["continuum","bbar","misrecon","signal","dummy"]:
-        fit_p = rootfile.Get(name + "_fit_p_" + component)
-        if(fit_p):
-            rescale(dt_data_p, fit_p)
-            fits_p.append((component,fit_p))
-        fit_m = rootfile.Get(name + "_fit_m_" + component)
-        if(fit_m):
-            rescale(dt_data_m, fit_m)
-            fits_m.append((component,fit_m))
+        fit = rootfile.Get(name + "_" + component)
+        if(fit):
+            rescale(data, fit)
+            fits.append((component,fit))
 
-    if not (dt_data_p and dt_data_m and fits_p and fits_m):
+    if not (data and fits):
         print "Could not make dT plots for", name
         return 0
 
-    #plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps")
+    plot_dfs("dt", data, fits, "$\Delta t$ / ps", title=title, unit="ps")#, log=True)
     #plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps")
-    plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps", log=True)
-    plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps", log=True)
-    plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, label)
+    #plot_dfs("dt_p", dt_data_p, fits_p, "$\Delta t$ / ps", title="%s, $%s=+1$" % (title,label), unit="ps", log=True)
+    #plot_dfs("dt_m", dt_data_m, fits_m, "$\Delta t$ / ps", title="%s, $%s=-1$" % (title,label), unit="ps", log=True)
+    #plot_asymmetry(name, dt_data_p, dt_data_m, fits_p, fits_m, label)
     return 1
 
 try:
@@ -228,16 +222,43 @@ except ValueError:
 
 make_mBCdE_plots("mbcde_svd2", "SVD2")
 make_mBCdE_plots("mbcde", "SVD1 + SVD2")
-r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=True)
+r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=False)
 
-for t,l in [("q","q"),("qe","q\eta")]:
-    nplots = 0
-    nplots += make_dT_plots("dT_svd1_%s_rbin%d" % (t,7), "SVD1", l)
-    nplots += make_dT_plots("dT_svd2_%s_rbin%d" % (t,7), "SVD2", l)
-    for i in range(7):
-        nplots += make_dT_plots("dT_svd1_%s_rbin%d" % (t,i), "SVD1, rbin %d" % i, l)
-    for i in range(7):
-        nplots += make_dT_plots("dT_svd2_%s_rbin%d" % (t,i), "SVD2, rbin %d" % i, l)
+qname = "pm"
+qval = ["-1","+1"]
+tname = ["q","qe"]
+tval  = ["q", "q\eta"]
 
-    if nplots>0:
-        r2mpl.save_all(filename + "-dT-"+t, png=False, single_pdf=True)
+for svd in range(2):
+    for q in range(2):
+        for eta in range(2):
+            make_dT_plots("dT_svd{0}_q{1}_e{2}".format(svd+1, qname[q], qname[eta]),
+                          "SVD{0}, $q={1}$, $\eta={2}$".format(svd+1, qval[q], qval[eta]))
+    for qt in range(2):
+        for val in range(2):
+            make_dT_plots("dT_svd{0}_{1}{2}".format(svd+1, tname[qt], qname[val]),
+                          "SVD{0}, ${1}={2}$".format(svd+1, tval[qt], qval[val]))
+
+    r2mpl.save_all(filename + "-dT-svd{0}".format(svd+1), png=False, single_pdf=False)
+
+# rbin plots
+for svd in range(2):
+    for rbin in range(7):
+        for q in range(2):
+            for eta in range(2):
+                make_dT_plots("dT_svd{0}_rbin{1}_q{2}_e{3}".format(svd+1, rbin, qname[q], qname[eta]),
+                              "SVD{0}, rbin{1}, $q={2}$, $\eta={3}$".format(svd+1, rbin, qval[q], qval[eta]))
+
+    r2mpl.save_all(filename + "-dT-svd{0}-rbins".format(svd+1), png=False, single_pdf=False)
+
+#for t,l in [("q","q"),("qe","q\eta")]:
+    #nplots = 0
+    #nplots += make_dT_plots("dT_svd1_%s_rbin%d" % (t,7), "SVD1", l)
+    #nplots += make_dT_plots("dT_svd2_%s_rbin%d" % (t,7), "SVD2", l)
+    #for i in range(7):
+        #nplots += make_dT_plots("dT_svd1_%s_rbin%d" % (t,i), "SVD1, rbin %d" % i, l)
+    #for i in range(7):
+        #nplots += make_dT_plots("dT_svd2_%s_rbin%d" % (t,i), "SVD2, rbin %d" % i, l)
+
+    #if nplots>0:
+        #r2mpl.save_all(filename + "-dT-"+t, png=False, single_pdf=False)

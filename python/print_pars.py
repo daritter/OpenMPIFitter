@@ -14,6 +14,7 @@ print filenames
 
 import pyroot as pr
 import dspdsmks
+import r2mpl
 
 br_Dp = [0.0913]
 br_D0 = [0.0387, 0.139, 0.0807]
@@ -38,8 +39,8 @@ b0g = pr.chain(filenames[:1],"B0gen")
 h_ngenerated = b0g.draw("svdVs", range=(2,0,2), option="goff")
 #h_nevents = b0.draw("svdVs",cut="bestLHsig.mcInfo&1 && bestLHsig.flag==0 && bestLHsig.tag.flavour!=0", range=(2,0,2), option="goff")
 
-h_ncorrect = b0.draw("bestLHsig.mcInfo&1", cut="bestLHsig.flag==0 && bestLHsig.tag.flavour!=0", range=(2,0,2), option="goff")
-h_bestB = b0.draw("bestLHsig.mcInfo&1", cut="nB0>1 && trueB0>0 && bestLHsig.flag==0 && bestLHsig.tag.flavour!=0", range=(2,0,2), option="goff")
+h_ncorrect = b0.draw("bestLHsig.mcInfo&1", cut="", range=(2,0,2), option="goff")
+h_bestB = b0.draw("bestLHsig.mcInfo&1", cut="nB0>1 && trueB0>0", range=(2,0,2), option="goff")
 ncorrect = [h_ncorrect.GetBinContent(i+1) for i in range(2)]
 bestB = [h_bestB.GetBinContent(i+1) for i in range(2)]
 
@@ -48,6 +49,14 @@ pdf.set_filenames(filenames[1:])
 pdf.load()
 
 signal_yield = np.array([(pdf.size(i), math.sqrt(pdf.size(i))) for i in range(2)])
+
+h_yield = b0.draw("svdVs", range=(2,0,2), cut=utils.cuts + " && (bestLHsig.mcInfo&1)==1", option="goff")
+s2 = np.array([(h_yield.GetBinContent(i+1), h_yield.GetBinError(i+1)) for i in range(2)])
+if not np.array_equal(signal_yield,s2):
+    print "utils.cuts seem to be not working"
+    print "From fitter:", signal_yield
+    print "From cuts:  ", s2
+
 ngenerated = np.array([(h_ngenerated.GetBinContent(i+1), h_ngenerated.GetBinContent(i+1)) for i in range(2)])
 
 raw_eff = signal_yield / ngenerated
@@ -55,6 +64,14 @@ rec_eff = raw_eff * eff_DDKs
 
 ctl_eff = raw_eff * eff_DsD0Km
 
+h_nB0 = b0.draw("nB0", range=(200,0,200), option="goff")
+b_mult = h_nB0.GetMean()
+f,a = utils.get_plotaxes()
+r2mpl.plot(h_nB0, axes=a, log=True)
+a.set_title("\PBz Multiplicity")
+a.set_xlabel("Number of reconstructed \PBz")
+a.set_ylabel("Number of events")
+r2mpl.save_all("bmult", png=False, single_pdf=False)
 print """ngenerated = np.array([
     %d,
     %d,
@@ -80,7 +97,14 @@ signal_svd1_eff                  %17.10e %17.10e      0      0     Y
 signal_svd2_eff                  %17.10e %17.10e      0      0     Y
 """ % tuple(rec_eff.flat)
 
+print """
+#Control channel
+signal_svd1_eff                  %17.10e %17.10e      0      0     Y
+signal_svd2_eff                  %17.10e %17.10e      0      0     Y
+""" % tuple(ctl_eff.flat)
+
 print r"""
+\def\BMultiplicity{%.1f}
 \def\FractionCorrectRec{\SI{%.1f}{\%%}}
 \def\FractionCorrectBestB{\SI{%.1f}{\%%}}
 \def\ReconstructedBR{\num{%.3e}}
@@ -89,6 +113,7 @@ print r"""
 \def\RawReconstructionEffSVDTwo{%s}
 \def\ReconstructionEffSVDOne{%s}
 \def\ReconstructionEffSVDTwo{%s}""" % (
+    b_mult,
     100*ncorrect[1] / (ncorrect[0]+ncorrect[1]),
     100*bestB[1] / (bestB[0]+bestB[1]),
     eff_DDKs, eff_DsD0Km,

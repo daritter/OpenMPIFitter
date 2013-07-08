@@ -8,10 +8,10 @@ import utils
 import subprocess
 import random
 
-lintest_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "yield_signal_br"]
-lintest_pnames = [ r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$", r"$\mathcal{B}(\ddk)$"]
-lintest_irange = [(-1.0, 1.0)]*3 + [(2e-3, 6e-3)]
-lintest_orange = [(-2.5, 2.5)]*3 + [(0, utils.br*2)]
+lintest_params = ["signal_dt_Jc", "signal_dt_Js1", "signal_dt_Js2", "yield_signal_br"]#, "ratio_continuum_svd1", "ratio_continuum_svd2"]
+lintest_pnames = [ r"$J_C/J_0$", r"$(2J_{s1}/J_0) \sin(2\phi_1)$", r"$(2J_{s2}/J_0) \cos(2\phi_1)$", r"$\mathcal{B}(\ddk)$"]#, r"$f_{q\bar{q}}$, SVD1", r"$f_{q\bar{q}}$, SVD2"]
+lintest_irange = [(-1.0, 1.0)]*3 + [(2e-3, 6e-3)]#, (0, 0.3), (0, 0.3)]
+lintest_orange = [(-2.5, 2.5)]*3 + [(0, utils.br*2)]#, (0, 0.5), (0, 0.5)]
 
 def get_random_cp():
     while True:
@@ -41,8 +41,8 @@ if __name__ == "__main__":
     templates = {
         "signal": "~/belle/DspDsmKs/skim/ddk-signal-correct.root",
         "misrecon": "~/belle/DspDsmKs/skim/ddk-signal-misrecon.root",
-        "mixed": "~/belle/DspDsmKs/skim/ddk-mixed.root",
-        "charged": "~/belle/DspDsmKs/skim/ddk-charged.root",
+        "bbar": "~/belle/DspDsmKs/skim/ddk-bbar.root",
+        "continuum": None,
     }
     data = "~/belle/DspDsmKs/skim/ddk-on_resonance.root"
     genflags = ["--fudge=2"]
@@ -52,10 +52,10 @@ if __name__ == "__main__":
         genflags += ["--fullgsim"]
 
     fitflags = ["--fix=.*", "--release=yield_signal_.*|signal_dt_J.*"]#|signal_dt_blifetime"]
-    if "mixed" in templates or "charged" in templates:
-        fitflags[1]+="|yield_mixed_.*"
-
-    #fitflags = ["--fix=.*", "--release=yield_signal_.*|yield_mixed_.*"]
+    if "bbar" in templates:
+        fitflags[1]+="|yield_bbar_.*"
+    #if "continuum" in templates:
+    #    fitflags[1]+="|ratio_continuum.*"
 
     rfile = root.TFile(outfile + ".root", "RECREATE")
     histograms = {}
@@ -74,8 +74,8 @@ if __name__ == "__main__":
     params.load(infile)
     params("signal_svd1_nbb").value, params("signal_svd1_nbb").error = utils.nbb[0]
     params("signal_svd2_nbb").value, params("signal_svd2_nbb").error = utils.nbb[1]
-    params("yield_mixed_svd1").value /= 10
-    params("yield_mixed_svd2").value /= 10
+    params("scale_bbar").value = 1
+    params("scale_continuum").value = 1
 
     for i in range(nexp):
         exp_no = i+offset
@@ -87,8 +87,9 @@ if __name__ == "__main__":
             #    if irange is None: continue
             #    params(name).value = random.uniform(*irange)
             Jc,Js1,Js2 = get_random_cp()
-            br = random.uniform(*lintest_irange[-1])
-            for name, value in zip(lintest_params, [Jc,Js1,Js2,br]):
+            br = random.uniform(*lintest_irange[3])
+            #f1, f2 = [random.uniform(*e) for e in lintest_irange[-2:]]
+            for name, value in zip(lintest_params, [Jc,Js1,Js2,br]):#,f1,f2]):
                 params(name).value = value
 
             subprocess.call(["mkdir", "-p", directory])
