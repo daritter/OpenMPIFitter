@@ -19,12 +19,12 @@ namespace PAR {
 
 class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
     public:
-    ContinuumPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool combinedDeltaT):
+    ContinuumPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool combinedDeltaT, bool eta_dependence):
         DeltaTComponent<BkgTPDF>(range_dT, true, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         continuumPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         continuumPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        BBarPDF::init_deltaT(deltaT, combinedDeltaT);
+        BBarPDF::init_deltaT(deltaT, combinedDeltaT, eta_dependence);
     }
 
     virtual ~ContinuumPDF(){}

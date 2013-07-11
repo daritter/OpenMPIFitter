@@ -6,9 +6,9 @@
 
 class DeltaTPDF {
     public:
-        DeltaTPDF(Range range_dT, int isCharged=0):
+        DeltaTPDF(Range range_dT, int isCharged):
             range_dT(range_dT), isCharged(isCharged), outlierPDF(range_dT.vmin, range_dT.vmax),
-            offset(-1)
+            offset(-1), eta_dependence(true)
         {}
 
         void setParameters(int tau, int Jc, int Js1, int Js2,  int fractionScale, int outlierMean, int cacheId){
@@ -23,6 +23,10 @@ class DeltaTPDF {
 
         void setOffset(int offset){
             this->offset = offset;
+        }
+
+        void setEtaDependence(bool eta){
+            eta_dependence = eta;
         }
 
         double operator()(const Event& e, const std::vector<double> &par) {
@@ -67,12 +71,20 @@ class DeltaTPDF {
                     (e.eta * par[Jc] * cos_pdf - (par[Js1] + e.eta * par[Js2]) * sin_pdf)
                     )/int_life_pdf;
 
+            if(!eta_dependence){
+                sig_pdf = (
+                    life_pdf * (1.0 - e.tag_q*e.wrongTag_dw) +
+                    e.tag_q * (1.0-2.0*e.wrongTag_w) *
+                    (par[Jc] * cos_pdf + par[Js1] * sin_pdf)
+                    )/int_life_pdf;
+            }
+
             const double omean = (outlierMean>=0)?par[outlierMean]:0.0;
             outlierPDF.set(omean, dtres_param->sig_ol);
             double fraction = (e.tag_ntrk>1 && e.vtx_ntrk>1)?dtres_param->fol_mul:dtres_param->fol_sgl;
             if(fractionScale>=0) fraction*=par[fractionScale];
 
-            return ((1-fraction)*sig_pdf + fraction*outlierPDF(dT))/4.0;
+            return ((1-fraction)*sig_pdf + fraction*outlierPDF(dT))/(eta_dependence?4.0:2.0);
         }
 
     private:
@@ -90,6 +102,7 @@ class DeltaTPDF {
         Gauss outlierPDF;
 
         int offset;
+        bool eta_dependence;
 };
 
 #endif

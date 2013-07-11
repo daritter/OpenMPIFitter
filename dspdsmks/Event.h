@@ -137,7 +137,7 @@ struct Event {
         }else{
             deltaT = deltaZ * Belle::dt_resol_global::inv_bgc;
             tag_r = fabs(tag_r);
-            eta = (m2DsmKs>m2DspKs)?1:-1;
+            eta = (m2DsmKs>m2DspKs)?-1:1;
         }
 
         //Check quality flag

@@ -57,13 +57,17 @@ namespace PAR {
     PARAM(bkg_svd1_dt_mean_delta);
     PARAM(bkg_svd1_dt_mean_tau);
     PARAM(bkg_svd1_dt_sigma_main_sgl);
-    PARAM(bkg_svd1_dt_sigma_tail_sgl);
+    PARAM(bkg_svd1_dt_sigma_tail1_sgl);
+    PARAM(bkg_svd1_dt_sigma_tail2_sgl);
+    PARAM(bkg_svd1_dt_weight_tail1_sgl);
+    PARAM(bkg_svd1_dt_weight_tail2_sgl);
     PARAM(bkg_svd1_dt_fraction_delta_sgl);
-    PARAM(bkg_svd1_dt_fraction_tail_sgl);
     PARAM(bkg_svd1_dt_sigma_main_mul);
-    PARAM(bkg_svd1_dt_sigma_tail_mul);
+    PARAM(bkg_svd1_dt_sigma_tail1_mul);
+    PARAM(bkg_svd1_dt_sigma_tail2_mul);
+    PARAM(bkg_svd1_dt_weight_tail1_mul);
+    PARAM(bkg_svd1_dt_weight_tail2_mul);
     PARAM(bkg_svd1_dt_fraction_delta_mul);
-    PARAM(bkg_svd1_dt_fraction_tail_mul);
     PARAM(bkg_svd1_dt_outlier_fraction);
     PARAM(bkg_svd1_dt_outlier_mean);
     PARAM(bkg_svd1_dt_outlier_scale);
@@ -75,17 +79,20 @@ namespace PAR {
     PARAM(bkg_svd1_dt_acp5);
     PARAM(bkg_svd1_dt_acp6);
 
-    //PARAM(bkg_svd2_dt_blifetime);
     PARAM(bkg_svd2_dt_mean_delta);
     PARAM(bkg_svd2_dt_mean_tau);
     PARAM(bkg_svd2_dt_sigma_main_sgl);
-    PARAM(bkg_svd2_dt_sigma_tail_sgl);
+    PARAM(bkg_svd2_dt_sigma_tail1_sgl);
+    PARAM(bkg_svd2_dt_sigma_tail2_sgl);
+    PARAM(bkg_svd2_dt_weight_tail1_sgl);
+    PARAM(bkg_svd2_dt_weight_tail2_sgl);
     PARAM(bkg_svd2_dt_fraction_delta_sgl);
-    PARAM(bkg_svd2_dt_fraction_tail_sgl);
     PARAM(bkg_svd2_dt_sigma_main_mul);
-    PARAM(bkg_svd2_dt_sigma_tail_mul);
+    PARAM(bkg_svd2_dt_sigma_tail1_mul);
+    PARAM(bkg_svd2_dt_sigma_tail2_mul);
+    PARAM(bkg_svd2_dt_weight_tail1_mul);
+    PARAM(bkg_svd2_dt_weight_tail2_mul);
     PARAM(bkg_svd2_dt_fraction_delta_mul);
-    PARAM(bkg_svd2_dt_fraction_tail_mul);
     PARAM(bkg_svd2_dt_outlier_fraction);
     PARAM(bkg_svd2_dt_outlier_mean);
     PARAM(bkg_svd2_dt_outlier_scale);
@@ -101,7 +108,7 @@ namespace PAR {
 
 class BBarPDF: public DeltaTComponent<BkgTPDF> {
     public:
-    static void init_deltaT(BkgTPDF &deltaT, bool combined){
+    static void init_deltaT(BkgTPDF &deltaT, bool combined, bool eta_dependence){
         /*if(!combined){
             deltaT.setCommonParameters(0,PAR::bkg_svd1_dt_mean_delta, PAR::bkg_svd1_dt_blifetime, PAR::bkg_svd1_dt_mean_tau,
                     PAR::bkg_svd1_dt_outlier_fraction, PAR::bkg_svd1_dt_outlier_mean, PAR::bkg_svd1_dt_outlier_scale);
@@ -123,29 +130,35 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
 
         deltaT.setCommonParameters(0,PAR::bkg_svd1_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_svd1_dt_mean_tau,
                 PAR::bkg_svd1_dt_outlier_fraction, PAR::bkg_svd1_dt_outlier_mean, PAR::bkg_svd1_dt_outlier_scale);
-        deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_sgl, PAR::bkg_svd1_dt_sigma_tail_sgl,
-                PAR::bkg_svd1_dt_fraction_delta_sgl, PAR::bkg_svd1_dt_fraction_tail_sgl, false);
+        deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_sgl, PAR::bkg_svd1_dt_sigma_tail1_sgl, PAR::bkg_svd1_dt_sigma_tail2_sgl,
+                PAR::bkg_svd1_dt_weight_tail1_sgl, PAR::bkg_svd1_dt_weight_tail2_sgl,
+                PAR::bkg_svd1_dt_fraction_delta_sgl, false);
         if(!combined) {
-            deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_mul, PAR::bkg_svd1_dt_sigma_tail_mul,
-                PAR::bkg_svd1_dt_fraction_delta_mul, PAR::bkg_svd1_dt_fraction_tail_mul, true);
+            deltaT.setParameters(0,PAR::bkg_svd1_dt_sigma_main_mul, PAR::bkg_svd1_dt_sigma_tail1_mul, PAR::bkg_svd1_dt_sigma_tail2_mul,
+                PAR::bkg_svd1_dt_weight_tail1_mul, PAR::bkg_svd1_dt_weight_tail2_mul,
+                PAR::bkg_svd1_dt_fraction_delta_mul, true);
         }
         deltaT.setAcp(0,PAR::bkg_svd1_dt_acp0);
 
         deltaT.setCommonParameters(1,PAR::bkg_svd2_dt_mean_delta, PAR::bkg_dt_blifetime, PAR::bkg_svd2_dt_mean_tau,
                 PAR::bkg_svd2_dt_outlier_fraction, PAR::bkg_svd2_dt_outlier_mean, PAR::bkg_svd2_dt_outlier_scale);
-        deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_sgl, PAR::bkg_svd2_dt_sigma_tail_sgl,
-                PAR::bkg_svd2_dt_fraction_delta_sgl, PAR::bkg_svd2_dt_fraction_tail_sgl, false);
-        deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_mul, PAR::bkg_svd2_dt_sigma_tail_mul,
-                PAR::bkg_svd2_dt_fraction_delta_mul, PAR::bkg_svd2_dt_fraction_tail_mul, true);
+        deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_sgl, PAR::bkg_svd2_dt_sigma_tail1_sgl, PAR::bkg_svd2_dt_sigma_tail2_sgl,
+                PAR::bkg_svd2_dt_weight_tail1_sgl, PAR::bkg_svd2_dt_weight_tail2_sgl,
+                PAR::bkg_svd2_dt_fraction_delta_sgl, false);
+        deltaT.setParameters(1,PAR::bkg_svd2_dt_sigma_main_mul, PAR::bkg_svd2_dt_sigma_tail1_mul, PAR::bkg_svd2_dt_sigma_tail2_mul,
+                PAR::bkg_svd2_dt_weight_tail1_mul, PAR::bkg_svd2_dt_weight_tail2_mul,
+                PAR::bkg_svd2_dt_fraction_delta_mul, true);
         deltaT.setAcp(1,PAR::bkg_svd2_dt_acp0);
+
+        deltaT.setEtaDependence(eta_dependence);
     }
 
-    BBarPDF(Range range_mBC, Range range_dE, Range range_dT, bool useMbcdE, bool useDeltaT, bool combinedDeltaT):
+    BBarPDF(Range range_mBC, Range range_dE, Range range_dT, bool useMbcdE, bool useDeltaT, bool combinedDeltaT, bool eta_dependence):
         DeltaTComponent<BkgTPDF>(range_dT, false, useDeltaT), useMbcdE(useMbcdE), range_mBC(range_mBC), range_dE(range_dE),
         bbarPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         bbarPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
-        init_deltaT(deltaT,combinedDeltaT);
+        init_deltaT(deltaT,combinedDeltaT, eta_dependence);
     }
 
     virtual ~BBarPDF(){}

@@ -51,9 +51,10 @@ if __name__ == "__main__":
     if mctype.find("full")>=0:
         genflags += ["--fullgsim"]
 
-    fitflags = ["--fix=.*", "--release=yield_signal_.*|signal_dt_J.*"]#|signal_dt_blifetime"]
+    fitflags1 = ["--fix=.*", "--release=yield_signal_.*"]#|signal_dt_blifetime"]
+    fitflags2 = ["--fix=.*", "--release=signal_dt_J.*"]#|signal_dt_blifetime"]
     if "bbar" in templates:
-        fitflags[1]+="|yield_bbar_.*"
+        fitflags1[1]+="|yield_bbar_.*"
     #if "continuum" in templates:
     #    fitflags[1]+="|ratio_continuum.*"
 
@@ -95,7 +96,7 @@ if __name__ == "__main__":
             subprocess.call(["mkdir", "-p", directory])
             params.save(paramfile)
 
-        toymc.add_job(output, paramfile, genflags, fitflags, data, templates)
+        toymc.add_job(output, paramfile, genflags, fitflags1, fitflags2, data, templates)
 
     results = toymc.run_jobs(False, True)
 

@@ -52,12 +52,14 @@ def generate_experiment(basename, params, data, components, flags, log, deltaT=T
 
     return did_something, files
 
-def fit_experiment(basename, initial, files, flags, components, log):
+def fit_experiment(basename, initial, files, flags1, flags2, components, log):
     log.write("Fitting experiment with %s\n" % components)
     log.flush()
     parfile  = basename + ".par"
     if os.path.exists(parfile): return parfile
-    ret = subprocess.call(["./ddk-fitter", "-i", initial, "-o", parfile, "--cmp=%s" % components] + files + flags, stdout = log)
+    ret = subprocess.call(["./ddk-fitter", "-i", initial, "-o", parfile, "--cmp=%s" % components] + files + flags1, stdout = log)
+    if flags2 is not None:
+        ret += subprocess.call(["./ddk-fitter", "-i", parfile, "-o", parfile, "--cmp=%s" % components] + files + flags2, stdout = log)
     if ret == 0: return parfile
 
     os.remove(parfile)
@@ -71,7 +73,7 @@ def make_experiment(thread_id, force_refit, deltaT):
 
     while True:
         try:
-            basename, params, genflags, fitflags, data, components = jobs.get(True,10)
+            basename, params, genflags, fitflags1, fitflags2, data, components = jobs.get(True,10)
         except queue.Empty:
             return
 
@@ -83,7 +85,7 @@ def make_experiment(thread_id, force_refit, deltaT):
             log = open(logfile,"w")
             refit, rootfiles = generate_experiment(basename, params, data, components, genflags, log, deltaT)
             if (refit or force_refit) and os.path.exists(parfile): os.remove(parfile)
-            outfile = fit_experiment(basename, params, rootfiles, fitflags, ",".join(components.keys()+deltaTcmp), log)
+            outfile = fit_experiment(basename, params, rootfiles, fitflags1, fitflags2, ",".join(components.keys()+deltaTcmp), log)
             with lock: results.append(outfile)
         except Exception, e:
             with lock: print e
@@ -94,8 +96,8 @@ def make_experiment(thread_id, force_refit, deltaT):
 
 jobs = queue.Queue()
 results = []
-def add_job(basename, params, genflags, fitflags, data, components):
-    jobs.put((basename, params, genflags, fitflags, data, components))
+def add_job(basename, params, genflags, fitflags1, fitflags2, data, components):
+    jobs.put((basename, params, genflags, fitflags1, fitflags2, data, components))
 
 def run_jobs(refit=False, deltaT=True):
     global results
@@ -141,9 +143,10 @@ if __name__ == "__main__":
     data = "~/belle/DspDsmKs/skim/ddk-on_resonance.root"
 
     genflags = ["--fudge=2"]
-    fitflags = ["--fix=.*","--release=yield_signal_.*|signal_dt_J.*|signal_dt_blifetime"]
+    fitflags1 = ["--fix=.*","--release=yield_signal_.*"]
+    fitflags2 = ["--fix=.*","--release=signal_dt_J.*|signal_dt_blifetime"]
     if "bbar" in templates:
-        fitflags[-1] += "|yield_bbar.*"
+        fitflags1[-1] += "|yield_bbar.*"
 
     #fitflags = ["--fix=.*","--release=yield_.*|signal_dt_J.*"]
 
@@ -156,7 +159,7 @@ if __name__ == "__main__":
 
 
     for i in range(nexp):
-        add_job("toymc/%s-%03d" % (toyname,i), paramfile, genflags, fitflags, data, templates)
+        add_job("toymc/%s-%04d" % (toyname,i), paramfile, genflags, fitflags1, fitflags2, data, templates)
 
     br_result = root.TH1D("brresult","",100,0,2*utils.br)
     br_pull   = root.TH1D("brpull","",100,-5,5)
@@ -196,4 +199,4 @@ if __name__ == "__main__":
         draw_toyMC(hist, r"fit results, input=$%.3g$" % cpv_input[i], xlabel=name, ylabel="Entries / %s" % hist.GetBinWidth(1))
         draw_toyMC(pull, r"pull distribution", xlabel="Pull(%s)" % name, ylabel="Entries / %s" % pull.GetBinWidth(1))
 
-    r2mpl.save_all("toymc-%s" % toyname, png=False, single_pdf=True)
+    r2mpl.save_all("toymc/toymc-%s" % toyname, png=False, single_pdf=True)

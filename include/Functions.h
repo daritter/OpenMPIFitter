@@ -7,7 +7,7 @@
 
 class Gauss {
     public:
-        constexpr static double sqrt_2pi_2 = 1.2533141373155002512078826424055226265034;
+        constexpr static double sqrt_pi_2 = 1.2533141373155002512078826424055226265034;
 
         Gauss(double lower=std::numeric_limits<double>::quiet_NaN(), double upper=0):
             lower(lower),upper(upper),mean(std::numeric_limits<double>::quiet_NaN()),sigma(-1),sigma2(-1),norm(0) {}
@@ -38,7 +38,7 @@ class Gauss {
                 }else{
                     norm = sigma2 * erf(x1/sigma2) - sigma * erf(x2/sigma);
                 }
-                norm *= sqrt_2pi_2;
+                norm *= sqrt_pi_2;
             }
 
             //And save the parameters
@@ -175,6 +175,77 @@ template<int N> class Chebychev {
         double u[N+1];
         double norm;
 };
+
+//FIXME Check function
+class CrystalBall {
+    public:
+        CrystalBall(double lower, double upper):
+            lower(lower),upper(upper), alpha(std::numeric_limits<double>::quiet_NaN()), n(0), mean(0), sigma(0) {}
+
+        void set_limits(double lower, double upper){
+            if(lower == this->lower && upper == this->upper) return;
+            this->lower = lower;
+            this->upper = upper;
+            alpha = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        void set(double alpha, double n, double mean, double sigma){
+            if( this->alpha==alpha && this->n == n && this->mean==mean && this->sigma==sigma)
+                return;
+
+            this->alpha = alpha;
+            this->n = n;
+            this->mean = mean;
+            this->sigma = sigma;
+            A = std::pow(n/alpha,n) * std::exp(-alpha*alpha/2.);
+            B = (n/alpha) - alpha;
+            if(sigma==0) {
+                norm = 0;
+            } else {
+                norm = 1./(integral(upper) - integral(lower));
+            }
+        }
+
+        /** Calculate the fcn for a given value */
+        double operator()(double x) const {
+            if(x<lower || x>upper) return 0.0;
+            if(sigma==0.0) return (x==mean)?std::numeric_limits<double>::max():0;
+            if(!finite(sigma) || norm==0) return 0.0;
+            const double dev = (x-mean)/sigma;
+            if(dev>-alpha) return norm*std::exp(-dev*dev/2.);
+            return norm*A*std::pow(B-dev,n);
+        }
+
+        double getNorm() const { return norm; }
+
+    protected:
+        double integral(double x){
+            const double flip = mean-alpha*sigma;
+            if(x<=flip) return integral_exp(x);
+            return integral_exp(flip) + integral_gauss(x) - integral_gauss(flip);
+        }
+
+        double integral_exp(double x){
+            return A*sigma*std::pow((mean+B*sigma-x)/sigma,1-n)/(n-1);
+        }
+
+        double integral_gauss(double x){
+            return Gauss::sqrt_pi_2*(1+std::erf((x-mean)/(M_SQRT2*sigma)))*sigma;
+        }
+
+        double lower;
+        double upper;
+        double alpha;
+        double n;
+        double mean;
+        double sigma;
+        double A;
+        double B;
+        double norm;
+};
+
+
+
 
 /** Compound FCN for adding to generic 1D FCN functions*/
 template<class FCN1, class FCN2> class Add1DFcn {
@@ -328,6 +399,26 @@ template<int N> class MultiGauss {
             }
         }
 
+        void set(double mean, double sigma, double norm1, double meanshift1, double sigmascale1, double norm2, double meanshift2, double sigmascale2, const double *par1=0){
+            fcns[0].set(mean,sigma);
+            mean += meanshift1;
+            sigma *= sigmascale1;
+            norms[1] = norm1;
+            fcns[1].set(mean,sigma);
+
+            mean += meanshift2;
+            sigma *= sigmascale2;
+            norms[2] = norm2;
+            fcns[2].set(mean,sigma);
+
+            for(int i=3; i<N; ++i){
+                norms[i] = par1[3*i-9];
+                mean += par1[3*i-8];
+                sigma *= par1[3*i-7];
+                if(norms[i]==0) continue;
+                fcns[i].set(mean,sigma);
+            }
+        }
 
         double operator()(double x) const {
             double result(0);
@@ -339,7 +430,6 @@ template<int N> class MultiGauss {
             }
             return result/norm;
         }
-
 
     private:
         Gauss* fcns;

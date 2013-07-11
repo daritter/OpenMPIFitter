@@ -12,7 +12,7 @@ TEST(DeltaTHists, Fill){
         for(e.rbin=0; e.rbin<7; ++e.rbin){
             dthists.fill(e, [](const Event &e){
                     return e.deltaT * (DeltaTHists::NHISTS_PER_SVD*e.svdVs + DeltaTHists::NHISTS_PER_RBIN*e.rbin + (e.tag_q+1) + (e.eta+1)/2);
-                    });
+                    }, true);
         }
     }
 
@@ -43,12 +43,12 @@ TEST(DeltaTHists, Norm){
     TF1 gauss("g","gausn",-10,10);
     gauss.SetParameters(1,0,1);
     for(int i=0; i<100; ++i){
-        dthists.fill(e, [&](const Event &e){ return gauss(e.deltaT - i*5./100.); });
+        dthists.fill(e, [&](const Event &e){ return gauss(e.deltaT - i*5./100.); }, true);
     }
     DeltaTHists dthists2(5000,-10,10);
     dthists2.recieve(dthists.send());
-    dthists.finalize();
-    dthists2.finalize([](int,int){return 2.;});
+    dthists.finalize(true);
+    dthists2.finalize(true,[](int,int){return 2.;});
     for(int i=0; i<DeltaTHists::NHISTS; ++i){
         ASSERT_FLOAT_EQ(dthists[i]->Integral(), (i<4)?1:0);
         ASSERT_FLOAT_EQ(dthists2[i]->Integral(), (i<4)?2:0);

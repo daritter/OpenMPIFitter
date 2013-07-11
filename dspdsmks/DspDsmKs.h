@@ -57,6 +57,7 @@ struct DspDsmKsPDF {
         CMP_continuum= 1<<3,
         CMP_deltat   = 1<<4,
         CMP_nombc    = 1<<5,
+        CMP_noeta    = 1<<6,
         CMP_all      = CMP_signal | CMP_misrecon | CMP_bbar | CMP_continuum | CMP_deltat
     };
 
@@ -87,6 +88,7 @@ struct DspDsmKsPDF {
             else DspDsmKsPDF__checkComponent(deltat);
             else DspDsmKsPDF__checkComponent(all);
             else DspDsmKsPDF__checkComponent(nombc);
+            else DspDsmKsPDF__checkComponent(noeta);
             else throw std::invalid_argument("Unknown component: '" + component + "'");
         }
 #undef DspDsmKsPDF__checkComponent
@@ -102,28 +104,28 @@ struct DspDsmKsPDF {
     {}
 
     ~DspDsmKsPDF(){
-        for(Component* component: components){
-            delete component;
+        for(auto component: components){
+            delete component.second;
         }
     }
 
     void setComponents(EnabledComponents cmp=CMP_all){
         enabledComponents = cmp;
-        for(Component* component: components){
-            delete component;
+        for(auto component: components){
+            delete component.second;
         }
         components.clear();
         if(cmp & CMP_signal){
-            components.push_back(new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+            components.emplace_back(CMP_signal, new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta)));
         }
         if(cmp & CMP_misrecon){
-            components.push_back(new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat));
+            components.emplace_back(CMP_misrecon, new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta)));
         }
         if(cmp & CMP_bbar){
-            components.push_back(new BBarPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat, combined_dT));
+            components.emplace_back(CMP_bbar, new BBarPDF(range_mBC, range_dE, range_dT, !(cmp & CMP_nombc), cmp & CMP_deltat, combined_dT, !(cmp & CMP_noeta)));
         }
         if(cmp & CMP_continuum){
-            components.push_back(new ContinuumPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, combined_dT));
+            components.emplace_back(CMP_continuum, new ContinuumPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, combined_dT, !(cmp & CMP_noeta)));
         }
     }
 
@@ -134,8 +136,8 @@ struct DspDsmKsPDF {
     /** Return the pdf value for a given paramater set and event */
     double PDF(const Event& e, const std::vector<double> &par) const {
         long double result(0);
-        for(Component* component: components){
-            result += (*component)(e, par);
+        for(auto component: components){
+            result += (*component.second)(e, par);
         }
         return result;
     }
@@ -155,29 +157,42 @@ struct DspDsmKsPDF {
     }
 
     /** Return the yield of the pdf given the set of parameters */
-    double get_yield(const std::vector<double> &par, int svdVs=Component::BOTH, int rbin=-1) const {
+    double get_yield(const std::vector<double> &par, int svdVs=Component::BOTH, int rbin=-1, int cmp = EnabledComponents::CMP_all) const {
         double yield(0);
-        for(Component* component: components){
-            yield += component->get_yield(par,(Component::EnabledSVD)svdVs, rbin);
+        for(auto component: components){
+            yield += (component.first&cmp)?component.second->get_yield(par,(Component::EnabledSVD)svdVs, rbin):0;
         }
         return yield;
     }
 
-    double get_deltaT(const Event &e, const std::vector<double> &par) const {
+    double get_deltaT(const Event &e, const std::vector<double> &par, EnabledComponents cmp =  EnabledComponents::CMP_all) const {
         long double deltaT(0);
-        for(Component* component: components){
-            deltaT += component->get_deltaT(e,par, true);
+        for(auto component: components){
+            if(cmp & component.first) deltaT += component.second->get_deltaT(e,par, true);
         }
         return deltaT;
     }
+
+    double get_cmpFraction(const Event& e, const std::vector<double> &par, EnabledComponents cmp) const {
+        if(components.size()==1) return 1.0;
+        long double sum_all(0);
+        long double NcmpPDFcmp(0);
+        for(auto component: components){
+            const long double NiPDFi = (*component.second)(e, par);
+            if(component.first == cmp) NcmpPDFcmp = NiPDFi;
+            sum_all += NiPDFi;
+        }
+        return NcmpPDFcmp/sum_all;
+    }
+
 
     std::vector<double> get_rbinFractions(const std::vector<double> &par, int svd){
         std::vector<double> result(7);
         std::vector<double> fractions(7);
         double yield(0);
-        for(Component* component: components){
-            const double y = component->get_yield(par, (Component::EnabledSVD)svd);
-            component->get_rbinFractions(par, fractions, (Component::EnabledSVD)svd, y);
+        for(auto component: components){
+            const double y = component.second->get_yield(par, (Component::EnabledSVD)svd);
+            component.second->get_rbinFractions(par, fractions, (Component::EnabledSVD)svd, y);
             for(int i=0; i<7; ++i){ result[i] += fractions[i]; }
             yield += y;
         }
@@ -189,9 +204,9 @@ struct DspDsmKsPDF {
     double get_cosTheta(const Event &e, const std::vector<double> &par, int svdVs) const {
         long double yield(0);
         long double sum(0);
-        for(Component* component: components){
-            const double y = component->get_yield(par,(Component::EnabledSVD)svdVs);
-            const double c = component->get_cosTheta(e);
+        for(auto component: components){
+            const double y = component.second->get_yield(par,(Component::EnabledSVD)svdVs);
+            const double c = component.second->get_cosTheta(e);
             sum += y*c;
             yield += y;
         }
@@ -223,14 +238,24 @@ struct DspDsmKsPDF {
 
         if(flag & PLT_DT){
             DeltaTHists dthists((int)values[0], values[1], values[2]);
+            Range plotrange_mBC("pMbc", values[3], values[4]);
+            Range plotrange_dE("pdE", values[5], values[6]);
+            EnabledComponents cmp = (EnabledComponents) values[7];
             for(int svd=0; svd<2; ++svd){
                 if((svd==0) && !(flag & PLT_SVD1)) continue;
                 if((svd==1) && !(flag & PLT_SVD2)) continue;
                 ProgressBar pbar(data[svd].size());
-                if(rank==0 && data[svd].size()==0) std::cout << "SVD" << (svd+1) << ": " << ++pbar;
+                if(rank==0) {
+                    std::cout << "SVD" << (svd+1) << ": ";
+                    if(data[svd].empty()) std::cout << ++pbar;
+                }
                 for(Event &e: data[svd]){
                     if(rank==0) std::cout << ++pbar;
-                    dthists.fill(e, [&](const Event &e){ return get_deltaT(e, par); });
+                    const bool skip = !(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE));
+                    dthists.fill(e, [&](const Event &e){
+                            const double fCmp = get_cmpFraction(e, par, cmp);
+                            return fCmp * get_deltaT(e, par, cmp); },
+                            !(enabledComponents & CMP_noeta), skip);
                 }
             }
             return dthists.send();
@@ -243,7 +268,7 @@ struct DspDsmKsPDF {
         if(flag & PLT_SVD1) svdVs |= Component::SVD1;
         if(flag & PLT_SVD2) svdVs |= Component::SVD2;
 
-        if(flag & PLT_DT){
+        /*if(flag & PLT_DT){
             long double pdf(0.0);
             int nEvents(0);
             for(int svd=0; svd<2; ++svd){
@@ -270,7 +295,7 @@ struct DspDsmKsPDF {
             }
             const double yield = get_yield(par,svdVs);
             return pdf*yield/nEvents;
-        }
+        }*/
         if(flag & (PLT_MAX | PLT_MAXDT)){
             double pdf(0.0);
             int oldComponents = enabledComponents;
@@ -624,7 +649,7 @@ struct DspDsmKsPDF {
     bool combined_dT;
 
     /** PDF function components */
-    mutable std::vector<Component*> components;
+    mutable std::vector<std::pair<EnabledComponents, Component*>> components;
     EnabledComponents enabledComponents;
 
     /** indicate wether events should be sorted to optimize pdf evaluation */

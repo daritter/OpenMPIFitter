@@ -61,7 +61,7 @@ TEST(BkgT,NormWithCache){
     Range range_dE("dE", -0.15,0.1);
 
     BkgTPDF dtpdf(Range("dT",-70,70), 0);
-    BBarPDF::init_deltaT(dtpdf,false);
+    BBarPDF::init_deltaT(dtpdf,false,true);
 
     Parameters params;
     {

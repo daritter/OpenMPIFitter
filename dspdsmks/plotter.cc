@@ -101,7 +101,7 @@ struct PlotRoutine {
 
         std::string names[] = {"signal","misrecon","bbar","continuum"};
         int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_bbar, DspDsmKsPDF::CMP_continuum};
-        int noMbcdE = activeComponents & DspDsmKsPDF::CMP_nombc;
+        int noMbcdE = activeComponents & (DspDsmKsPDF::CMP_nombc | DspDsmKsPDF::CMP_noeta);
 
         if(activeComponents & DspDsmKsPDF::CMP_deltat){
             for(int i=0; i<4; ++i){
@@ -109,15 +109,20 @@ struct PlotRoutine {
                 std::string name = names[i];
                 if(!(cmp & activeComponents)) continue;
                 std::cout << "Plotting dT for " << name << ": " << std::endl;
-                parallel_pdf.setOptions(cmp | DspDsmKsPDF::CMP_deltat | noMbcdE);
+                //parallel_pdf.setOptions(cmp | DspDsmKsPDF::CMP_deltat | noMbcdE);
                 DeltaTHists dthists(bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax, name);
                 int svdVs = DspDsmKsPDF::PLT_SVD1 | DspDsmKsPDF::PLT_SVD2 | DspDsmKsPDF::PLT_DT;
-                std::vector<double> values({(double) bins_dT*sampling_dT, plotrange_dT.vmin, plotrange_dT.vmax});
+                std::vector<double> values({(double) bins_dT*sampling_dT,
+                        plotrange_dT.vmin, plotrange_dT.vmax,
+                        plotrange_mBC.vmin, plotrange_mBC.vmax,
+                        plotrange_dE.vmin, plotrange_dE.vmax, (double)cmp
+                        });
                 std::vector<double> result = parallel_pdf.plotM(svdVs, values, par);
                 dthists.recieve(result);
                 dthists.finalize(true, [&](int svd, int rbin){
-                    return parallel_pdf.localFCN().get_yield(par, (svd>0)?Component::SVD2:Component::SVD1, rbin);
-                });
+                    //Scale the pdf to be the correct fraction of yields
+                    return parallel_pdf.localFCN().get_yield(par, (svd>0)?Component::SVD2:Component::SVD1, rbin, cmp);
+                }, true);
             }
         }
 
@@ -145,16 +150,16 @@ struct PlotRoutine {
 
         for(const Event& e: local_pdf.getData(0)){
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
-            dthists(0, e.rbin, (e.tag_q+1)/2, (e.eta+1)/2)->Fill(e.deltaT);
             if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE))) continue;
+            dthists(0, e.rbin, (e.tag_q+1)/2, (e.eta+1)/2)->Fill(e.deltaT);
             h_bEnergy_svd1->Fill(e.benergy);
             h_MbcdE_data_svd1->Fill(e.Mbc,e.dE);
             h_rbin_data_svd1->Fill(e.rbin);
         }
         for(const Event& e: local_pdf.getData(1)){
             h_allEvents->Fill(e.Mbc,e.dE,e.deltaT);
-            dthists(1, e.rbin, (e.tag_q+1)/2, (e.eta+1)/2)->Fill(e.deltaT);
             if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE))) continue;
+            dthists(1, e.rbin, (e.tag_q+1)/2, (e.eta+1)/2)->Fill(e.deltaT);
             h_bEnergy_svd2->Fill(e.benergy);
             h_MbcdE_data_svd2->Fill(e.Mbc,e.dE);
             h_rbin_data_svd2->Fill(e.rbin);

@@ -24,21 +24,26 @@ class DeltaTHists {
 
         ~DeltaTHists();
 
-        void finalize(bool scale, std::function<double (int, int)> pdf_yield = [](int,int){return 1.;});
+        void finalize(bool scale, std::function<double (int, int)> pdf_yield = [](int,int){return 1.;}, bool normalize=true);
 
         void recieve(const std::vector<double> &values);
 
         std::vector<double> send();
 
-        void fill(Event e, std::function<double (const Event&)> pdf){
+        void fill(Event e, std::function<double (const Event&)> pdf, bool eta_dependence, bool skip = false){
             yields->Fill(e.svdVs, e.rbin);
+            if(skip) return;
             for(int ix=0; ix<hists[0]->GetNbinsX(); ++ix){
                 e.deltaT = hists[0]->GetBinCenter(ix+1);
                 for(int q=0; q<2; ++q){
                     e.tag_q = 2*q-1;
-                    for(int eta=0; eta<2; ++eta){
-                        e.eta = 2*eta-1;
-                        hists[index(e.svdVs, e.rbin, q, eta)]->Fill(e.deltaT, pdf(e));
+                    if(eta_dependence){
+                        for(int eta=0; eta<2; ++eta){
+                            e.eta = 2*eta-1;
+                            hists[index(e.svdVs, e.rbin, q, eta)]->Fill(e.deltaT, pdf(e));
+                        }
+                    }else{
+                        hists[index(e.svdVs, e.rbin, q, (e.eta+1)/2)]->Fill(e.deltaT, pdf(e));
                     }
                 }
             }

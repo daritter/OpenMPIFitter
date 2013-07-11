@@ -64,7 +64,7 @@ DeltaTHists::~DeltaTHists(){
 }
 
 
-void DeltaTHists::finalize(bool scale, std::function<double (int, int)> pdf_yield){
+void DeltaTHists::finalize(bool scale, std::function<double (int, int)> pdf_yield, bool normalize){
     const double binsize = hists[0]->GetXaxis()->GetBinWidth(1);
     TH1D* full[2][4][2] = {{{0}}};
     if(!deleteHists){
@@ -94,12 +94,14 @@ void DeltaTHists::finalize(bool scale, std::function<double (int, int)> pdf_yiel
 
     for(int svd=0; svd<NSVD; ++svd){
         for(int rbin=0; rbin<NRBIN; ++rbin){
-            const double nevents = yield(svd,rbin);
+            const double nevents = normalize?yield(svd,rbin):1.;
             if(scale && nevents==0) continue;
             for(int q=0; q<2; ++q){
                 for(int eta=0; eta<2; ++eta){
                     TH1D* h = hists[index(svd,rbin,q,eta)];
-                    if(scale) h->Scale(pdf_yield(svd,rbin) * binsize / nevents);
+                    //std::cout << pdf_yield(svd,rbin) <<" * "<< binsize <<" / "<<nevents<<std::endl;
+                    //if(scale) h->Scale(pdf_yield(svd,rbin) * binsize / nevents);
+                    if(scale) h->Scale(binsize);
                     if(!deleteHists){
                         full[svd][q][eta]->Add(h);
                         full[svd][2][q]->Add(h);

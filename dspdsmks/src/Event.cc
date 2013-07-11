@@ -12,9 +12,10 @@ void dTCache::print_stats(){
         << hits << " hits, "
         << sets << " sets, ";
     if(requests>0){
-        auto fmt = std::cout.flags();
+        std::ios  state(NULL);
+        state.copyfmt(std::cout);
         std::cout << std::fixed << std::setprecision(2) << (100.*hits/requests) << "% efficiency";
-        std::cout.flags(fmt);
+        std::cout.copyfmt(state);
     }
     std::cout << std::endl;
 

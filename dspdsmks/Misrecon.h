@@ -53,7 +53,7 @@ namespace PAR {
 
 class MisreconPDF: public DeltaTComponent<> {
     public:
-    MisreconPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT=false):
+    MisreconPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool eta_dependence):
         DeltaTComponent<>(range_dT, false, useDeltaT), range_mBC(range_mBC), range_dE(range_dE),
         misreconPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         misreconPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
@@ -62,6 +62,7 @@ class MisreconPDF: public DeltaTComponent<> {
                 PAR::misrecon_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
                 PAR::misrecon_dt_fractionscale, -1, Event::dt_misrecon);
         deltaT.setOffset(PAR::misrecon_dt_offset);
+        deltaT.setEtaDependence(eta_dependence);
     }
 
     virtual ~MisreconPDF(){}

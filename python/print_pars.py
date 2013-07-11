@@ -50,7 +50,7 @@ pdf.load()
 
 signal_yield = np.array([(pdf.size(i), math.sqrt(pdf.size(i))) for i in range(2)])
 
-h_yield = b0.draw("svdVs", range=(2,0,2), cut=utils.cuts + " && (bestLHsig.mcInfo&1)==1", option="goff")
+h_yield = b0.draw("svdVs", range=(2,0,2), cut=utils.cuts() + " && (bestLHsig.mcInfo&1)==1", option="goff")
 s2 = np.array([(h_yield.GetBinContent(i+1), h_yield.GetBinError(i+1)) for i in range(2)])
 if not np.array_equal(signal_yield,s2):
     print "utils.cuts seem to be not working"
@@ -108,7 +108,6 @@ print r"""
 \def\FractionCorrectRec{\SI{%.1f}{\%%}}
 \def\FractionCorrectBestB{\SI{%.1f}{\%%}}
 \def\ReconstructedBR{\num{%.3e}}
-\def\ReconstructedBRCtrl{\num{%.3e}}
 \def\RawReconstructionEffSVDOne{%s}
 \def\RawReconstructionEffSVDTwo{%s}
 \def\ReconstructionEffSVDOne{%s}
@@ -116,9 +115,28 @@ print r"""
     b_mult,
     100*ncorrect[1] / (ncorrect[0]+ncorrect[1]),
     100*bestB[1] / (bestB[0]+bestB[1]),
-    eff_DDKs, eff_DsD0Km,
+    eff_DDKs,
     utils.format_error(*raw_eff[0], exponent=-3),
     utils.format_error(*raw_eff[1], exponent=-3),
     utils.format_error(*rec_eff[0], exponent=-5),
     utils.format_error(*rec_eff[1], exponent=-5),
+)
+
+print r"""
+\def\BMultiplicityCtrl{%.1f}
+\def\FractionCorrectRecCtrl{\SI{%.1f}{\%%}}
+\def\FractionCorrectBestBCtrl{\SI{%.1f}{\%%}}
+\def\ReconstructedBRCtrl{\num{%.3e}}
+\def\RawReconstructionEffSVDOneCtrl{%s}
+\def\RawReconstructionEffSVDTwoCtrl{%s}
+\def\ReconstructionEffSVDOneCtrl{%s}
+\def\ReconstructionEffSVDTwoCtrl{%s}""" % (
+    b_mult,
+    100*ncorrect[1] / (ncorrect[0]+ncorrect[1]),
+    100*bestB[1] / (bestB[0]+bestB[1]),
+    eff_DsD0Km,
+    utils.format_error(*raw_eff[0], exponent=-3),
+    utils.format_error(*raw_eff[1], exponent=-3),
+    utils.format_error(*ctl_eff[0], exponent=-5),
+    utils.format_error(*ctl_eff[1], exponent=-5),
 )
