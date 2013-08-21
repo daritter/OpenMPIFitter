@@ -120,20 +120,30 @@ namespace PAR {
     PARAM(signal_dt_Js1);
     PARAM(signal_dt_Js2);
     PARAM(signal_dt_fractionscale);
+
+    PARAM(signal_dt_srec0_svd1);
+    PARAM(signal_dt_srec0_svd2);
+    PARAM(signal_dt_srec1_svd1);
+    PARAM(signal_dt_srec1_svd2);
+    PARAM(signal_dt_fol_sgl_svd1);
+    PARAM(signal_dt_fol_sgl_svd2);
+    PARAM(signal_dt_fol_mul_svd1);
+    PARAM(signal_dt_fol_mul_svd2);
 };
 
 
 class SignalPDF: public DeltaTComponent<> {
     public:
-    SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool eta_dependence):
+    SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool eta_dependence, bool useCache):
         DeltaTComponent<>(range_dT, false, useDeltaT, false), range_mBC(range_mBC), range_dE(range_dE),
         signalPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         signalPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setParameters(
                 PAR::signal_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
-                PAR::signal_dt_fractionscale, -1, Event::dt_signal);
+                PAR::signal_dt_fractionscale, -1, useCache?Event::dt_signal:-1);
         deltaT.setEtaDependence(eta_dependence);
+        deltaT.setCorrections(PAR::signal_dt_srec0_svd1, PAR::signal_dt_srec1_svd1, PAR::signal_dt_fol_sgl_svd1, PAR::signal_dt_fol_mul_svd1);
     }
     virtual ~SignalPDF(){}
 

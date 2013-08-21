@@ -58,6 +58,7 @@ struct DspDsmKsPDF {
         CMP_deltat   = 1<<4,
         CMP_nombc    = 1<<5,
         CMP_noeta    = 1<<6,
+        CMP_nocache  = 1<<7,
         CMP_all      = CMP_signal | CMP_misrecon | CMP_bbar | CMP_continuum | CMP_deltat
     };
 
@@ -89,6 +90,7 @@ struct DspDsmKsPDF {
             else DspDsmKsPDF__checkComponent(all);
             else DspDsmKsPDF__checkComponent(nombc);
             else DspDsmKsPDF__checkComponent(noeta);
+            else DspDsmKsPDF__checkComponent(nocache);
             else throw std::invalid_argument("Unknown component: '" + component + "'");
         }
 #undef DspDsmKsPDF__checkComponent
@@ -116,7 +118,7 @@ struct DspDsmKsPDF {
         }
         components.clear();
         if(cmp & CMP_signal){
-            components.emplace_back(CMP_signal, new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta)));
+            components.emplace_back(CMP_signal, new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta),  !(cmp & CMP_nocache)));
         }
         if(cmp & CMP_misrecon){
             components.emplace_back(CMP_misrecon, new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta)));
