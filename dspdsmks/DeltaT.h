@@ -65,18 +65,20 @@ class DeltaTPDF {
                 if(cacheId>=0) e.dTcache[cacheId].set(dT, abs_tau, life_pdf, int_life_pdf, sin_pdf, cos_pdf);
             }
 
-            double sig_pdf = (
-                    life_pdf * (1.0 - e.tag_q*e.wrongTag_dw) +
-                    e.tag_q * (1.0-2.0*e.wrongTag_w) *
-                    (e.eta * par[Jc] * cos_pdf - (par[Js1] + e.eta * par[Js2]) * sin_pdf)
-                    )/int_life_pdf;
-
-            if(!eta_dependence){
+            double sig_pdf(0);
+            if(eta_dependence) {
                 sig_pdf = (
-                    life_pdf * (1.0 - e.tag_q*e.wrongTag_dw) +
-                    e.tag_q * (1.0-2.0*e.wrongTag_w) *
-                    (par[Jc] * cos_pdf + par[Js1] * sin_pdf)
-                    )/int_life_pdf;
+                        life_pdf * (1.0 - e.tag_q*e.wrongTag_dw) +
+                        e.tag_q * (1.0-2.0*e.wrongTag_w) *
+                        (e.eta * par[Jc] * cos_pdf - (par[Js1] + e.eta * par[Js2]) * sin_pdf)
+                        )/int_life_pdf;
+
+            }else{
+                sig_pdf = (
+                        life_pdf * (1.0 - e.tag_q*e.wrongTag_dw) +
+                        e.tag_q * (1.0-2.0*e.wrongTag_w) *
+                        (par[Jc] * cos_pdf + par[Js1] * sin_pdf)
+                        )/int_life_pdf;
             }
 
             const double omean = (outlierMean>=0)?par[outlierMean]:0.0;

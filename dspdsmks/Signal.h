@@ -201,8 +201,8 @@ class SignalPDF: public DeltaTComponent<> {
         return SignalPDF::get_signal_yield(par,svd,rbin);
     }
 
-    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0){
-        fill_rbinFractions(par, fractions, svd, PAR::signal_svd1_rbin1, PAR::signal_svd2_rbin1, scale);
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const {
+        fill_rbinFractions(par, fractions, svd, PAR::signal_svd1_rbin1, PAR::signal_svd2_rbin1, scale, PAR::signal_corr_svd1_rbin1,  PAR::signal_corr_svd2_rbin1);
     }
 
     private:

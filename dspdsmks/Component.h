@@ -21,24 +21,34 @@ class Component {
     virtual double get_deltaT(const Event& e, const std::vector<double> &par, bool anyway=false) = 0;
     virtual double get_cosTheta(const Event &e) = 0;
 
-    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) = 0;
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const = 0;
+
+    static double get_rbinFraction(int rbin, int rbin1, const std::vector<double> &par, int corr_rbin1=-1) {
+        if(rbin<0) return 1.0;
+        if(rbin>6) return 0.0;
+        double sum(0);
+        for(int i=0; i<7; ++i) sum += par[rbin1+i];
+        if(corr_rbin1>=0){
+            if(rbin<6) return par[rbin1+rbin]/sum * par[corr_rbin1+rbin];
+            double corr_rbin6(1);
+            for(int i=0; i<6; ++i) corr_rbin6 -= par[rbin1+i]/sum * par[corr_rbin1+i];
+            return std::max(0., corr_rbin6);
+        }
+        return par[rbin1+rbin]/sum;
+    }
 
     protected:
 
-    void fill_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, int svd1_rbin1, int svd2_rbin1, double scale){
+    void fill_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, int svd1_rbin1, int svd2_rbin1, double scale, int svd1_cbin1=-1, int svd2_cbin1=-1) const {
         if((svd & SVD1) && (svd & SVD2)){
             std::cerr << "Cannot give rbin fractions for both svds";
         }
         const int rbin1 = (svd & SVD1)?svd1_rbin1:svd2_rbin1;
-        double sum(0);
-        for(int i=0; i<7; ++i) {
-            sum += par[rbin1+i];
-        }
-        for(int i=0; i<7; ++i) {
-            fractions[i] = par[rbin1+i]/sum*scale;
+        const int cbin1 = (svd & SVD1)?svd1_cbin1:svd2_cbin1;
+        for(int i=0; i<7; ++i){
+            fractions[i] = get_rbinFraction(i, rbin1, par, cbin1)*scale;
         }
     }
-
 };
 
 template<class T=DeltaTPDF> class DeltaTComponent: public Component {
@@ -56,20 +66,6 @@ template<class T=DeltaTPDF> class DeltaTComponent: public Component {
 
     virtual double get_cosTheta(const Event &e){
         return flatCosTheta?1.0:(1.0-e.cosTheta*e.cosTheta);
-    }
-
-    static double get_rbinFraction(int rbin, int rbin1, const std::vector<double> &par, int corr_rbin1=-1) {
-        if(rbin<0) return 1.0;
-        if(rbin>6) return 0.0;
-        double sum(0);
-        for(int i=0; i<7; ++i) sum += par[rbin1+i];
-        if(corr_rbin1>=0){
-            if(rbin<6) return par[rbin1+rbin]/sum * par[corr_rbin1+rbin];
-            double corr_rbin6(1);
-            for(int i=0; i<6; ++i) corr_rbin6 -= par[rbin1+i]/sum * par[corr_rbin1+i];
-            return std::max(0., corr_rbin6);
-        }
-        return par[rbin1+rbin]/sum;
     }
 
     protected:

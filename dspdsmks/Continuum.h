@@ -66,7 +66,7 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
         return par[PAR::scale_continuum] * yield;
     }
 
-    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0){
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const {
         fill_rbinFractions(par, fractions, svd, PAR::bkg_svd1_rbin1, PAR::bkg_svd2_rbin1, scale);
     }
 

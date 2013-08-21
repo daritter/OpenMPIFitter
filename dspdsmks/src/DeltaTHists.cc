@@ -66,7 +66,7 @@ DeltaTHists::~DeltaTHists(){
 
 void DeltaTHists::finalize(bool scale, std::function<double (int, int)> pdf_yield, bool normalize){
     const double binsize = hists[0]->GetXaxis()->GetBinWidth(1);
-    TH1D* full[2][4][2] = {{{0}}};
+    TH1D* full[3][4][2] = {{{0}}};
     if(!deleteHists){
         const std::string pmn("mp");
         const std::string pmt("-+");
@@ -77,15 +77,15 @@ void DeltaTHists::finalize(bool scale, std::function<double (int, int)> pdf_yiel
         boost::format dt_hist_title("#Deltat, SVD%1%, %4%, q=%2%1, #eta=%3%1");
         boost::format dt_hist_name2("dT_svd%1%_%2%%3%_%4%");
         boost::format dt_hist_title2("#Deltat, SVD%1%, %4%, %2%=%3%1");
-        for(int svd=0; svd<NSVD; ++svd){
+        for(int svd=0; svd<NSVD+1; ++svd){
             for(int q=0; q<2; ++q){
                 for(int eta=0; eta<2; ++eta){
-                    const std::string hname = (dt_hist_name % (svd+1) % pmn[q] % pmn[eta] % name).str();
-                    const std::string htitle = (dt_hist_title % (svd+1) % pmt[q] % pmt[eta] % name).str();
+                    const std::string hname = (dt_hist_name % (svd) % pmn[q] % pmn[eta] % name).str();
+                    const std::string htitle = (dt_hist_title % (svd) % pmt[q] % pmt[eta] % name).str();
                     full[svd][q][eta] = new TH1D(hname.c_str(),htitle.c_str(), nbins, mindt, maxdt);
 
-                    const std::string hname2 = (dt_hist_name2 % (svd+1) % pln[q] % pmn[eta] % name).str();
-                    const std::string htitle2 = (dt_hist_title2 % (svd+1) % plt[q] % pmt[eta] % name).str();
+                    const std::string hname2 = (dt_hist_name2 % (svd) % pln[q] % pmn[eta] % name).str();
+                    const std::string htitle2 = (dt_hist_title2 % (svd) % plt[q] % pmt[eta] % name).str();
                     full[svd][2+q][eta] = new TH1D(hname2.c_str(),htitle2.c_str(), nbins, mindt, maxdt);
                 }
             }
@@ -103,9 +103,12 @@ void DeltaTHists::finalize(bool scale, std::function<double (int, int)> pdf_yiel
                     //if(scale) h->Scale(pdf_yield(svd,rbin) * binsize / nevents);
                     if(scale) h->Scale(binsize);
                     if(!deleteHists){
-                        full[svd][q][eta]->Add(h);
-                        full[svd][2][q]->Add(h);
-                        full[svd][3][(q!=eta)?0:1]->Add(h);
+                        full[0][q][eta]->Add(h);
+                        full[0][2][q]->Add(h);
+                        full[0][3][(q!=eta)?0:1]->Add(h);
+                        full[svd+1][q][eta]->Add(h);
+                        full[svd+1][2][q]->Add(h);
+                        full[svd+1][3][(q!=eta)?0:1]->Add(h);
                     }
                 }
             }

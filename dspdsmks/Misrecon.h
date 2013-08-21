@@ -102,7 +102,7 @@ class MisreconPDF: public DeltaTComponent<> {
         return yield;
     }
 
-    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0){
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const {
         fill_rbinFractions(par,fractions, svd, PAR::misrecon_svd1_rbin1, PAR::misrecon_svd2_rbin1, scale);
     }
 
