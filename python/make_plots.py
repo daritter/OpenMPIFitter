@@ -77,6 +77,10 @@ def plot_mBCdE(data, label=None, title=None, **argk):
     a.set_xlabel("$M_{BC}$ / GeV")
     a.set_ylabel("$\Delta E$ / GeV")
 
+    #Draw rectangle to show signal enhanced area
+    coords = (5.27,-0.04,5.29,0.04)
+    a.add_patch(matplotlib.patches.Rectangle(coords[:2], coords[2]-coords[0], coords[3]-coords[1], edgecolor="k", facecolor="none"))
+
 def plot_fit(axes, fit, data, color, label=None, i=0):
     r2mpl.plotSmooth(fit, axes=axes, color=color, samples=2000, label=label, zorder=i+1, linewidth=0.5)
     #r2mpl.plot(fit, axes=axes, color=color, label=label, linewidth=0.2)
@@ -215,13 +219,13 @@ def make_dT_plots(name1, name2=None, title1="", title2=None, label=None, val1=No
                 fits[i].append((component,fit))
 
     axes = [None, None]
-    if data[0]:
+    if data[0] and fits[0]:
         axes[0] = plot_dfs("dt_1", data[0], fits[0], "$\Delta t$ / ps", title=title1, unit="ps", stack=False)#, log=True)
 
-    if data[1]:
+    if data[1] and fits[1]:
         axes[1] = plot_dfs("dt_2", data[1], fits[1], "$\Delta t$ / ps", title=title2, unit="ps", stack=False)#, log=True)
 
-    if data[0] and data[1]:
+    if axes[0] and axes[1]:
         plot_asymmetry(data[0], data[1], fits[0], fits[1], label, val1, val2)
         # Make sure the two plots have the same y-axis range
         ymax = max(a.get_ylim()[1] for a in axes)
@@ -235,7 +239,7 @@ except ValueError:
 
 make_mBCdE_plots("mbcde_svd2", "SVD2")
 make_mBCdE_plots("mbcde", "SVD1 + SVD2")
-r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=False)
+r2mpl.save_all(filename + "-mBCdE", png=False, single_pdf=True)
 
 qname = "pm"
 qval = ["-1","+1"]
@@ -243,25 +247,27 @@ tname = ["q","qe"]
 tval  = ["q", "q\eta"]
 
 #dT plots
-for svd in range(2):
+for svd in range(3):
+    svdtitle = svd>0 and "SVD{0}, ".format(svd) or "SVD1 + SVD2, "
     for q in range(2):
         for eta in range(2):
-            make_dT_plots("dT_svd{0}_q{1}_e{2}".format(svd+1, qname[q], qname[eta]),
-                          title1="SVD{0}, $q={1}$, $\eta={2}$".format(svd+1, qval[q], qval[eta]))
+            make_dT_plots("dT_svd{0}_q{1}_e{2}".format(svd, qname[q], qname[eta]),
+                          title1="{0}$q={1}$, $\eta={2}$".format(svdtitle, qval[q], qval[eta]))
     for qt in range(2):
-        names = ["dT_svd{0}_{1}{2}".format(svd+1, tname[qt], qname[val]) for val in range(2)]
-        titles = ["SVD{0}, ${1}={2}$".format(svd+1, tval[qt], qval[val]) for val in range(2)]
+        names = ["dT_svd{0}_{1}{2}".format(svd, tname[qt], qname[val]) for val in range(2)]
+        titles = ["{0}${1}={2}$".format(svdtitle, tval[qt], qval[val]) for val in range(2)]
         args = names + titles + [tval[qt]] + qval
         make_dT_plots(*args)
 
-    r2mpl.save_all(filename + "-dT-svd{0}".format(svd+1), png=False, single_pdf=False)
+    r2mpl.save_all(filename + "-dT-svd{0}".format(svd), png=False, single_pdf=True)
 
 # rbin plots
-for svd in range(2):
+for svd in range(3):
+    svdtitle = svd>0 and "SVD{0}, ".format(svd) or "SVD1 + SVD2, "
     for rbin in range(7):
         for q in range(2):
             for eta in range(2):
-                make_dT_plots("dT_svd{0}_rbin{1}_q{2}_e{3}".format(svd+1, rbin, qname[q], qname[eta]),
-                              title1="SVD{0}, rbin{1}, $q={2}$, $\eta={3}$".format(svd+1, rbin, qval[q], qval[eta]))
+                make_dT_plots("dT_svd{0}_rbin{1}_q{2}_e{3}".format(svd, rbin, qname[q], qname[eta]),
+                              title1="{0}rbin{1}, $q={2}$, $\eta={3}$".format(svdtitle, rbin, qval[q], qval[eta]))
 
-    r2mpl.save_all(filename + "-dT-svd{0}-rbins".format(svd+1), png=False, single_pdf=False)
+    r2mpl.save_all(filename + "-dT-svd{0}-rbins".format(svd), png=False, single_pdf=False)

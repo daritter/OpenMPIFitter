@@ -117,7 +117,7 @@ def get_plotaxes_stacked():
     a1.set_xticklabels([])
     return f,a1,a2
 
-def format_error(value, error=None, precision=3, exporder=3, exponent=None):
+def format_error(value, error=None, precision=3, exporder=3, exponent=None, align=False):
     if exponent is None:
         if value==0:
             exponent = 0
@@ -130,13 +130,15 @@ def format_error(value, error=None, precision=3, exporder=3, exponent=None):
         if error is not None:
             error /= math.pow(10,exponent)
 
+    operator = align and r'&\pm&' or r'\pm'
+
     if error is not None:
         if(show_exp):
-            return r"({0:.{precision}f} \pm {1:.{precision}f}) \times 10^{{{exp}}}".format(
-                value, error, exp=exponent, precision=precision)
+            return r"({0:.{precision}f} {op} {1:.{precision}f}) \times 10^{{{exp}}}".format(
+                value, error, exp=exponent, precision=precision, op=operator)
         else:
-            return r"{0:.{precision}f} \pm {1:.{precision}f}".format(
-                value, error, precision=precision)
+            return r"{0:.{precision}f} {op} {1:.{precision}f}".format(
+                value, error, precision=precision, op=operator)
     else:
         if(show_exp):
             return r"{0:.{precision}f} \times 10^{{{exp}}}".format(
