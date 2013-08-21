@@ -134,16 +134,18 @@ namespace PAR {
 
 class SignalPDF: public DeltaTComponent<> {
     public:
-    SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool eta_dependence, bool useCache):
+    SignalPDF(Range range_mBC, Range range_dE, Range range_dT, bool useDeltaT, bool eta_dependence, bool fit_dtres):
         DeltaTComponent<>(range_dT, false, useDeltaT, false), range_mBC(range_mBC), range_dE(range_dE),
         signalPDF_svd1(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax),
         signalPDF_svd2(range_mBC.vmin, range_mBC.vmax, range_dE.vmin, range_dE.vmax)
     {
         deltaT.setParameters(
                 PAR::signal_dt_blifetime, PAR::signal_dt_Jc, PAR::signal_dt_Js1, PAR::signal_dt_Js2,
-                PAR::signal_dt_fractionscale, -1, useCache?Event::dt_signal:-1);
+                PAR::signal_dt_fractionscale, -1, fit_dtres?Event::dt_signal:-1);
         deltaT.setEtaDependence(eta_dependence);
-        deltaT.setCorrections(PAR::signal_dt_srec0_svd1, PAR::signal_dt_srec1_svd1, PAR::signal_dt_fol_sgl_svd1, PAR::signal_dt_fol_mul_svd1);
+        if(fit_dtres){
+            deltaT.setCorrections(PAR::signal_dt_srec0_svd1, PAR::signal_dt_srec1_svd1, PAR::signal_dt_fol_sgl_svd1, PAR::signal_dt_fol_mul_svd1);
+        }
     }
     virtual ~SignalPDF(){}
 

@@ -58,7 +58,7 @@ struct DspDsmKsPDF {
         CMP_deltat   = 1<<4,
         CMP_nombc    = 1<<5,
         CMP_noeta    = 1<<6,
-        CMP_nocache  = 1<<7,
+        CMP_fitdtres  = 1<<7,
         CMP_all      = CMP_signal | CMP_misrecon | CMP_bbar | CMP_continuum | CMP_deltat
     };
 
@@ -90,7 +90,7 @@ struct DspDsmKsPDF {
             else DspDsmKsPDF__checkComponent(all);
             else DspDsmKsPDF__checkComponent(nombc);
             else DspDsmKsPDF__checkComponent(noeta);
-            else DspDsmKsPDF__checkComponent(nocache);
+            else DspDsmKsPDF__checkComponent(fitdtres);
             else throw std::invalid_argument("Unknown component: '" + component + "'");
         }
 #undef DspDsmKsPDF__checkComponent
@@ -102,7 +102,7 @@ struct DspDsmKsPDF {
         minLogL(std::numeric_limits<double>::infinity()), maxLogL(-std::numeric_limits<double>::infinity()), bestBSelection("bestLHsig"),
         range_mBC("Mbc",5.24,5.30), range_dE("dE",-0.15,0.1), range_dT("dT",Belle::dt_resol_global::dt_llmt, Belle::dt_resol_global::dt_ulmt),
         veto_mBC("Mbc",5.24,5.30), veto_dE("dE",-0.1,0.1), use_veto(false), combined_dT(false),
-        optimize(optimize), svdFlag(Component::BOTH)
+        optimize(optimize), fixed_dtres(false), svdFlag(Component::BOTH)
     {}
 
     ~DspDsmKsPDF(){
@@ -118,7 +118,7 @@ struct DspDsmKsPDF {
         }
         components.clear();
         if(cmp & CMP_signal){
-            components.emplace_back(CMP_signal, new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta),  !(cmp & CMP_nocache)));
+            components.emplace_back(CMP_signal, new SignalPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta),  !(cmp & CMP_fitdtres)));
         }
         if(cmp & CMP_misrecon){
             components.emplace_back(CMP_misrecon, new MisreconPDF(range_mBC, range_dE, range_dT, cmp & CMP_deltat, !(cmp & CMP_noeta)));
@@ -144,8 +144,25 @@ struct DspDsmKsPDF {
         return result;
     }
 
+    void fix_dtresparam(const std::vector<double> &par) const{
+        if(!(enabledComponents & CMP_fitdtres) && !fixed_dtres){
+            std::cout << "Fixing dtres_params" << std::endl;
+            for(int svd=0; svd<2; ++svd){
+                for(int mc=0; mc<2; ++mc){
+                    Belle::dtres_param_t* dtres_param = Belle::get_dtres_param( svd>0?31:7, mc );
+                    dtres_param->Srec[0] *= par[PAR::signal_dt_srec0_svd1 + svd];
+                    dtres_param->Srec[1] *= par[PAR::signal_dt_srec1_svd1 + svd];
+                    dtres_param->fol_sgl *= par[PAR::signal_dt_fol_sgl_svd1 + svd];
+                    dtres_param->fol_mul *= par[PAR::signal_dt_fol_mul_svd1 + svd];
+                }
+            }
+            fixed_dtres = true;
+        }
+    }
+
     /** Return the pdf for all events */
     double operator()(const std::vector<double> &par) const {
+        fix_dtresparam(par);
         double log_pdf(0.0);
         for(int svd=0; svd<2; ++svd){
             if((svd==0) && !(svdFlag & Component::SVD1)) continue;
@@ -233,6 +250,7 @@ struct DspDsmKsPDF {
     }
 
     std::vector<double> plotM(int flag, const std::vector<double> values, const std::vector<double> &par, int rank){
+        fix_dtresparam(par);
         int svdVs=0;
         std::vector<double> results;
         if(flag & PLT_SVD1) svdVs |= Component::SVD1;
@@ -266,38 +284,11 @@ struct DspDsmKsPDF {
     }
 
     double plot(int flag, const std::vector<double> values, const std::vector<double> &par){
+        fix_dtresparam(par);
         int svdVs=0;
         if(flag & PLT_SVD1) svdVs |= Component::SVD1;
         if(flag & PLT_SVD2) svdVs |= Component::SVD2;
 
-        /*if(flag & PLT_DT){
-            long double pdf(0.0);
-            int nEvents(0);
-            for(int svd=0; svd<2; ++svd){
-                if((svd==0) && !(flag & PLT_SVD1)) continue;
-                if((svd==1) && !(flag & PLT_SVD2)) continue;
-                for(unsigned int i=0; i<data[svd].size(); i++ ){
-                    Event e = data[svd][i];
-                    e.deltaT = values[0];
-                    for(int i=-1; i<=2; i+=2){
-                        if(flag & PLT_DT_Q){
-                            e.tag_q = (int) values[1];
-                            e.eta = i;
-                        }else if(flag & PLT_DT_E){
-                            e.tag_q = i;
-                            e.eta = (int) values[1];
-                        }else if(flag & PLT_DT_QE){
-                            e.tag_q = i;
-                            e.eta = (int) (i*values[1]);
-                        }
-                        pdf += get_deltaT(e, par);
-                    }
-                    ++nEvents;
-                }
-            }
-            const double yield = get_yield(par,svdVs);
-            return pdf*yield/nEvents;
-        }*/
         if(flag & (PLT_MAX | PLT_MAXDT)){
             double pdf(0.0);
             int oldComponents = enabledComponents;
@@ -656,6 +647,9 @@ struct DspDsmKsPDF {
 
     /** indicate wether events should be sorted to optimize pdf evaluation */
     bool optimize;
+
+    /** check wether dtres_params have already been fixed */
+    mutable bool fixed_dtres;
 
     /** which SVD version to use when fitting */
     Component::EnabledSVD svdFlag;
