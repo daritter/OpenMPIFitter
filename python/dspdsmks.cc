@@ -5,6 +5,7 @@
 #include <Parameters.h>
 #include "../dspdsmks/DspDsmKs.h"
 #include <fstream>
+#include <sstream>
 
 struct ParameterHelper {
     static const std::string tostring(Parameter &self){
@@ -26,16 +27,21 @@ struct PDFHelper {
             filenames.push_back(boost::python::extract<std::string>(ns[i]));
         }
     }
-    static void print_yields(DspDsmKsPDF &self, const Parameters &p){
+    static std::string print_yields(DspDsmKsPDF &self, const Parameters &p){
         const std::vector<double> par = p.getValues();
         std::string names[] = {"signal","misrecon","bbar","continuum"};
         int components[] = {DspDsmKsPDF::CMP_signal, DspDsmKsPDF::CMP_misrecon, DspDsmKsPDF::CMP_bbar, DspDsmKsPDF::CMP_continuum};
+        std::stringstream buffer;
+        buffer << "{" << std::endl;
         for(int i=0; i<4; ++i){
                 int cmp = components[i];
                 self.setComponents((DspDsmKsPDF::EnabledComponents)cmp);
                 std::string name = names[i];
                 std::cout << name << ": SVD1 = " << self.get_yield(par, Component::SVD1) << ", SVD2 = " << self.get_yield(par, Component::SVD2) << std::endl;
+                buffer << "    '" << name << "': (" << self.get_yield(par, Component::SVD1) << ", " << self.get_yield(par, Component::SVD2) << ")," << std::endl;
         }
+        buffer << "}";
+        return buffer.str();
     }
 };
 
