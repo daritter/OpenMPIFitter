@@ -6,7 +6,8 @@
 #include "Component.h"
 
 namespace PAR {
-    PARAM(yield_signal_br);
+    PARAM(yield_signal_svd1);
+    PARAM(yield_signal_svd2);
 
     PARAM(signal_svd1_rbin1);
     PARAM(signal_svd1_rbin2);
@@ -39,8 +40,6 @@ namespace PAR {
     PARAM(signal_corr_svd2_rbin6);
 
 
-    PARAM(signal_svd1_eff);
-    PARAM(signal_svd1_nbb);
     PARAM(signal_svd1_ratio);
     PARAM(signal_svd1_Mbc_mean_m0);
     PARAM(signal_svd1_Mbc_mean_m1);
@@ -81,8 +80,6 @@ namespace PAR {
     PARAM(signal_svd2_rbin6);
     PARAM(signal_svd2_rbin7);
 
-    PARAM(signal_svd2_eff);
-    PARAM(signal_svd2_nbb);
     PARAM(signal_svd2_ratio);
     PARAM(signal_svd2_Mbc_mean_m0);
     PARAM(signal_svd2_Mbc_mean_m1);
@@ -149,7 +146,7 @@ class SignalPDF: public DeltaTComponent<> {
     }
     virtual ~SignalPDF(){}
 
-    virtual double operator()(const Event& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par, bool normalized=false) {
         if(e.svdVs == 0){
             //Set Parameters for signal component
             signalPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
@@ -171,6 +168,7 @@ class SignalPDF: public DeltaTComponent<> {
             signalPDF_svd1.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd1_Mbc_argusC]);
             signalPDF_svd1.fcn2.fcny.set(par[PAR::signal_svd1_dE_bkg_mean], par[PAR::signal_svd1_dE_bkg_sigma]);
 
+            if(normalized) return signalPDF_svd1(e.Mbc, e.dE);
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * signalPDF_svd1(e.Mbc, e.dE);
         }else{
             //Set Parameters for signal component
@@ -194,6 +192,7 @@ class SignalPDF: public DeltaTComponent<> {
             signalPDF_svd2.fcn2.fcnx.set(e.benergy, par[PAR::signal_svd2_Mbc_argusC]);
             signalPDF_svd2.fcn2.fcny.set(par[PAR::signal_svd2_dE_bkg_mean], par[PAR::signal_svd2_dE_bkg_sigma]);
 
+            if(normalized) return signalPDF_svd2(e.Mbc, e.dE);
             return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * signalPDF_svd2(e.Mbc, e.dE);
         }
     }
@@ -201,10 +200,10 @@ class SignalPDF: public DeltaTComponent<> {
     static double get_signal_yield(const std::vector<double> &par, EnabledSVD svd, int rbin=-1) {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd1_nbb] * par[PAR::signal_svd1_eff] * get_rbinFraction(rbin, PAR::signal_svd1_rbin1, par, PAR::signal_corr_svd1_rbin1);
+            yield += par[PAR::yield_signal_svd1] * get_rbinFraction(rbin, PAR::signal_svd1_rbin1, par, PAR::signal_corr_svd1_rbin1);
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_signal_br] * par[PAR::signal_svd2_nbb] * par[PAR::signal_svd2_eff] * get_rbinFraction(rbin, PAR::signal_svd2_rbin1, par, PAR::signal_corr_svd2_rbin1);
+            yield += par[PAR::yield_signal_svd2] * get_rbinFraction(rbin, PAR::signal_svd2_rbin1, par, PAR::signal_corr_svd2_rbin1);
         }
         return yield;
     }

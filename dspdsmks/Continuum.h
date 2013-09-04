@@ -8,8 +8,8 @@
 
 namespace PAR {
     PARAM(scale_continuum);
-    PARAM(ratio_continuum_svd1);
-    PARAM(ratio_continuum_svd2);
+    PARAM(f_continuum_svd1);
+    PARAM(f_continuum_svd2);
     PARAM(continuum_svd1_dE);
     PARAM(continuum_svd1_dE_cheb1);
     PARAM(continuum_svd2_dE);
@@ -29,7 +29,7 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
 
     virtual ~ContinuumPDF(){}
 
-    virtual double operator()(const Event& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par, bool normalized=false) {
         if(e.svdVs == 0){
             //Set Parameters for continuum component
             continuumPDF_svd1.set_limits(range_mBC.vmin, std::min(e.benergy,(double) range_mBC.vmax), range_dE.vmin, range_dE.vmax);
@@ -40,6 +40,7 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
                 continuumPDF_svd1.fcny.set(&par[PAR::bbar_svd1_dE_cheb1]);
             }
 
+            if(normalized) return continuumPDF_svd1(e.Mbc, e.dE);
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * continuumPDF_svd1(e.Mbc, e.dE);
         } else {
             //Set Parameters for continuum component
@@ -51,6 +52,7 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
                 continuumPDF_svd2.fcny.set(&par[PAR::bbar_svd2_dE_cheb1]);
             }
 
+            if(normalized) return  continuumPDF_svd2(e.Mbc, e.dE);
             return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * continuumPDF_svd2(e.Mbc, e.dE);
         }
     }
@@ -58,10 +60,10 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::ratio_continuum_svd1] * par[PAR::yield_bbar_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
+            yield += par[PAR::yield_bkg_svd1] * par[PAR::f_continuum_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
         }
         if(svd & SVD2){
-            yield += par[PAR::ratio_continuum_svd2] * par[PAR::yield_bbar_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
+            yield += par[PAR::yield_bkg_svd2] * par[PAR::f_continuum_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
         }
         return par[PAR::scale_continuum] * yield;
     }
@@ -70,6 +72,11 @@ class ContinuumPDF: public DeltaTComponent<BkgTPDF> {
         fill_rbinFractions(par, fractions, svd, PAR::bkg_svd1_rbin1, PAR::bkg_svd2_rbin1, scale);
     }
 
+    virtual double get_fraction(const std::vector<double> &par, EnabledSVD svd=BOTH) {
+        if(svd & SVD1) return par[PAR::f_continuum_svd1];
+        if(svd & SVD2) return par[PAR::f_continuum_svd2];
+        return 0;
+    }
 
     private:
 

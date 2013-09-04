@@ -16,10 +16,14 @@ class Component {
     Component() {}
 
     virtual ~Component(){}
-    virtual double operator()(const Event& e, const std::vector<double> &par) = 0;
+    virtual double operator()(const Event& e, const std::vector<double> &par, bool normalized=false) = 0;
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const = 0;
     virtual double get_deltaT(const Event& e, const std::vector<double> &par, bool anyway=false) = 0;
     virtual double get_cosTheta(const Event &e) = 0;
+
+    virtual double get_fraction(const std::vector<double> &par, EnabledSVD svd=BOTH) {
+        return 1;
+    }
 
     virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const = 0;
 

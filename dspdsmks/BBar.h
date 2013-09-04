@@ -7,8 +7,11 @@
 #include "BkgT.h"
 
 namespace PAR {
+    PARAM(yield_bkg_svd1);
+    PARAM(yield_bkg_svd2);
+
     PARAM(scale_bbar);
-    PARAM(yield_bbar_svd1);
+    PARAM(f_bbar_svd1);
     PARAM(bbar_svd1_ratio);
     PARAM(bbar_svd1_Mbc_mean);
     PARAM(bbar_svd1_Mbc_sigma);
@@ -22,7 +25,7 @@ namespace PAR {
     PARAM(bbar_svd1_ctrlpeak_dE_mean);
     PARAM(bbar_svd1_ctrlpeak_dE_sigma);
 
-    PARAM(yield_bbar_svd2);
+    PARAM(f_bbar_svd2);
     PARAM(bbar_svd2_ratio);
     PARAM(bbar_svd2_Mbc_mean);
     PARAM(bbar_svd2_Mbc_sigma);
@@ -163,7 +166,7 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
 
     virtual ~BBarPDF(){}
 
-    virtual double operator()(const Event& e, const std::vector<double> &par) {
+    virtual double operator()(const Event& e, const std::vector<double> &par, bool normalized=false) {
         if(e.svdVs == 0){
             if(useMbcdE){
                 //Set Parameters for bbar component
@@ -180,6 +183,7 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
                 bbarPDF_svd1.fcn2.fcny.set(&par[PAR::bbar_svd1_dE_cheb1]);
             }
 
+            if(normalized) return bbarPDF_svd1(e.Mbc, e.dE);
             return get_deltaT(e,par) * get_yield(par, SVD1, e.rbin) * (useMbcdE?bbarPDF_svd1(e.Mbc, e.dE):1);
         } else {
             if(useMbcdE){
@@ -197,6 +201,7 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
                 bbarPDF_svd2.fcn2.fcny.set(&par[PAR::bbar_svd2_dE_cheb1]);
             }
 
+            if(normalized) return bbarPDF_svd2(e.Mbc, e.dE);
             return get_deltaT(e,par) * get_yield(par, SVD2, e.rbin) * (useMbcdE?bbarPDF_svd2(e.Mbc, e.dE):1);
         }
     }
@@ -204,16 +209,23 @@ class BBarPDF: public DeltaTComponent<BkgTPDF> {
     virtual double get_yield(const std::vector<double> &par, EnabledSVD svd=BOTH, int rbin=-1) const {
         double yield(0);
         if(svd & SVD1){
-            yield += par[PAR::yield_bbar_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
+            yield += par[PAR::yield_bkg_svd1] * par[PAR::f_bbar_svd1] * get_rbinFraction(rbin, PAR::bkg_svd1_rbin1, par);
+            std::cout << "boo" << std::endl;
         }
         if(svd & SVD2){
-            yield += par[PAR::yield_bbar_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
+            yield += par[PAR::yield_bkg_svd2] * par[PAR::f_bbar_svd2] * get_rbinFraction(rbin, PAR::bkg_svd2_rbin1, par);
         }
         return par[PAR::scale_bbar] * yield;
     }
 
-    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const {
+    virtual void get_rbinFractions(const std::vector<double> &par, std::vector<double> &fractions, EnabledSVD svd, double scale=1.0) const    {
         fill_rbinFractions(par, fractions, svd, PAR::bkg_svd1_rbin1, PAR::bkg_svd2_rbin1, scale);
+    }
+
+    virtual double get_fraction(const std::vector<double> &par, EnabledSVD svd=BOTH) {
+        if(svd & SVD1) return par[PAR::f_bbar_svd1];
+        if(svd & SVD2) return par[PAR::f_bbar_svd2];
+        return 0;
     }
 
     private:

@@ -204,6 +204,20 @@ struct DspDsmKsPDF {
         return NcmpPDFcmp/sum_all;
     }
 
+    double get_sWeight(const Event& e, const std::vector<double> &par, double cov0, double cov1) const {
+        long double sum_cov(0);
+        long double sum_N(0);
+        for(auto component: components){
+            const double cov = (component.first == CMP_signal)?cov0:cov1;
+            const double pdf = (*component.second)(e, par, true);
+            const double N = component.second->get_yield(par, e.svdVs?Component::SVD2:Component::SVD1);
+            const double f = component.second->get_fraction(par, e.svdVs?Component::SVD2:Component::SVD1);
+            sum_cov += f *cov * pdf;
+            sum_N += N * pdf;
+            //std::cout << component.first << " " << f << " "  << cov << " " << pdf << " " << N << std::endl;
+        }
+        return sum_cov/sum_N;
+    }
 
     std::vector<double> get_rbinFractions(const std::vector<double> &par, int svd){
         std::vector<double> result(7);

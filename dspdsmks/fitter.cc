@@ -60,13 +60,20 @@ struct FitRoutine {
             params.update(min.UserParameters());
             success &= min.IsValid();
 
-            /*const ROOT::Minuit2::MnUserCovariance &cov = min.UserCovariance();
+            const ROOT::Minuit2::MnUserCovariance &cov = min.UserCovariance();
             for(unsigned int i=0; i<cov.Nrow(); ++i){
                 int external =  min.UserParameters().Trafo().ExtOfInt(i);
                 std::cout << "COV row/col " << i << " corresponds to " << external << ": " << min.UserParameters().GetName(external) << std::endl;
             }
+            std::cout << "COV: " << std::endl;
+            for(unsigned int i=0; i<cov.Nrow(); ++i){
+                for(unsigned int j=0; j<cov.Nrow(); ++j){
+                    std::cout << cov(i, j) << ", ";
+                }
+                std::cout << std::endl;
+            }
 
-            for(unsigned int i=0; i<params.size(); ++i){
+            /*for(unsigned int i=0; i<params.size(); ++i){
                 if(params[i].isFixed()) continue;
                 std::cout << i << " (" << params[i].name() << ") -> " << min.UserParameters().Trafo().IntOfExt(i) << std::endl;
             }*/
