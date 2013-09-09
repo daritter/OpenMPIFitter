@@ -1,0 +1,10 @@
+% correction factors for slow neutral pions, experiment range 7-27
+% correction value = epsion_data / epsilon_MC
+%	pmin(GeV)		pmax(GeV)		correction	err_uncorr	err_corr	err_syst
+	0.050				0.075				1.012				0.204				0.038			0.001
+	0.075				0.100				1.302				0.121				0.053			0.001
+	0.100				0.125				0.782				0.090				0.031			0.001
+	0.125				0.150				0.880				0.103				0.033			0.001
+	0.150				0.175				1.245				0.093				0.049			0.001
+	0.175				0.200				1.116				0.102				0.039			0.002
+%	0						0.200				1.051				0.043				0.040			0.001
