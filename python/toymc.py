@@ -14,14 +14,14 @@ import matplotlib
 
 lock = threading.Lock()
 
-def draw_toyMC(hist,title,xlabel="",ylabel="",exponent=None):
+def draw_toyMC(hist,title,xlabel="",ylabel="",exponent=None, box="tl"):
     fit = root.TF1("gauss","gaus")
     textbox = r"\begin{align*}\mu&=%s\\\sigma&=%s\end{align*}"
     fig, a = utils.get_plotaxes((4,3.2))
     hist.Fit(fit,"LQ")
     r2mpl.plot(hist,axes=a, errors=True, color="k", zorder=1)
     r2mpl.plot(fit,axes=a, color="r", zorder=0)
-    utils.text_box(a, "tl", textbox % (
+    utils.text_box(a, box, textbox % (
         utils.format_error(fit.GetParameter(1), fit.GetParError(1), exponent=exponent),
         utils.format_error(fit.GetParameter(2), fit.GetParError(2), exponent=exponent)))
 
