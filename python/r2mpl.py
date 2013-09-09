@@ -241,7 +241,7 @@ def plot2D(hist, axes=None, sparse=True, contour=None, color=None, log=False, **
         return axes.plot_surface(x,y,data, **argk)
 
     if contour is not None:
-        return axes.contour(data.T, extent=[xmin,xmax,ymin,ymax], origin='lower', **argk)
+        return axes.contour(data.T, contour, extent=[xmin,xmax,ymin,ymax], origin='lower', **argk)
 
     if color is not None:
         cconv = mpl.colors.ColorConverter()
