@@ -22,9 +22,9 @@ else:
 
 rootfile = root.TFile(filename + ".root")
 
-def draw_dalitz(hist, splus, sminus):
-    hist.Sumw2()
-    hist.Rebin2D(2,2)
+def draw_dalitz(hist, title, splus, sminus):
+    #hist.Sumw2()
+    #hist.Rebin2D(2,2)
     f, a = utils.get_plotaxes()
     p = r2mpl.plot(hist, a)#, aspect="equal")
     label = r"Entries / $\num{%.3g} \times \num{%.3g}\text{ GeV}^2$" % \
@@ -35,6 +35,7 @@ def draw_dalitz(hist, splus, sminus):
     cb = f.colorbar(p, format=formatter, fraction=0.2)
     cb.set_label(label)
     a.grid(False)
+    a.set_title(title)
     a.set_xlabel(splus)
     a.set_ylabel(sminus)
 
@@ -42,6 +43,7 @@ def draw_dalitz(hist, splus, sminus):
     h_x = hist.ProjectionX()
     #h_x.Rebin(2)
     r2mpl.plot(h_x, errors=True)
+    a.set_title(title)
     a.set_xlabel(splus)
     a.set_ylabel(r"Entries / $\num{%.3g}\text{ GeV}$" % h_x.GetXaxis().GetBinWidth(1))
 
@@ -49,14 +51,30 @@ def draw_dalitz(hist, splus, sminus):
     h_y = hist.ProjectionY()
     #h_y.Rebin(2)
     r2mpl.plot(h_y, errors=True)
+    a.set_title(title)
     a.set_xlabel(sminus)
     a.set_ylabel(r"Entries / $\num{%.3g}\text{ GeV}$" % h_y.GetXaxis().GetBinWidth(1))
 
+def draw_mass(hist, label):
+    #hist.Sumw2()
+    #hist.Rebin(2)
+    f, a = utils.get_plotaxes()
+    p = r2mpl.plot(hist, axes=a, errors=True)
+    a.set_xlabel(label)
+    a.set_ylabel(r"Entries / $\num{%.3g}\text{ GeV}$" % hist.GetXaxis().GetBinWidth(1))
+
 hist1 = rootfile.Get("sDalitz_svd2")
-hist2 = rootfile.Get("sDalitz2_svd2")
-hist3 = rootfile.Get("sDalitz3_svd2")
-draw_dalitz(hist1, splus, sminus)
-draw_dalitz(hist2, splus, s23)
-draw_dalitz(hist3, sminus, s23)
+hist2 = rootfile.Get("pDalitz_svd2")
+#hist3 = rootfile.Get("sDalitz3_svd2")
+draw_dalitz(hist1, "sPlot", splus, sminus)
+draw_dalitz(hist2, "Signal Fraction", splus, sminus)
+#draw_dalitz(hist3, sminus, s23)
+
+h_splus = rootfile.Get("mass_splus")
+draw_mass(h_splus, splus.replace("^2",""))
+h_sminus = rootfile.Get("mass_sminus")
+draw_mass(h_sminus, sminus.replace("^2",""))
+h_s12 = rootfile.Get("mass_s12")
+draw_mass(h_s12, s23.replace("^2",""))
 
 r2mpl.save_all(filename, png=False, single_pdf=False)

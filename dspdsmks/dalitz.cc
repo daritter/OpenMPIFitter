@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
     DspDsmKsPDF::EnabledComponents activeComponents = DspDsmKsPDF::CMP_all;
 
     Range plotrange_mBC("mBC",0,0), plotrange_dE("dE",0,0), plotrange_dT("dT",0,0);
-    int bins_splus(80), bins_sminus(80);
+    int bins(51);
     std::string rootFile("dalitz.root"), parameterIn("ddk-out.par");
 
     try{
@@ -66,9 +66,7 @@ int main(int argc, char* argv[]){
              "The minimal dT value for the plot")
             ("plot-max-dT", po::value<float>(&plotrange_dT.vmax)->default_value(pdf.getRange_dT().vmax),
              "The maximal dT value for the plot")
-            ("bins-splus", po::value<int>(&bins_splus)->default_value(bins_splus),
-             "Number of Bins per axis for the data")
-            ("bins-sminus", po::value<int>(&bins_sminus)->default_value(bins_sminus),
+            ("bins", po::value<int>(&bins)->default_value(bins),
              "Number of Bins per axis for the data")
            ;
 
@@ -113,11 +111,18 @@ int main(int argc, char* argv[]){
     TFile *r_rootFile = new TFile((rootFile+".root").c_str(),"RECREATE");
 
     //h_dalitz_svd1 = new TH2D( "dalitz_svd1", "sPlot Dalitz, SVD1", bins_splus, 5., 12., bins_sminus, 5., 12.);
-    TH2D* h_dalitz_svd2 = new TH2D( "dalitz_svd2", "Normal Dalitz, SVD2", bins_splus, 5., 12., bins_sminus, 5., 12.);
-    TH2D* h_pdalitz_svd2 = new TH2D( "pDalitz_svd2", "pPlot Dalitz, SVD2", bins_splus, 5., 12., bins_sminus, 5., 12.);
-    TH2D* h_sdalitz_svd2 = new TH2D( "sDalitz_svd2", "sPlot Dalitz, SVD2", bins_splus, 5., 12., bins_sminus, 5., 12.);
-    TH2D* h_sdalitz2_svd2 = new TH2D( "sDalitz2_svd2", "sPlot Dalitz s12,s23, SVD2", bins_splus, 0, -1, bins_sminus, 0, -1.);
-    TH2D* h_sdalitz3_svd2 = new TH2D( "sDalitz3_svd2", "sPlot Dalitz s23,s23, SVD2", bins_splus, 0, -1, bins_sminus, 0, -1.);
+    TH2D* h_dalitz_svd2 = new TH2D( "dalitz_svd2", "Normal Dalitz, SVD2", bins, 5., 12., bins, 5., 12.);
+    TH2D* h_pdalitz_svd2 = new TH2D( "pDalitz_svd2", "pPlot Dalitz, SVD2", bins, 5., 12., bins, 5., 12.);
+    TH2D* h_sdalitz_svd2 = new TH2D( "sDalitz_svd2", "sPlot Dalitz, SVD2", bins, 5., 12., bins, 5., 12.);
+    TH2D* h_sdalitz2_svd2 = new TH2D( "sDalitz2_svd2", "sPlot Dalitz s12,s23, SVD2", bins, 0, -1, bins, 0, -1.);
+    TH2D* h_sdalitz3_svd2 = new TH2D( "sDalitz3_svd2", "sPlot Dalitz s23,s23, SVD2", bins, 0, -1, bins, 0, -1.);
+
+    TH1D* h_masses[3];
+    h_masses[0] = new TH1D("mass_splus", "mass_splus", bins, 0, -1);
+    h_masses[1] = new TH1D("mass_sminus", "mass_sminus", bins, 0, -1);
+    h_masses[2] = new TH1D("mass_s12", "mass_s12", bins, 0, -1);
+    std::vector<TH1*> hists{h_dalitz_svd2, h_pdalitz_svd2, h_sdalitz_svd2, h_sdalitz2_svd2, h_sdalitz3_svd2, h_masses[0], h_masses[1], h_masses[2]};
+    for(TH1* h: hists) h->Sumw2();
 
     /*for(const Event& e: pdf.getData(0)){
         if(!(plotrange_mBC(e.Mbc) && plotrange_dE(e.dE) && plotrange_dT(e.dT))) continue;
@@ -139,6 +144,10 @@ int main(int argc, char* argv[]){
         h_sdalitz_svd2->Fill(e.m2DspKs, e.m2DsmKs, sWeight);
         h_sdalitz2_svd2->Fill(e.m2DspKs, s23, sWeight);
         h_sdalitz3_svd2->Fill(e.m2DsmKs, s23, sWeight);
+
+        h_masses[0]->Fill(sqrt(e.m2DspKs), sWeight);
+        h_masses[1]->Fill(sqrt(e.m2DsmKs), sWeight);
+        h_masses[2]->Fill(sqrt(s23), sWeight);
     }
     r_rootFile->Write();
     r_rootFile->Close();
