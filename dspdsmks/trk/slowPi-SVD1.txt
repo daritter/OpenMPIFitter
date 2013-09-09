@@ -1,0 +1,10 @@
+% correction factors for slow charged pions, experiment range 7-27
+% correction value = epsion_data / epsilon_MC
+%	pmin(GeV)		pmax(GeV)		correction	err_uncorr	err_corr	err_syst
+	0.050				0.075				1.091				0.182				0.027			0.013
+	0.075				0.100				0.937				0.067				0.024			0.001
+	0.100				0.125				0.892				0.053				0.024			0.001
+	0.125				0.150				1.058				0.046				0.028			0.000
+	0.150				0.175				1.086				0.042				0.029			0.000 
+	0.175				0.200				1.028				0.050				0.027			0.001
+%	0						0.200				1.020				0.022				0.027			0.000
