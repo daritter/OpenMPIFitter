@@ -30,6 +30,7 @@
 #include "Continuum.h"
 #include "progress.h"
 #include "DeltaTHists.h"
+#include "BinEfficiency.h"
 
 /** DspDsmKs PDF function.
  *
@@ -599,6 +600,17 @@ struct DspDsmKsPDF {
         Event event;
         event.setBranches(chain, bestBSelection);
         const unsigned int entries = chain->GetEntries();
+        BinEfficiency syst(0);
+        int channelP(0), channelM(0);
+        int track_pdg[11]{0};
+        double track_plab[11]{0}, track_costheta[11]{0};
+        if(size==1){
+            chain->SetBranchAddress((bestBSelection + ".channelP").c_str(), &channelP);
+            chain->SetBranchAddress((bestBSelection + ".channelM").c_str(), &channelM);
+            chain->SetBranchAddress("track_pdg", &track_pdg);
+            chain->SetBranchAddress("track_plab", &track_plab);
+            chain->SetBranchAddress("track_costheta", &track_costheta);
+        }
         for(unsigned int i=process; i<entries; i+=size){
             if(!chain->GetEntry(i)) {
                 std::cerr << "ARRRRRRRRR: There be a problem readin in event " << i << std::endl;
@@ -608,8 +620,14 @@ struct DspDsmKsPDF {
             if(!range_mBC(event.Mbc) || !range_dE(event.dE) || !range_dT(event.deltaT)) continue;
             if(use_veto && veto_mBC(event.Mbc) && veto_dE(event.dE)) continue;
             data[event.svdVs].push_back(event);
+            if(size==1){
+                syst.add(event.svdVs, channelP, channelM, track_pdg, track_plab, track_costheta);
+            }
         }
         delete chain;
+        if(size==1){
+            syst.save(std::cout);
+        }
     }
 
 
