@@ -33,6 +33,16 @@ efficiency_ctrl = np.array([
    [1.7508169e-03, 6.7758386e-06],
 ])
 
+correction_mc = np.array([
+    0.9466,
+    0.9045,
+])
+
+correction_ctrl = np.array([
+    0.9770,
+    0.9708,
+])
+
 nbb = np.array([
     [151.961, 1.241],
     [619.620, 9.441],

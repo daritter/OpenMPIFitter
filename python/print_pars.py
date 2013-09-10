@@ -64,6 +64,9 @@ rec_eff = raw_eff * eff_DDKs
 
 ctl_eff = raw_eff * eff_DsD0Km
 
+rec_eff_c = rec_eff * np.array([utils.correction_mc, utils.correction_mc]).T
+ctl_eff_c = ctl_eff * np.array([utils.correction_ctrl, utils.correction_ctrl]).T
+
 h_nB0 = b0.draw("nB0", range=(200,0,200), option="goff")
 b_mult = h_nB0.GetMean()
 f,a = utils.get_plotaxes()
@@ -95,13 +98,13 @@ print """efficiency_ctrl = np.array([
 print """
 signal_svd1_eff                  %17.10e %17.10e      0      0     Y
 signal_svd2_eff                  %17.10e %17.10e      0      0     Y
-""" % tuple(rec_eff.flat)
+""" % tuple(rec_eff_c.flat)
 
 print """
 #Control channel
 signal_svd1_eff                  %17.10e %17.10e      0      0     Y
 signal_svd2_eff                  %17.10e %17.10e      0      0     Y
-""" % tuple(ctl_eff.flat)
+""" % tuple(ctl_eff_c.flat)
 
 print r"""
 \def\BMultiplicity{%.1f}
@@ -111,7 +114,9 @@ print r"""
 \def\RawReconstructionEffSVDOne{%s}
 \def\RawReconstructionEffSVDTwo{%s}
 \def\ReconstructionEffSVDOne{%s}
-\def\ReconstructionEffSVDTwo{%s}""" % (
+\def\ReconstructionEffSVDTwo{%s}
+\def\ReconstructionEffSVDOneCorr{%s}
+\def\ReconstructionEffSVDTwoCorr{%s}""" % (
     b_mult,
     100*ncorrect[1] / (ncorrect[0]+ncorrect[1]),
     100*bestB[1] / (bestB[0]+bestB[1]),
@@ -120,6 +125,8 @@ print r"""
     utils.format_error(*raw_eff[1], exponent=-3),
     utils.format_error(*rec_eff[0], exponent=-5),
     utils.format_error(*rec_eff[1], exponent=-5),
+    utils.format_error(*rec_eff_c[0], exponent=-5),
+    utils.format_error(*rec_eff_c[1], exponent=-5),
 )
 
 print r"""
@@ -130,7 +137,9 @@ print r"""
 \def\RawReconstructionEffSVDOneCtrl{%s}
 \def\RawReconstructionEffSVDTwoCtrl{%s}
 \def\ReconstructionEffSVDOneCtrl{%s}
-\def\ReconstructionEffSVDTwoCtrl{%s}""" % (
+\def\ReconstructionEffSVDTwoCtrl{%s}
+\def\ReconstructionEffSVDOneCtrlCorr{%s}
+\def\ReconstructionEffSVDTwoCtrlCorr{%s}""" % (
     b_mult,
     100*ncorrect[1] / (ncorrect[0]+ncorrect[1]),
     100*bestB[1] / (bestB[0]+bestB[1]),
@@ -139,4 +148,6 @@ print r"""
     utils.format_error(*raw_eff[1], exponent=-3),
     utils.format_error(*ctl_eff[0], exponent=-5),
     utils.format_error(*ctl_eff[1], exponent=-5),
+    utils.format_error(*ctl_eff_c[0], exponent=-5),
+    utils.format_error(*ctl_eff_c[1], exponent=-5),
 )
