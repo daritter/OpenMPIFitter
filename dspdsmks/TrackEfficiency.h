@@ -44,8 +44,6 @@ class TrackEfficiency {
 
         TrackEfficiency(): ntracks(0), overall(0), eff(1), err(0) {}
 
-        ~TrackEfficiency() {}
-
         void init(const std::string &filename, bool charged=true){
             overall = charged?trk_syst:pi0_syst;
             err = overall;
@@ -59,13 +57,13 @@ class TrackEfficiency {
             }
             while(!file.eof()){
                 std::getline(file, line);
+                //Ignore comment lines
                 if(line.empty() || line[0] == '%') continue;
                 std::stringstream linebuf(line);
                 linebuf >> tmp.pmin >> tmp.pmax >> tmp.corr >> tmp.err_uncorr >> tmp.err_corr >> tmp.err_syst;
-                //std::cout << tmp.pmin << ", " << tmp.pmax << ", " << tmp.corr << ", " << tmp.err_uncorr << ", " << tmp.err_corr << ", " << tmp.err_syst << tmp.ntracks << std::endl;
                 bins.push_back(tmp);
             }
-            //Add high momentum bin
+            // Add catch all momentum bin for all tracks which were not handled up to this point
             tmp.pmin = 0.0;
             tmp.pmax = std::numeric_limits<double>::infinity();
             tmp.corr = 1.0;
@@ -87,10 +85,11 @@ class TrackEfficiency {
             eff = 0;
             err = 0;
             for(const auto& bin: bins){
-                //std::cout << bin.pmin << ", " << bin.pmax << ", " << bin.corr << ", " << bin.err_uncorr << ", " << bin.err_corr << ", " << bin.err_syst << ", " << bin.ntracks << std::endl;
-                //Weighted average of efficiency correction
+                // Weighted average of efficiency correction, equation 5 in
+                // BN1176
                 eff += bin.corr * bin.ntracks;
-                //And weighted average of errors including correlated terms
+                // And weighted average of errors including correlated terms,
+                // equation 6 in BN1176
                 double corr = 0;
                 for(const auto& bin2: bins){
                     corr += bin.ntracks * bin2.ntracks * bin.err_corr * bin2.err_corr;
@@ -99,15 +98,17 @@ class TrackEfficiency {
                 err += n2*bin.err_uncorr*bin.err_uncorr + corr + n2*bin.err_syst*bin.err_syst;
             }
             eff /= ntracks;
-            //Add overall tracking systematic and convert from variance to sigma
+            // Add overall tracking systematic
             err = std::sqrt(err/ntracks/ntracks + eff*eff*overall*overall);
         }
 
-        double get_eff() { return eff; }
-        double get_err() { return err; }
+        double get_eff() const { return eff; }
+        double get_err() const { return err; }
+        double ratio() const { return eff; }
+        double ratio_ref() const { return eff; }
+        double ratio_error() const { return err; }
 
-
-    protected:
+    private:
         static constexpr float trk_syst = 0.0035;
         static constexpr float pi0_syst = 0.04;
         unsigned int ntracks;

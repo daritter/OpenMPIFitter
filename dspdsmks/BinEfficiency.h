@@ -19,7 +19,7 @@ namespace Belle {
 
 class BinEfficiency {
     public:
-        BinEfficiency(int index):index(index),channel_count{{{0}}},count{0} {
+        BinEfficiency(int index):index(index),channel_count{{{0}}},count{0},value_error("%.4f ± %.4f (%5.2f%%)") {
             prefix = (boost::format("bin%1%_") % index).str();
 
             init(km_eff,   "Km",      true);
@@ -35,15 +35,21 @@ class BinEfficiency {
             init(DKpp_p1,  "DKpp_p1", false);
             init(DKpp_p2,  "DKpp_p2", false);
 
-            slowPi[0].init(TRK_SVD1, true);
-            slowPi[1].init(TRK_SVD2, true);
-            slowPi0[0].init(PI0_SVD1, false);
-            slowPi0[1].init(PI0_SVD2, false);
-            fastPi0[0].init(PI0_SVD1, false);
-            fastPi0[1].init(PI0_SVD2, false);
-            fastTracks[0].init(TRK_SVD1, true);
-            fastTracks[1].init(TRK_SVD2, true);
-            //init(slowPi,   "slowPi",  false, 0.0);
+            init(trk_slowPi, true);
+            init(trk_slowPi0, false);
+            init(trk_Km_eff, true);
+            init(trk_DKp_K, true);
+            init(trk_DKp_p, true);
+            init(trk_DKpp0_K, true);
+            init(trk_DKpp0_p, true);
+            init(trk_DKpp0_p0, false);
+            init(trk_DKppp_K, true);
+            init(trk_DKppp_p1, true);
+            init(trk_DKppp_p2, true);
+            init(trk_DKppp_p3, true);
+            init(trk_DKpp_K, true);
+            init(trk_DKpp_p1, true);
+            init(trk_DKpp_p2, true);
         }
 
         ~BinEfficiency() {}
@@ -53,85 +59,76 @@ class BinEfficiency {
             kid_eff[1].init(pid, K?1:3, (prefix + name + "_svd2").c_str(), SVD2_TABLE);
         }
 
+        void init(TrackEfficiency* trk_eff, bool charged){
+            trk_eff[0].init(charged?TRK_SVD1:PI0_SVD1, charged);
+            trk_eff[1].init(charged?TRK_SVD2:PI0_SVD2, charged);
+        }
+
         int addDs(int svd, int channel, int* pdg, double* plab, double* costheta){
             //Use the D channel numbers, not D*
             if(channel>5) channel -= 4;
             channel -= 2;
-            /*std::cout << channel << ": ";
-            for(int i=0; i<5; ++i){
-                std::cout << "(" << pdg[i] << "," << plab[i] << "," << costheta[i] << "), ";
-            }
-            std::cout << std::endl;*/
             switch(channel){
                 case 0:
                     assert(fabs(pdg[0]) == 321);
                     assert(fabs(pdg[1]) == 211);
                     assert(fabs(pdg[2]) == 0);
                     assert(fabs(pdg[3]) == 0);
-                    assert(fabs(pdg[4]) == 211);
                     DKp_K[svd].addtrack(plab[0], costheta[0]);
                     DKp_p[svd].addtrack(plab[1], costheta[1]);
-                    fastTracks[svd].add(plab[0]);
-                    fastTracks[svd].add(plab[1]);
+                    trk_DKp_K[svd].add(plab[0]);
+                    trk_DKp_p[svd].add(plab[1]);
                     break;
                 case 1:
                     assert(fabs(pdg[0]) == 321);
                     assert(fabs(pdg[1]) == 211);
                     assert(fabs(pdg[2]) == 111);
                     assert(fabs(pdg[3]) == 0);
-                    assert(fabs(pdg[4]) == 211);
                     DKpp0_K[svd].addtrack(plab[0], costheta[0]);
                     DKpp0_p[svd].addtrack(plab[1], costheta[1]);
-                    fastPi0[svd].add(plab[2]);
-                    fastTracks[svd].add(plab[0]);
-                    fastTracks[svd].add(plab[1]);
+                    trk_DKpp0_K[svd].add(plab[0]);
+                    trk_DKpp0_p[svd].add(plab[1]);
+                    trk_DKpp0_p0[svd].add(plab[2]);
                     break;
                 case 2:
                     assert(fabs(pdg[0]) == 211);
                     assert(fabs(pdg[1]) == 211);
                     assert(fabs(pdg[2]) == 321);
                     assert(fabs(pdg[3]) == 211);
-                    assert(fabs(pdg[4]) == 211);
                     DKppp_p1[svd].addtrack(plab[0], costheta[0]);
                     DKppp_p2[svd].addtrack(plab[1], costheta[1]);
                     DKppp_K[svd].addtrack(plab[2], costheta[2]);
                     DKppp_p3[svd].addtrack(plab[3], costheta[3]);
-                    fastTracks[svd].add(plab[0]);
-                    fastTracks[svd].add(plab[1]);
-                    fastTracks[svd].add(plab[2]);
-                    fastTracks[svd].add(plab[3]);
+                    trk_DKppp_p1[svd].add(plab[0]);
+                    trk_DKppp_p2[svd].add(plab[1]);
+                    trk_DKppp_K[svd].add(plab[2]);
+                    trk_DKppp_p3[svd].add(plab[3]);
                     break;
                 case 3:
                     assert(fabs(pdg[0]) == 211);
                     assert(fabs(pdg[1]) == 211);
                     assert(fabs(pdg[2]) == 321);
                     assert(fabs(pdg[3]) == 0);
-                    assert(fabs(pdg[4]) == 111);
                     DKpp_p1[svd].addtrack(plab[0], costheta[0]);
                     DKpp_p2[svd].addtrack(plab[1], costheta[1]);
                     DKpp_K[svd].addtrack(plab[2], costheta[2]);
-                    fastTracks[svd].add(plab[0]);
-                    fastTracks[svd].add(plab[1]);
-                    fastTracks[svd].add(plab[2]);
+                    trk_DKpp_p1[svd].add(plab[0]);
+                    trk_DKpp_p2[svd].add(plab[1]);
+                    trk_DKpp_K[svd].add(plab[2]);
                     break;
                 default:
                     std::cerr << "Unknown channel: " << channel << std::endl;
                     std::abort();
             }
             if(fabs(pdg[4]) == 211) {
-                slowPi[svd].add(plab[4]);
-            }else{
-                slowPi0[svd].add(plab[4]);
+                trk_slowPi[svd].add(plab[4]);
+            }else if(fabs(pdg[4]) == 111){
+                trk_slowPi0[svd].add(plab[4]);
             }
             return channel;
         }
 
         void add(int svd, int channelP, int channelM, int* pdg, double* plab, double* costheta) {
-            /*std::cout << channelP << ", " << channelM << ": ";
-            for(int i=0; i<11; ++i){
-                std::cout << pdg[i] << ", ";
-            }
-            std::cout << std::endl;*/
             int c1 = addDs(svd, channelP, pdg, plab, costheta);
             int c2 = addDs(svd, channelM, pdg + 5, plab + 5, costheta + 5);
             ++channel_count[svd][c1][c2];
@@ -145,107 +142,166 @@ class BinEfficiency {
             }
         }
 
-        void calc_eff_err(double& eff, double& err, std::vector<Belle::KID_eff_06*> kid1, const std::vector<Belle::KID_eff_06*> &kid2, const std::vector<Belle::KID_eff_06*> &kid3, bool usemc=false){
-            kid1.insert(end(kid1), begin(kid2), end(kid2));
-            kid1.insert(end(kid1), begin(kid3), end(kid3));
+        template<class T> void calc_eff_err(double& eff, double& err, std::vector<T*> v1, const std::vector<T*> &v2, const std::vector<T*> &v3, bool use_ref=false, bool conservative=false){
+            // Calculate the efficiency and error for one channel. We have two
+            // d(*)s and possibly a K- (in the control channel) so lets add up
+            // all the tracks into one vector
+            v1.insert(end(v1), begin(v2), end(v2));
+            v1.insert(end(v1), begin(v3), end(v3));
+
+            // No let's calculate the combined efficiency and error
+            // eta = prod_i eta_i
+            // sigma = sum_i (prod_j^(j!=i) eta_j) sigma_i
             eff = 1.0;
             err = 0;
-            for(size_t i=0; i<kid1.size(); ++i){
-                const auto& kid = kid1[i];
-                eff *= usemc?kid->ratio_ref():kid->ratio();
+            for(size_t i=0; i<v1.size(); ++i){
+                const auto& e1 = v1[i];
+                eff *= use_ref?e1->ratio_ref():e1->ratio();
                 double tmp(1.);
-                for(size_t j=0; j<kid1.size(); ++j){
+                for(size_t j=0; j<v1.size(); ++j){
                     if(i==j) continue;
-                    const auto& kid2 = kid1[j];
-                    tmp *= usemc?kid->ratio_ref():kid2->ratio();
+                    const auto& e2 = v1[j];
+                    tmp *= use_ref?e2->ratio_ref():e2->ratio();
                 }
-                err += tmp * kid->ratio_error();
+                double e_err = e1->ratio_error();
+                if(conservative){
+                    const double d = e1->ratio() - e1->ratio_ref();
+                    e_err = std::sqrt(e_err*e_err + d*d);
+                }
+                err += tmp * e_err;
             }
         }
 
-
-        void save(std::ostream &out) {
-            std::vector<std::string> channel_names{
+        template<class T> void calculate_total(std::ostream &out, int svd, double &eff, double &err, const std::vector<T*>* d1, const std::vector<T*>* d2, const std::vector<T*> &k, const std::string &name){
+            static std::vector<std::string> channel_names{
                 "D⁰ → K⁻π⁺    ",
                 "D⁰ → K⁻π⁺π⁰  ",
                 "D⁰ → K⁻π⁺π⁺π⁻",
                 "D⁺ → K⁻π⁺π⁺  "
             };
-            boost::format value_error("%.4f ± %.4f (%.2f%%) -- weight = %.4f");
+            //Calculate efficency and error for all channels and make a
+            //weighted average of the efficiency and the relative errors
+            for(int i=0; i<4; ++i){
+                for(int j=0; j<4; ++j){
+                    double weight = 1.0 * channel_count[svd][i][j] / count[svd];
+                    if(weight == 0) continue;
+
+                    double ch_eff(0), ch_err(0);
+                    calc_eff_err(ch_eff, ch_err, d1[i], d2[j], k);
+                    if(ch_err>0){
+                        out << name + " " + channel_names[i] + ", " + channel_names[j] << ": "
+                            << value_error % ch_eff %  ch_err % (ch_err/ch_eff*100)
+                            << boost::format(" -- weight = %.4f") % weight << std::endl;
+                    }
+                    eff += weight*ch_eff;
+                    err += weight*ch_err/ch_eff;
+                }
+            }
+            out << std::endl;
+            err *= eff;
+        }
+
+        void overall(double &eff, double &err, const std::vector<double> &efficiencies, const std::vector<double> &errors){
+            eff = 1;
+            err = 0;
+            for(size_t i=0; i<efficiencies.size(); ++i){
+                eff *= efficiencies[i];
+                const double rel = errors[i]/efficiencies[i];
+                err += rel*rel;
+            }
+            err = sqrt(err)*eff;
+        }
+
+        void save(std::ostream &out) {
+            auto print = [&](double tot_eff, double tot_err, const std::string &name){
+                out << "≣≣≣≣ " << name << " efficiency correction: "
+                    << value_error % tot_eff % tot_err % (tot_err/tot_eff*100)
+                    << std::endl;
+            };
             out << "Efficiencies for Bin " << index << ":" << std::endl;
-            out.precision(5);
             for(int svd=0; svd<2; ++svd){
-                out << " =============================== SVD " << (svd+1)
-                    << " =============================== " << std::endl;
-                std::vector<Belle::KID_eff_06*> channels[4] = {
+                out << "=================================== SVD " << (svd+1)
+                    << " ===================================" << std::endl;
+
+                //kid efficienies used in the different decay channels
+                std::vector<Belle::KID_eff_06*> kid_channels[4] = {
                     {&DKp_K[svd], &DKp_p[svd]},
                     {&DKpp0_K[svd], &DKpp0_p[svd]},
                     {&DKppp_K[svd], &DKppp_p1[svd], &DKppp_p2[svd], &DKppp_p3[svd]},
                     {&DKpp_K[svd], &DKpp_p1[svd], &DKpp_p2[svd]}
                 };
-                std::vector<Belle::KID_eff_06*> Km;
+                std::vector<Belle::KID_eff_06*> kid_Km;
+                //trk efficiencies used in the different decay channels
+                std::vector<TrackEfficiency*> trk_channels[4] = {
+                    {&trk_DKp_K[svd], &trk_DKp_p[svd], &trk_slowPi[svd]},
+                    {&trk_DKpp0_K[svd], &trk_DKpp0_p[svd], &trk_slowPi[svd]},
+                    {&trk_DKppp_K[svd], &trk_DKppp_p1[svd], &trk_DKppp_p2[svd], &trk_DKppp_p3[svd], &trk_slowPi[svd]},
+                    {&trk_DKpp_K[svd], &trk_DKpp_p1[svd], &trk_DKpp_p2[svd]}
+                };
+                //for ctrl channel the second is a D and does not have slow pi
+                std::vector<TrackEfficiency*> trk_channels_ctrl[4] = {
+                    {&trk_DKp_K[svd], &trk_DKp_p[svd]},
+                    {&trk_DKpp0_K[svd], &trk_DKpp0_p[svd]},
+                    {&trk_DKppp_K[svd], &trk_DKppp_p1[svd], &trk_DKppp_p2[svd], &trk_DKppp_p3[svd]},
+                    {&trk_DKpp_K[svd], &trk_DKpp_p1[svd], &trk_DKpp_p2[svd]}
+                };
+                std::vector<TrackEfficiency*> trk_Km;
+                //pi0 efficiencies used in the different decay channels
+                std::vector<TrackEfficiency*> pi0_channels[4] = {
+                    {},
+                    {&trk_DKpp0_p0[svd]},
+                    {},
+                    {&trk_slowPi0[svd]}
+                };
+                std::vector<TrackEfficiency*> pi0_Km;
+
+                bool ctrl=false;
                 if(!ks_eff[svd].get_totalNum()>0){
-                    Km.push_back(&km_eff[svd]);
+                    kid_Km.push_back(&km_eff[svd]);
+                    trk_Km.push_back(&trk_Km_eff[svd]);
+                    ctrl = true;
                 }
 
+                //Calculate all used efficiencies
                 for(int i=0; i<4; ++i){
-                    std::cout << "⇒ KID_eff values for " << channel_names[i] << std::endl;
-                    for(auto* kid: channels[i]){
-                        kid->calculate();
-                        kid->dump();
-                    }
+                    //std::cout << "⇒ KID_eff values for " << channel_names[i] << std::endl;
+                    for(auto* kid: kid_channels[i]){ kid->calculate(); }
+                    for(auto* trk: trk_channels[i]){ trk->calculate(); }
+                    for(auto* trk: pi0_channels[i]){ trk->calculate(); }
                 }
-                double eff[4][4] = {{0}};
-                double err[4][4] = {{0}};
-                double total_eff = 0;
-                double total_err = 0;
-                double total_weight = 0;
-                for(int i=0; i<4; ++i){
-                    for(int j=0; j<4; ++j){
-                        double weight = 1.0 * channel_count[svd][i][j] / count[svd];
-                        calc_eff_err(eff[i][j], err[i][j], channels[i], channels[j], Km);
-                        out << "Channel " << channel_names[i] << ", " << channel_names[j] << ": "
-                            << value_error % eff[i][j] %  err[i][j] % (err[i][j]/eff[i][j]*100) % weight
-                            << " (" << channel_count[svd][i][j] << "/" << count[svd] << ")" << std::endl;
-                        total_eff += weight*eff[i][j];
-                        total_err += weight*weight*err[i][j]*err[i][j];
-                        total_weight += weight;
-                    }
-                }
-                total_err = std::sqrt(total_err);
-                out << "≣≣≣≣ KID Efficiency correction: "
-                    << value_error % total_eff % total_err % (total_err/total_eff*100) % total_weight
-                    << std::endl;
+                for(auto* trk: trk_Km){ trk->calculate(); }
+                for(auto* kid: kid_Km){ kid->calculate(); }
+
+                double kid_total_eff(0), kid_total_err(0);
+                double trk_total_eff(0), trk_total_err(0);
+                double pi0_total_eff(0), pi0_total_err(0);
+                double k0s_total_eff(1), k0s_total_err(0);
+                double complete_eff(1), complete_err(0);
+
+                calculate_total(out, svd, kid_total_eff, kid_total_err, kid_channels, kid_channels, kid_Km, "kid");
+                calculate_total(out, svd, trk_total_eff, trk_total_err, trk_channels, ctrl?trk_channels_ctrl:trk_channels, trk_Km, "trk");
+                calculate_total(out, svd, pi0_total_eff, pi0_total_err, pi0_channels, pi0_channels, pi0_Km, "pi0");
+
+                print(kid_total_eff, kid_total_err, "kid");
+                print(trk_total_eff, trk_total_err, "trk");
+                print(pi0_total_eff, pi0_total_err, "pi0");
+
                 if(ks_eff[svd].get_totalNum()>0){
-                    double ks_err = ks_eff[svd].total_errFactor() /  ks_eff[svd].total_effFactor();
-                    ks_err = std::sqrt((ks_err)*(ks_err) + 0.006*0.006);
-                    ks_err *= ks_eff[svd].total_effFactor();
-                    out << "≣≣≣≣  Ks Efficiency correction: "
-                        << value_error % ks_eff[svd].total_effFactor()
-                        % ks_err
-                        % (ks_err/ks_eff[svd].total_effFactor()*100) % 1.0
-                       << std::endl;
+                    k0s_total_eff = ks_eff[svd].total_effFactor();
+                    k0s_total_err = ks_eff[svd].total_errFactor() /  ks_eff[svd].total_effFactor();
+                    k0s_total_err = std::sqrt((k0s_total_err)*(k0s_total_err) + 0.006*0.006);
+                    k0s_total_err *= k0s_total_eff;
+                    print(k0s_total_eff, k0s_total_err, "K0s");
                 }
-                slowPi[svd].calculate();
-                out << "≣≣≣≣ slowPi Efficiency correction: "
-                    << value_error % slowPi[svd].get_eff() % slowPi[svd].get_err()
-                    % (slowPi[svd].get_err()/slowPi[svd].get_eff()*100) % 1.0
-                    << std::endl;
-                slowPi0[svd].calculate();
-                out << "≣≣≣≣ slowPi0 Efficiency correction: "
-                    << value_error % slowPi0[svd].get_eff() % slowPi0[svd].get_err()
-                    % (slowPi0[svd].get_err()/slowPi0[svd].get_eff()*100) % 1.0
-                    << std::endl;
-                fastPi0[svd].calculate();
-                out << "≣≣≣≣ fastPi0 Efficiency correction: "
-                    << value_error % fastPi0[svd].get_eff() % fastPi0[svd].get_err()
-                    % (fastPi0[svd].get_err()/fastPi0[svd].get_eff()*100) % 1.0
-                    << std::endl;
-                fastTracks[svd].calculate();
-                out << "≣≣≣≣ fastTracks Efficiency correction: "
-                    << value_error % fastTracks[svd].get_eff() % fastTracks[svd].get_err()
-                    % (fastTracks[svd].get_err()/fastTracks[svd].get_eff()*100) % 1.0
-                    << std::endl;
+
+                //Calculate the overall efficiency&error (adding relative error quadratically)
+                overall(complete_eff, complete_err,
+                        {kid_total_eff, trk_total_eff, pi0_total_eff, k0s_total_eff},
+                        {kid_total_err, trk_total_err, pi0_total_err, k0s_total_err}
+                );
+
+                print(complete_eff, complete_err, "all");
+
                 out << std::endl;
             }
         }
@@ -256,6 +312,7 @@ class BinEfficiency {
         std::string prefix;
         unsigned int channel_count[2][4][4];
         unsigned int count[2];
+        boost::format value_error;
 
         Belle::Ks_eff ks_eff[2];
         Belle::KID_eff_06 km_eff[2];
@@ -281,11 +338,30 @@ class BinEfficiency {
 
         //Slow pions for all channels the same
         //KID_eff_06 slowPi[2];
-        TrackEfficiency slowPi[2];
-        TrackEfficiency slowPi0[2];
+        TrackEfficiency trk_slowPi[2];
+        TrackEfficiency trk_slowPi0[2];
 
-        TrackEfficiency fastTracks[2];
-        TrackEfficiency fastPi0[2];
+        TrackEfficiency trk_Km_eff[2];
+
+        //Channel 2: D -> KmPp
+        TrackEfficiency trk_DKp_K[2];
+        TrackEfficiency trk_DKp_p[2];
+
+        //Channel 3: D -> KmPpP0
+        TrackEfficiency trk_DKpp0_K[2];
+        TrackEfficiency trk_DKpp0_p[2];
+        TrackEfficiency trk_DKpp0_p0[2];
+
+        //Channel 4: D -> KmPpPpPm
+        TrackEfficiency trk_DKppp_K[2];
+        TrackEfficiency trk_DKppp_p1[2];
+        TrackEfficiency trk_DKppp_p2[2];
+        TrackEfficiency trk_DKppp_p3[2];
+
+        //Channel 5: D -> KmPpPp
+        TrackEfficiency trk_DKpp_K[2];
+        TrackEfficiency trk_DKpp_p1[2];
+        TrackEfficiency trk_DKpp_p2[2];
 };
 
 #endif
