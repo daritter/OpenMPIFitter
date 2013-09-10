@@ -24,4 +24,4 @@ for par in glob.glob("toymc/ctrl-dt/*.out"):
 toymc.draw_toyMC(lifetime, r"fit result", r"$\tau_{\PBz}$ / ps", ylabel=r"Entries / \num{%s}" % lifetime.GetBinWidth(1), box="tr")[0].axvline(1.519,c="b",ls="--")
 toymc.draw_toyMC(pull_lifetime, r"pull distribution", r"Pull($\tau_{\PBz}$)", ylabel=r"Entries / \num{%s}" % pull_lifetime.GetBinWidth(1), box="tr")[0].axvline(0,c="b",ls="--")
 
-r2mpl.save_all("vary_lifetime")
+r2mpl.save_all("vary_lifetime", png=False, single_pdf=True)
